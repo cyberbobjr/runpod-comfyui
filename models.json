@@ -1,0 +1,107 @@
+{
+    "config": {
+        "BASE_DIR": "/mnt/e/ComfyUI_windows_portable/ComfyUI/models"
+    },
+    "models": [
+        {
+            "url": "https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors",
+            "dest": "${BASE_DIR}/clip/Flux/clip_l.safetensors"
+        },
+        {
+            "url": "https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp8_e4m3fn.safetensors",
+            "dest": "${BASE_DIR}/clip/Flux/t5xxl_fp8_e4m3fn.safetensors"
+        },
+        {
+            "url": "https://huggingface.co/black-forest-labs/FLUX.1-schnell/resolve/main/ae.safetensors",
+            "dest": "${BASE_DIR}/vae/Flux/ae.safetensors"
+        },
+        {
+            "url": "https://huggingface.co/black-forest-labs/FLUX.1-dev/resolve/main/flux1-dev.safetensors",
+            "dest": "${BASE_DIR}/unet/Flux/flux1-dev.safetensors"
+        },
+        {
+            "url": "https://huggingface.co/black-forest-labs/FLUX.1-Fill-dev/resolve/main/flux1-fill-dev.safetensors",
+            "dest": "${BASE_DIR}/unet/Flux/flux1-fill-dev.safetensors"
+        },
+        {
+            "url": "https://civitai.com/api/download/models/1095910",
+            "dest": "${BASE_DIR}/unet/Flux/agfluxFillNSFWFp8_agfluxFillNSFWV17Fp8.safetensors"
+        },
+        {
+            "url": "https://huggingface.co/black-forest-labs/FLUX.1-Redux-dev/resolve/main/flux1-redux-dev.safetensors",
+            "dest": "${BASE_DIR}/unet/Flux/flux1-redux-dev.safetensors"
+        },
+        {
+            "url": "https://civitai.com/api/download/models/804967",
+            "dest": "${BASE_DIR}/loras/Flux/Hand_v2.safetensors"
+        },
+        {
+            "url": "https://civitai.com/api/download/models/1472123",
+            "dest": "${BASE_DIR}/loras/Flux/NSFW_Body_Parts.safetensors"
+        },
+        {
+            "url": "https://civitai.com/api/download/models/1573489",
+            "dest": "${BASE_DIR}/loras/Flux/cloth_removal_double_reg05-4-2900.safetensors"
+        },
+        {
+            "url": "https://huggingface.co/Shakker-Labs/FLUX.1-dev-ControlNet-Union-Pro-2.0/resolve/main/diffusion_pytorch_model.safetensors",
+            "dest": "${BASE_DIR}/controlnet/Flux/FLUX.1-dev-ControlNet-Union-Pro-2.0.safetensors"
+        },
+        {
+            "url": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/diffusion_models/wan2.1_i2v_720p_14B_fp8_scaled.safetensors",
+            "dest": "${BASE_DIR}/diffusion_models/WAN21/wan2.1_i2v_720p_14B_fp8_scaled.safetensors"
+        },
+        {
+            "url": "https://civitai.com/api/download/models/1464208",
+            "dest": "${BASE_DIR}/diffusion_models/WAN21/wanAIWan21VideoModelSafetensors_kijaiWan21I2V14B720P.safetensors"
+        },
+        {
+            "url": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors",
+            "dest": "${BASE_DIR}/vae/WAN21/wan_2.1_vae.safetensors"
+        },
+        {
+            "url": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+            "dest": "${BASE_DIR}/text_encoders/WAN21/umt5_xxl_fp8_e4m3fn_scaled.safetensors"
+        },
+        {
+            "url": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/clip_vision/clip_vision_h.safetensors",
+            "dest": "${BASE_DIR}/clip_vision/WAN21/clip_vision_h.safetensors"
+        },
+        {
+            "url": "https://civitai.com/api/download/models/1599906",
+            "dest": "${BASE_DIR}/loras/WAN21/Su_MCraft_Ep60.safetensors"
+        },
+        {
+            "url": "https://civitai.com/api/download/models/1694292",
+            "dest": "${BASE_DIR}/loras/WAN21/fingering_i2v_e248.safetensors"
+        },
+        {
+            "url": "https://civitai.com/api/download/models/1537915",
+            "dest": "${BASE_DIR}/loras/WAN21/BouncyWalkV01.safetensors"
+        },
+        {
+            "url": "https://huggingface.co/Comfy-Org/HiDream-I1_ComfyUI/resolve/main/split_files/diffusion_models/hidream_i1_fast_fp8.safetensors",
+            "dest": "${BASE_DIR}/diffusion_models/HiDream/hidream_i1_fast_fp8.safetensors"
+        },
+        {
+            "url": "https://huggingface.co/Comfy-Org/HiDream-I1_ComfyUI/resolve/main/split_files/text_encoders/clip_g_hidream.safetensors",
+            "dest": "${BASE_DIR}/text_encoders/HiDream/clip_g_hidream.safetensors"
+        },
+        {
+            "url": "https://huggingface.co/Comfy-Org/HiDream-I1_ComfyUI/resolve/main/split_files/text_encoders/clip_l_hidream.safetensors",
+            "dest": "${BASE_DIR}/text_encoders/HiDream/clip_l_hidream.safetensors"
+        },
+        {
+            "url": "https://huggingface.co/Comfy-Org/HiDream-I1_ComfyUI/resolve/main/split_files/text_encoders/llama_3.1_8b_instruct_fp8_scaled.safetensors",
+            "dest": "${BASE_DIR}/text_encoders/HiDream/llama_3.1_8b_instruct_fp8_scaled.safetensors"
+        },
+        {
+            "url": "https://huggingface.co/Comfy-Org/HiDream-I1_ComfyUI/resolve/main/split_files/text_encoders/t5xxl_fp8_e4m3fn_scaled.safetensors",
+            "dest": "${BASE_DIR}/text_encoders/HiDream/t5xxl_fp8_e4m3fn_scaled.safetensors"
+        },
+        {
+            "url": "https://huggingface.co/Comfy-Org/HiDream-I1_ComfyUI/resolve/main/split_files/vae/ae.safetensors",
+            "dest": "${BASE_DIR}/vae/HiDream/ae.safetensors"
+        }
+    ]
+}
