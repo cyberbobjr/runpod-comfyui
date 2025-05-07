@@ -79,14 +79,14 @@ def main():
 
     config = data.get("config", {})
     base_dir = config.get("BASE_DIR", "")
-    hf_token = env.get("HF_TOKEN", None)
-    civitai_token = env.get("CIVITAI_TOKEN", None)
+    # Priorité : .env puis variable d'environnement système
+    hf_token = env.get("HF_TOKEN") or os.environ.get("HF_TOKEN")
+    civitai_token = env.get("CIVITAI_TOKEN") or os.environ.get("CIVITAI_TOKEN")
     models = data.get("models", [])
 
     for entry in models:
         url = entry["url"]
         dest = entry["dest"]
-        version = entry.get("version")
         headers = entry.get("headers", {})
 
         # Ajout du token civitai si applicable
@@ -106,15 +106,24 @@ def main():
 
         os.makedirs(os.path.dirname(dest_real), exist_ok=True)
 
-        # Toujours télécharger si version vide, None ou "0"
-        force_download = version is None or str(version).strip() == "" or str(version) == "0"
+        # Récupère la taille du fichier sur le serveur
+        try:
+            head = requests.head(url, headers=headers, allow_redirects=True)
+            server_size = int(head.headers.get('content-length', 0))
+        except Exception as e:
+            print(f"Impossible de récupérer la taille du fichier distant pour {url}: {e}")
+            server_size = 0
 
-        # Vérifie si le fichier existe et a une taille nulle
-        if os.path.exists(dest_real) and os.path.getsize(dest_real) == 0:
-            print(f"ATTENTION: {dest_real} existe mais a une taille de 0, il sera re-téléchargé.")
-        elif not force_download and file_matches_version(dest_real, version):
-            print(f"OK: {dest_real} déjà présent et à jour.")
+        # Vérifie la taille locale
+        local_exists = os.path.exists(dest_real)
+        local_size = os.path.getsize(dest_real) if local_exists else -1
+
+        # Décide s'il faut télécharger
+        if local_exists and local_size == server_size:
+            print(f"OK: {dest_real} déjà présent et à jour (taille identique).")
             continue
+        elif local_exists and local_size != server_size:
+            print(f"ATTENTION: {dest_real} existe mais la taille diffère ({local_size} != {server_size}), il sera re-téléchargé.")
 
         free_mb = get_free_space_mb(os.path.dirname(dest_real))
         if free_mb < 500:  # seuil de 500 Mo libres

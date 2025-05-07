@@ -1,6 +1,6 @@
 {
     "config": {
-        "BASE_DIR": "/mnt/e/ComfyUI_windows_portable/ComfyUI/models"
+        "BASE_DIR": "/runpod-volume/models"
     },
     "models": [
         {
