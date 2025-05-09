@@ -34,8 +34,8 @@ def compute_autov1_hash(filepath):
             h.update(chunk)
     return h.hexdigest()
 
-def file_matches_version(filepath, expected_hash, expected_size):
-    """Vérifie si le fichier correspond à la taille attendue (ignore le hash)."""
+def file_matches_version(filepath, expected_size):
+    """Vérifie si le fichier correspond à la taille attendue."""
     if not os.path.exists(filepath):
         return False
     if expected_size:
@@ -150,7 +150,7 @@ def select_models_interactively(groups, base_dir):
                 tags_str = " [" + ", ".join(tags) + "]"
             dest_real = entry["dest"].replace("${BASE_DIR}", base_dir).replace("$BASE_DIR", base_dir)
             expected_size = entry.get("size")
-            is_installed = file_matches_version(dest_real, None, expected_size)
+            is_installed = file_matches_version(dest_real, expected_size)
             # Style rouge si tag nsfw, sinon pas de couleur
             style = ""
             if any(t.lower() == "nsfw" for t in tags):
@@ -200,8 +200,6 @@ def select_models_interactively(groups, base_dir):
         entry = model_refs[idx][2]
         if entry is None:
             continue
-        expected_size = entry.get("size")
-        is_installed = file_matches_version(dest_real, None, expected_size)
         if idx not in selected_indices and os.path.exists(dest_real):
             try:
                 os.remove(dest_real)
@@ -215,7 +213,7 @@ def select_models_interactively(groups, base_dir):
             continue
         dest_real = entry["dest"].replace("${BASE_DIR}", base_dir).replace("$BASE_DIR", base_dir)
         expected_size = entry.get("size")
-        is_installed = file_matches_version(dest_real, None, expected_size)
+        is_installed = file_matches_version(dest_real, expected_size)
         # On ne garde que les modèles non déjà installés ou incorrects
         if idx in selected_indices and not is_installed:
             selected_entries.append((group_name, entry))
@@ -233,25 +231,28 @@ def download_models(selected_entries, base_dir, hf_token, civitai_token):
                 sep = "&" if "?" in url else "?"
                 url = f"{url}{sep}token={civitai_token}"
 
-        dest_real = dest.replace("${BASE_DIR}", base_dir).replace("$BASE_DIR", base_dir)
-
         if "huggingface.co" in url and hf_token:
             if not headers:
                 headers = {}
             headers["Authorization"] = f"Bearer {hf_token}"
 
+        dest_real = dest.replace("${BASE_DIR}", base_dir).replace("$BASE_DIR", base_dir)
         os.makedirs(os.path.dirname(dest_real), exist_ok=True)
 
-        try:
-            head = requests.head(url, headers=headers, allow_redirects=True)
-            server_size = int(head.headers.get('content-length', 0))
-        except Exception as e:
-            print(f"Impossible de récupérer la taille du fichier distant pour {url}: {e}")
-            server_size = 0
+        # Priorité : taille du JSON > taille serveur
+        expected_size = entry.get("size")
+        server_size = None
+        if expected_size is None:
+            try:
+                head = requests.head(url, headers=headers, allow_redirects=True)
+                server_size = int(head.headers.get('content-length', 0))
+            except Exception as e:
+                print(f"Impossible de récupérer la taille du fichier distant pour {url}: {e}")
+                server_size = 0
+            expected_size = server_size
 
-        expected_size = entry.get("size") or server_size
-        # Vérifie à nouveau avant téléchargement (ignore le hash)
-        if file_matches_version(dest_real, None, expected_size):
+        # Vérifie à nouveau avant téléchargement
+        if file_matches_version(dest_real, expected_size):
             print(f"OK: {dest_real} déjà présent et à jour (taille identique).")
             continue
 
