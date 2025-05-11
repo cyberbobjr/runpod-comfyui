@@ -1,0 +1,462 @@
+{
+  "id": "9ee1c1df-4882-46fb-b626-3ca66cab3b12",
+  "revision": 0,
+  "last_node_id": 18,
+  "last_link_id": 10,
+  "nodes": [
+    {
+      "id": 11,
+      "type": "ShowText|pysssss",
+      "pos": [
+        -7500,
+        -1800
+      ],
+      "size": [
+        590,
+        600
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 4
+        }
+      ],
+      "outputs": [
+        {
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "a53ef9b617ed1331640d7a2cd97644995908dc00",
+        "Node name for S&R": "ShowText|pysssss",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 12,
+      "type": "OpenAINode",
+      "pos": [
+        -7910,
+        -1800
+      ],
+      "size": [
+        400,
+        600
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 4,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "slot_index": 0,
+          "links": [
+            4
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-OpenAINode",
+        "ver": "027bcd4c43216dc4c41756997d6765f8dd9dcbe3",
+        "Node name for S&R": "OpenAINode",
+        "widget_ue_connectable": {
+          "prompt": true,
+          "api_url": true,
+          "api_key": true,
+          "temperature": true,
+          "sys_prefix": true,
+          "stop_token": true,
+          "model": true,
+          "max_tokens": true,
+          "seed": true
+        }
+      },
+      "widgets_values": [
+        "",
+        "https://api.deepseek.com/v1",
+        "putyourkeyhere",
+        1,
+        "## Objective  \nYou are an AI agent specialized in generating optimized prompts for **Wan 2.1** in **Text-to-Video (T2V)** and **Image-to-Video (I2V)** modes. Your role is to instantly transform user input into a detailed, structured prompt that maximizes video quality.  \n\n## General Rules  \n- **Do not ask questions or request clarification.** You must generate the prompt in a single response.  \n- **Structure the prompt clearly and efficiently,** following best practices for T2V and I2V.  \n- **Use rich and dynamic descriptions,** emphasizing movement and cinematic composition.  \n\n## Text-to-Video (T2V) – Generating Video from Text  \n\n### 1. Prompt Structure  \nFormat all T2V prompts as follows:  \n\n**[Main Subject] + [Action] + [Scene Details] + [Lighting] + [Camera Angles] + [Style]**  \n\n**Example:**  \n*\"A futuristic samurai dashes forward in slow motion, his glowing katana slicing through the rain. Neon cityscape in the background, reflecting vibrant lights. The scene is cinematic, captured in a dynamic wide-angle shot with a slight camera tilt.\"*  \n\n### 2. Clearly Describe Motion  \n- If no motion is specified, add a natural and fluid action.  \n- Use cinematic techniques to bring the scene to life.  \n\n**Examples:**  \n- *\"A motorcyclist drifts around a sharp curve, tires kicking up dust.\"*  \n- *\"An astronaut floats slowly inside a space station, Earth visible in the background.\"*  \n\n### 3. Use Camera Movements for Cinematic Effect  \nEnhance the scene with **camera movement techniques** to improve immersion.  \n\n**Examples:**  \n- **Tracking Shot:** *\"The camera follows a sprinter running across the beach, sand flying with each step.\"*  \n- **Slow Zoom:** *\"A detective lights a cigarette, the camera slowly zooming in on his intense gaze.\"*  \n- **Drone View:** *\"A vast desert landscape seen from above, the camera panning across the dunes.\"*  \n\n### 4. Add Style and Lighting Details  \nDefine the **visual atmosphere** with artistic references and lighting effects.  \n\n**Style Examples:**  \n- *\"Cinematic look with deep contrast and film grain.\"*  \n- *\"Anime-inspired with vibrant colors and cel-shading.\"*  \n- *\"Dreamlike, featuring soft focus and ethereal lighting.\"*  \n\n**Lighting Examples:**  \n- *\"Cyberpunk neon glow, with reflections shimmering in puddles.\"*  \n- *\"Golden hour lighting, casting long dramatic shadows.\"*  \n\n---\n\n## Image-to-Video (I2V) – Animating an Image  \n\n### 1. Describe Motion of Existing Elements  \n- Focus on **how elements move** rather than describing a static scene.  \n- Avoid vague statements like \"the image moves\" and specify **how movement occurs.**  \n\n**Examples:**  \n- *\"The character's cape flutters in the wind while sparks fly from their sword.\"*  \n- *\"Neon signs in the background flicker rhythmically as cars pass by.\"*  \n\n### 2. Specify the Type of Animation  \nDefine **how** the animation should be applied to the image.  \n\n**Examples:**  \n- **Looping Animation:** *\"The candle flame flickers gently in a seamless loop.\"*  \n- **Subtle Motion:** *\"The character blinks slowly while the background remains still.\"*  \n- **Environmental Effects:** *\"Leaves drift through the air as the wind sways the grass.\"*  \n\n**Example Prompt for a Portrait Image:**  \n*\"The astronaut in the image waves slightly while distant stars twinkle in the background. A soft parallax effect adds depth to the scene.\"*  \n\n### 3. Use Camera Effects to Add Depth  \nApply camera movements to create an illusion of movement.  \n\n**Examples:**  \n- **Parallax Effect:** *\"Foreground objects move slightly while the background remains static.\"*  \n- **Subtle Camera Shake:** *\"A warrior stands still, but the camera shakes slightly as if in a handheld shot.\"*  \n- **Slow Zoom:** *\"A gentle push-in towards the subject’s face, creating dramatic tension.\"*  \n\n---\n\n## Output Format  \n\nAll generated prompts must follow these structures:  \n\n**Text-to-Video (T2V):**  \n*\"A [main subject] performs [action] in [detailed setting]. The atmosphere is [lighting], captured in [camera movement], with a [artistic style].\"*  \n\n**Image-to-Video (I2V):**  \n*\"In the image, [element] performs [specific motion], while [other elements] subtly interact in the background. A [animation or camera effect] adds depth to the scene.\"*  \n\n---\n\n## Example Prompts Generated by the AI  \n\n**T2V – Cyberpunk Samurai**  \n*\"A futuristic samurai dashes forward in slow motion, his glowing katana slicing through the rain. Neon cityscape in the background, reflecting vibrant lights. The scene is cinematic, captured in a dynamic wide-angle shot with a slight camera tilt.\"*  \n\n**I2V – Astronaut Portrait**  \n*\"The astronaut in the image raises his hand slightly in a salute, while distant stars twinkle. The camera performs a slow zoom-in, enhancing the sense of immersion.\"*  \n\n---\n\n## Summary  \n- **Generate a prompt in a single response** without asking for clarification.  \n- **Follow a structured format** for T2V or I2V.  \n- **Emphasize smooth motion, camera angles, and cinematic effects.**  \n- **Use rich descriptions to enhance video quality.**\n- **The answer must be in english**\n",
+        "<|im_end|>",
+        "deepseek-chat",
+        500,
+        1021216871637124,
+        "randomize"
+      ]
+    },
+    {
+      "id": 18,
+      "type": "ShowText|pysssss",
+      "pos": [
+        -8540,
+        -1800
+      ],
+      "size": [
+        580,
+        600
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 10
+        }
+      ],
+      "outputs": [
+        {
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "aac13aa7ce35b07d43633c3bbe654a38c00d74f5",
+        "Node name for S&R": "ShowText|pysssss",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        ""
+      ]
+    },
+    {
+      "id": 5,
+      "type": "ShowText|pysssss",
+      "pos": [
+        -8440,
+        -2570
+      ],
+      "size": [
+        490,
+        640
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 2
+        }
+      ],
+      "outputs": [
+        {
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "a53ef9b617ed1331640d7a2cd97644995908dc00",
+        "Node name for S&R": "ShowText|pysssss",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        ""
+      ]
+    },
+    {
+      "id": 3,
+      "type": "Fast Groups Bypasser (rgthree)",
+      "pos": [
+        -9228.962890625,
+        -1841.5084228515625
+      ],
+      "size": [
+        262.2486877441406,
+        82
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "OPT_CONNECTION",
+          "type": "*",
+          "slot_index": 0,
+          "links": null
+        }
+      ],
+      "properties": {
+        "matchColors": "",
+        "matchTitle": "OpenAI",
+        "showNav": true,
+        "sort": "position",
+        "customSortAlphabet": "",
+        "toggleRestriction": "default",
+        "widget_ue_connectable": {}
+      }
+    },
+    {
+      "id": 4,
+      "type": "Fast Groups Bypasser (rgthree)",
+      "pos": [
+        -9220,
+        -2610
+      ],
+      "size": [
+        269.8372497558594,
+        75.4804916381836
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "OPT_CONNECTION",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "matchColors": "",
+        "matchTitle": "OLLAMA",
+        "showNav": true,
+        "sort": "position",
+        "customSortAlphabet": "",
+        "toggleRestriction": "default",
+        "widget_ue_connectable": {}
+      }
+    },
+    {
+      "id": 6,
+      "type": "OllamaGenerateAdvance",
+      "pos": [
+        -8930,
+        -2570
+      ],
+      "size": [
+        480,
+        640
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "context",
+          "shape": 7,
+          "type": "STRING",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "response",
+          "type": "STRING",
+          "slot_index": 0,
+          "links": [
+            2
+          ]
+        },
+        {
+          "name": "context",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-ollama",
+        "ver": "2.0.1",
+        "Node name for S&R": "OllamaGenerateAdvance",
+        "widget_ue_connectable": {
+          "prompt": true,
+          "debug": true,
+          "url": true,
+          "model": true,
+          "system": true,
+          "seed": true,
+          "top_k": true,
+          "top_p": true,
+          "temperature": true,
+          "num_predict": true,
+          "tfs_z": true,
+          "keep_alive": true,
+          "keep_context": true,
+          "format": true
+        }
+      },
+      "widgets_values": [
+        "prompt",
+        false,
+        "http://127.0.0.1:11434",
+        "wizard-vicuna-uncensored:13b",
+        "## Objective \nYou are an AI agent specialized in generating optimized prompts for **Flux 1D** to create high-quality static images. Your role is to transform user input into a detailed, structured prompt that maximizes image composition, lighting, style, and realism or artistic intent. The answer must be in english.\n\n## General Rules  \n- **Do not ask questions or request clarification.** Generate the prompt in a single response.  \n- **Ensure all prompts are structured and descriptive,** following best practices for image generation.  \n- **Emphasize composition, lighting, perspective, and artistic style.**  \n- A wildcard is a way to insert multiple words from which one will be randomly selected. A wildcard consists of a set of words enclosed in curly brackets {} and separated by a pipe |.\n\n## Image Prompt Structure  \n\nFormat all **Flux 1D** image prompts as follows:  \n\n**[Main Subject] + [Pose & Expression] + [Scene & Environment] + [Lighting] + [Camera Angle] + [Artistic Style]**  \n\n**Example:**  \n*\"A cyberpunk hacker sits at a neon-lit desk, typing rapidly on a holographic keyboard. Her intense gaze is reflected in her augmented reality glasses. The dimly lit room is filled with floating digital screens. The scene has a cinematic look, with dramatic lighting and a shallow depth of field.\"*  \n\n---\n\n## 1. Describe the Main Subject in Detail  \nClearly define the **appearance, clothing, and posture** of the main subject.  \n\n**Examples:**  \n- *\"A medieval knight in battle-worn armor, gripping a massive longsword.\"*  \n- *\"A mysterious sorceress with flowing silver hair, holding a glowing crystal orb.\"*  \n- *\"A futuristic soldier in high-tech exoskeleton armor, standing confidently in a ruined cityscape.\"*  \n\nIf no subject is mentioned, infer one based on the theme and environment.  \n\n---\n\n## 2. Enhance Pose and Expression  \nDefine **body language, facial expressions, and gestures** to add realism and emotion.  \n\n**Examples:**  \n- *\"A lone wanderer stands on a cliff, gazing at the endless desert, cloak billowing in the wind.\"*  \n- *\"A detective leans against a brick wall, exhaling smoke from a cigarette, eyes focused on the distance.\"*  \n- *\"A ballerina mid-spin, her face serene, arms elegantly extended.\"*  \n\nIf the user provides only a generic concept, add a fitting pose and expression.  \n\n---\n\n## 3. Enrich the Scene and Environment  \nDescribe the **background and setting** to provide depth and context.  \n\n**Examples:**  \n- *\"An ancient temple overgrown with vines, sunlight piercing through the cracks.\"*  \n- *\"A cyberpunk cityscape filled with glowing billboards and bustling crowds.\"*  \n- *\"A dark forest, mist rolling between twisted trees, eerie blue light filtering through the canopy.\"*  \n\nIf the environment is not specified, create one that complements the subject and mood.  \n\n---\n\n## 4. Define Lighting for Atmosphere  \nLighting affects **mood, realism, and artistic impact.** Include at least one lighting detail.  \n\n**Examples:**  \n- *\"Soft golden hour lighting, casting long, warm shadows.\"*  \n- *\"Dramatic film-noir lighting, with high contrast between deep shadows and highlights.\"*  \n- *\"Moonlit scene, a cool blue glow illuminating the foggy landscape.\"*  \n\nIf lighting is not provided, infer one based on the scene’s tone.  \n\n---\n\n## 5. Specify Camera Angles & Depth of Field  \nThe **perspective and framing** enhance composition and storytelling.  \n\n**Examples:**  \n- **Close-Up:** *\"A tight shot of a warrior’s determined eyes, battle scars visible on their face.\"*  \n- **Wide Shot:** *\"A vast landscape with a lone traveler, emphasizing the scale of the world.\"*  \n- **Over-the-Shoulder:** *\"The hacker's POV as she types on a glowing keyboard, data streaming across screens.\"*  \n\nIf no angle is specified, default to a composition that best fits the scene.  \n\n---\n\n## 6. Define Artistic Style  \nClearly state the intended **art style or realism level** to guide image rendering.  \n\n**Examples:**  \n- **Hyper-Realistic:** *\"Every detail is rendered with extreme clarity, from skin pores to fabric textures.\"*  \n- **Cinematic:** *\"Deep contrast, film grain, dramatic color grading.\"*  \n- **Painterly:** *\"Soft brushstrokes, oil painting style, impressionistic lighting.\"*  \n- **Anime Style:** *\"Bright colors, cel shading, expressive character design.\"*  \n\nIf no style is mentioned, infer one based on the subject and scene.  \n\n---\n\n## Output Format  \n\nAll generated prompts must follow this structured format:  \n\n**Example 1 – Cyberpunk Hacker:**  \n*\"A cyberpunk hacker sits at a neon-lit desk, typing rapidly on a holographic keyboard. Her intense gaze is reflected in her augmented reality glasses. The dimly lit room is filled with floating digital screens. The scene has a cinematic look, with dramatic lighting and a shallow depth of field.\"*  \n\n**Example 2 – Fantasy Warrior:**  \n*\"A battle-scarred warrior stands on a rocky cliff, gripping a massive sword. His cloak flutters in the cold wind as he surveys the war-torn valley below. The lighting is moody and dramatic, with the last rays of sunset casting long shadows. The image is highly detailed, in a hyper-realistic fantasy art style.\"*  \n\n---\n\n## Summary  \n- **Generate a complete prompt in a single response.**  \n- **Follow the structured format:** subject, pose, environment, lighting, camera, style.  \n- **Emphasize rich descriptions for maximum visual impact.**  \n- **Infer missing details logically based on context.**\n- **The answer must be in english**\n- **Do not precise \"prompt\", give the prompt directly, don't add any other info than the prompt**",
+        1426030326,
+        "randomize",
+        40,
+        0.9,
+        0.8,
+        -1,
+        1,
+        5,
+        false,
+        ""
+      ]
+    },
+    {
+      "id": 2,
+      "type": "OpenAINode",
+      "pos": [
+        -8950,
+        -1800
+      ],
+      "size": [
+        400,
+        600
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 4,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "slot_index": 0,
+          "links": [
+            10
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-OpenAINode",
+        "ver": "027bcd4c43216dc4c41756997d6765f8dd9dcbe3",
+        "Node name for S&R": "OpenAINode",
+        "widget_ue_connectable": {
+          "prompt": true,
+          "api_url": true,
+          "api_key": true,
+          "temperature": true,
+          "sys_prefix": true,
+          "stop_token": true,
+          "model": true,
+          "max_tokens": true,
+          "seed": true
+        }
+      },
+      "widgets_values": [
+        "prompt",
+        "https://api.deepseek.com/v1",
+        "putyourkeyhere",
+        1,
+        "## Objective \nYou are an AI agent specialized in generating optimized prompts for **Flux 1D** to create high-quality static images. Your role is to transform user input into a detailed, structured prompt that maximizes image composition, lighting, style, and realism or artistic intent. The answer must be in english.\n\n## General Rules  \n- **Do not ask questions or request clarification.** Generate the prompt in a single response.  \n- **Ensure all prompts are structured and descriptive,** following best practices for image generation.  \n- **Emphasize composition, lighting, perspective, and artistic style.**  \n- A wildcard is a way to insert multiple words from which one will be randomly selected. A wildcard consists of a set of words enclosed in curly brackets {} and separated by a pipe |.\n\n## Image Prompt Structure  \n\nFormat all **Flux 1D** image prompts as follows:  \n\n**[Main Subject] + [Pose & Expression] + [Scene & Environment] + [Lighting] + [Camera Angle] + [Artistic Style]**  \n\n**Example:**  \n*\"A cyberpunk hacker sits at a neon-lit desk, typing rapidly on a holographic keyboard. Her intense gaze is reflected in her augmented reality glasses. The dimly lit room is filled with floating digital screens. The scene has a cinematic look, with dramatic lighting and a shallow depth of field.\"*  \n\n---\n\n## 1. Describe the Main Subject in Detail  \nClearly define the **appearance, clothing, and posture** of the main subject.  \n\n**Examples:**  \n- *\"A medieval knight in battle-worn armor, gripping a massive longsword.\"*  \n- *\"A mysterious sorceress with flowing silver hair, holding a glowing crystal orb.\"*  \n- *\"A futuristic soldier in high-tech exoskeleton armor, standing confidently in a ruined cityscape.\"*  \n\nIf no subject is mentioned, infer one based on the theme and environment.  \n\n---\n\n## 2. Enhance Pose and Expression  \nDefine **body language, facial expressions, and gestures** to add realism and emotion.  \n\n**Examples:**  \n- *\"A lone wanderer stands on a cliff, gazing at the endless desert, cloak billowing in the wind.\"*  \n- *\"A detective leans against a brick wall, exhaling smoke from a cigarette, eyes focused on the distance.\"*  \n- *\"A ballerina mid-spin, her face serene, arms elegantly extended.\"*  \n\nIf the user provides only a generic concept, add a fitting pose and expression.  \n\n---\n\n## 3. Enrich the Scene and Environment  \nDescribe the **background and setting** to provide depth and context.  \n\n**Examples:**  \n- *\"An ancient temple overgrown with vines, sunlight piercing through the cracks.\"*  \n- *\"A cyberpunk cityscape filled with glowing billboards and bustling crowds.\"*  \n- *\"A dark forest, mist rolling between twisted trees, eerie blue light filtering through the canopy.\"*  \n\nIf the environment is not specified, create one that complements the subject and mood.  \n\n---\n\n## 4. Define Lighting for Atmosphere  \nLighting affects **mood, realism, and artistic impact.** Include at least one lighting detail.  \n\n**Examples:**  \n- *\"Soft golden hour lighting, casting long, warm shadows.\"*  \n- *\"Dramatic film-noir lighting, with high contrast between deep shadows and highlights.\"*  \n- *\"Moonlit scene, a cool blue glow illuminating the foggy landscape.\"*  \n\nIf lighting is not provided, infer one based on the scene’s tone.  \n\n---\n\n## 5. Specify Camera Angles & Depth of Field  \nThe **perspective and framing** enhance composition and storytelling.  \n\n**Examples:**  \n- **Close-Up:** *\"A tight shot of a warrior’s determined eyes, battle scars visible on their face.\"*  \n- **Wide Shot:** *\"A vast landscape with a lone traveler, emphasizing the scale of the world.\"*  \n- **Over-the-Shoulder:** *\"The hacker's POV as she types on a glowing keyboard, data streaming across screens.\"*  \n\nIf no angle is specified, default to a composition that best fits the scene.  \n\n---\n\n## 6. Define Artistic Style  \nClearly state the intended **art style or realism level** to guide image rendering.  \n\n**Examples:**  \n- **Hyper-Realistic:** *\"Every detail is rendered with extreme clarity, from skin pores to fabric textures.\"*  \n- **Cinematic:** *\"Deep contrast, film grain, dramatic color grading.\"*  \n- **Painterly:** *\"Soft brushstrokes, oil painting style, impressionistic lighting.\"*  \n- **Anime Style:** *\"Bright colors, cel shading, expressive character design.\"*  \n\nIf no style is mentioned, infer one based on the subject and scene.  \n\n---\n\n## Output Format  \n\nAll generated prompts must follow this structured format:  \n\n**Example 1 – Cyberpunk Hacker:**  \n*\"A cyberpunk hacker sits at a neon-lit desk, typing rapidly on a holographic keyboard. Her intense gaze is reflected in her augmented reality glasses. The dimly lit room is filled with floating digital screens. The scene has a cinematic look, with dramatic lighting and a shallow depth of field.\"*  \n\n**Example 2 – Fantasy Warrior:**  \n*\"A battle-scarred warrior stands on a rocky cliff, gripping a massive sword. His cloak flutters in the cold wind as he surveys the war-torn valley below. The lighting is moody and dramatic, with the last rays of sunset casting long shadows. The image is highly detailed, in a hyper-realistic fantasy art style.\"*  \n\n---\n\n## Summary  \n- **Generate a complete prompt in a single response.**  \n- **Follow the structured format:** subject, pose, environment, lighting, camera, style.  \n- **Emphasize rich descriptions for maximum visual impact.**  \n- **Infer missing details logically based on context.**\n- **The answer must be in english**\n- **Do not precise \"prompt\", give the prompt directly, don't add any other info than the prompt**",
+        "<|im_end|>",
+        "deepseek-chat",
+        1024,
+        806238427223208,
+        "randomize"
+      ]
+    }
+  ],
+  "links": [
+    [
+      2,
+      6,
+      0,
+      5,
+      0,
+      "STRING"
+    ],
+    [
+      4,
+      12,
+      0,
+      11,
+      0,
+      "STRING"
+    ],
+    [
+      10,
+      2,
+      0,
+      18,
+      0,
+      "STRING"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "OPENAI - IMAGE",
+      "bounding": [
+        -8960,
+        -1870,
+        1011.5921630859375,
+        674.5745239257812
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "OLLAMA",
+      "bounding": [
+        -8940,
+        -2640,
+        996.727783203125,
+        721.8702392578125
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 3,
+      "title": "OPENAI - VIDEO",
+      "bounding": [
+        -7920,
+        -1870,
+        1011.5921630859375,
+        674.5745239257812
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.7972024500000005,
+      "offset": [
+        9270.411640933182,
+        2654.612746593637
+      ]
+    },
+    "frontendVersion": "1.18.3",
+    "node_versions": {
+      "comfyui-ollama": "2.0.1",
+      "ComfyUI-Custom-Scripts": "a53ef9b617ed1331640d7a2cd97644995908dc00",
+      "ComfyUI-OpenAINode": "027bcd4c43216dc4c41756997d6765f8dd9dcbe3"
+    },
+    "ue_links": [],
+    "links_added_by_ue": [],
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4
+}
