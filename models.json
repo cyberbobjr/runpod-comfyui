@@ -3,67 +3,7 @@
     "BASE_DIR": "/mnt/e/ComfyUI_windows_portable/ComfyUI/models"
   },
   "groups": {
-    "Upscale": [
-      {
-        "url": "https://huggingface.co/tomjackson2023/upscale_models/resolve/main/4x-UltraSharp.pth",
-        "dest": "${BASE_DIR}/upscale_models/4x-UltraSharp.pth",
-        "type": "upscale_models",
-        "src": "https://huggingface.co/tomjackson2023/upscale_models",
-        "size": 66961958
-      },
-      {
-        "url": "https://huggingface.co/tomjackson2023/upscale_models/resolve/main/8x_RealESRGAN.pth",
-        "dest": "${BASE_DIR}/upscale_models/8x_RealESRGAN.pth",
-        "type": "upscale_models",
-        "src": "https://huggingface.co/tomjackson2023/upscale_models",
-        "size": 67189359
-      }
-    ],
-    "Flux Lora": [
-      {
-        "url": "https://civitai.com/api/download/models/981081",
-        "dest": "${BASE_DIR}/loras/Flux/FLUX.1-Turbo-Alpha.safetensors",
-        "type": "loras",
-        "src": "https://civitai.com/models/876388/flux1-turbo-alpha",
-        "size": 694082424
-      },
-      {
-        "url": "https://civitai.com/api/download/models/804967",
-        "dest": "${BASE_DIR}/loras/Flux/Hand_v2.safetensors",
-        "type": "loras",
-        "src": "https://civitai.com/models/200255",
-        "hash": "82b169c9500da411fbccaa40538f34f44290a525b9a2710431e91229d281f96e",
-        "size": 343805439
-      },
-      {
-        "url": "https://huggingface.co/RiverZ/ICEdit-normal-lora/resolve/main/pytorch_lora_weights.safetensors",
-        "dest": "${BASE_DIR}/loras/Flux/ICEdit-normal-lora.safetensors",
-        "type": "loras",
-        "src": "https://huggingface.co/RiverZ/ICEdit-normal-lora",
-        "size": 231918592
-      },
-      {
-        "url": "https://huggingface.co/xiaozaa/catvton-flux-lora-alpha/resolve/main/pytorch_lora_weights.safetensors",
-        "dest": "${BASE_DIR}/loras/Flux/catvton-flux-lora-alpha.safetensors",
-        "type": "loras",
-        "src": "https://huggingface.co/xiaozaa/catvton-flux-lora-alpha",
-        "size": 717319984
-      }
-    ],
-    "Flux GGUF": [
-      {
-        "url": "https://civitai.com/api/download/models/1641174?type=Model&format=GGUF&size=full&fp=fp16",
-        "dest": "${BASE_DIR}/unet/Flux/nsfwMASTERFLUXFp16LoraMerged_v12Q80Gguf.gguf",
-        "tags": [
-          "nsfw"
-        ],
-        "type": "unet",
-        "src": "https://civitai.com/models/796670",
-        "hash": "129032f32224bf7138f16e18673d8008ba5f84c1ec74063bf4511a8bb4cf553d",
-        "size": 12708281504
-      }
-    ],
-    "Flux": [
+    "Flux SCHNELL": [
       {
         "url": "https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors",
         "dest": "${BASE_DIR}/clip/Flux/clip_l.safetensors",
@@ -94,6 +34,32 @@
         "type": "unet",
         "src": "https://huggingface.co/Comfy-Org/flux1-schnell",
         "size": 17236328572
+      }
+    ],
+    "Flux DEV": [
+      {
+        "url": "https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors",
+        "dest": "${BASE_DIR}/clip/Flux/clip_l.safetensors",
+        "type": "clip",
+        "src": "https://civitai.com/models/497255",
+        "hash": "660c6f5b1abae9dc498ac2d21e1347d2abdb0cf6c0c0c8576cd796491d9a6cdd",
+        "size": 246144152
+      },
+      {
+        "url": "https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp8_e4m3fn.safetensors",
+        "dest": "${BASE_DIR}/clip/Flux/t5xxl_fp8_e4m3fn.safetensors",
+        "type": "clip",
+        "src": "https://civitai.com/models/497255",
+        "hash": "7d330da4816157540d6bb7838bf63a0f02f573fc48ca4d8de34bb0cbfd514f09",
+        "size": 4893934904
+      },
+      {
+        "url": "https://huggingface.co/black-forest-labs/FLUX.1-schnell/resolve/main/ae.safetensors",
+        "dest": "${BASE_DIR}/vae/Flux/ae.safetensors",
+        "type": "vae",
+        "src": "https://civitai.com/models/636193",
+        "hash": "afc8e28272cd15db3919bacdb6918ce9c1ed22e96cb12c4d5ed0fba823529e38",
+        "size": 335304388
       },
       {
         "url": "https://huggingface.co/black-forest-labs/FLUX.1-dev/resolve/main/flux1-dev.safetensors",
@@ -102,17 +68,6 @@
         "src": "https://civitai.com/models/618692",
         "hash": "4610115bb0c89560703c892c59ac2742fa821e60ef5871b33493ba544683abd7",
         "size": 23802932552
-      },
-      {
-        "url": "https://huggingface.co/black-forest-labs/FLUX.1-Fill-dev/resolve/main/flux1-fill-dev.safetensors",
-        "dest": "${BASE_DIR}/unet/Flux/flux1-fill-dev.safetensors",
-        "tags": [
-          "fill"
-        ],
-        "type": "unet",
-        "src": "https://civitai.com/models/970162",
-        "hash": "03e289f530df51d014f48e675a9ffa2141bc003259bf5f25d75b957e920a41ca",
-        "size": 23804922408
       },
       {
         "url": "https://huggingface.co/black-forest-labs/FLUX.1-Redux-dev/resolve/main/flux1-redux-dev.safetensors",
@@ -125,41 +80,70 @@
       {
         "url": "https://huggingface.co/Shakker-Labs/FLUX.1-dev-ControlNet-Union-Pro-2.0/resolve/main/diffusion_pytorch_model.safetensors",
         "dest": "${BASE_DIR}/controlnet/Flux/FLUX.1-dev-ControlNet-Union-Pro-2.0.safetensors",
+        "src": "https://huggingface.co/Shakker-Labs/FLUX.1-dev-ControlNet-Union-Pro-2.0",
         "type": "controlnet",
         "hash": "9d03f63f36206bab2f36aed5cfedc8693c2881397534e9d5f9ae9a0a41362517",
         "size": 4281779224
-      }
-    ],
-    "Flux NSFW": [
+      },
       {
         "url": "https://civitai.com/api/download/models/1225329",
         "src": "https://civitai.com/models/796670?modelVersionId=1225329",
         "dest": "${BASE_DIR}/unet/Flux/nsfwMASTERFLUXFp16LoraMerged_v12Hyper8stepFp16.safetensors",
-        "tags": [
-          "nsfw"
-        ],
+        "tags": ["nsfw"],
         "type": "unet",
         "size": 23802903104
+      }
+    ],
+    "Flux GGUF - Low VRAM": [
+      {
+        "url": "https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors",
+        "dest": "${BASE_DIR}/clip/Flux/clip_l.safetensors",
+        "type": "clip",
+        "src": "https://civitai.com/models/497255",
+        "hash": "660c6f5b1abae9dc498ac2d21e1347d2abdb0cf6c0c0c8576cd796491d9a6cdd",
+        "size": 246144152
       },
       {
-        "url": "https://civitai.com/api/download/models/1573489",
-        "dest": "${BASE_DIR}/loras/Flux/cloth_removal_double_reg05-4-2900.safetensors",
-        "src": "https://civitai.com/models/1392143",
-        "tags": [
-          "nsfw"
-        ],
-        "type": "loras",
-        "hash": "56c03963a4e24f8a62984dc60db6627174c12585b08fcbf70ecb58d781ec8339",
-        "size": 104667792
+        "url": "https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp8_e4m3fn.safetensors",
+        "dest": "${BASE_DIR}/clip/Flux/t5xxl_fp8_e4m3fn.safetensors",
+        "type": "clip",
+        "src": "https://civitai.com/models/497255",
+        "hash": "7d330da4816157540d6bb7838bf63a0f02f573fc48ca4d8de34bb0cbfd514f09",
+        "size": 4893934904
+      },
+      {
+        "url": "https://huggingface.co/black-forest-labs/FLUX.1-schnell/resolve/main/ae.safetensors",
+        "dest": "${BASE_DIR}/vae/Flux/ae.safetensors",
+        "type": "vae",
+        "src": "https://civitai.com/models/636193",
+        "hash": "afc8e28272cd15db3919bacdb6918ce9c1ed22e96cb12c4d5ed0fba823529e38",
+        "size": 335304388
+      },
+      {
+        "url": "https://civitai.com/api/download/models/1641174",
+        "dest": "${BASE_DIR}/unet/Flux/nsfwMASTERFLUXFp16LoraMerged_v12Q80Gguf.gguf",
+        "tags": ["nsfw"],
+        "type": "unet",
+        "src": "https://civitai.com/models/796670",
+        "hash": "129032f32224bf7138f16e18673d8008ba5f84c1ec74063bf4511a8bb4cf553d",
+        "size": 12708281504
+      }
+    ],
+    "Flux Fill": [
+      {
+        "url": "https://huggingface.co/black-forest-labs/FLUX.1-Fill-dev/resolve/main/flux1-fill-dev.safetensors",
+        "dest": "${BASE_DIR}/unet/Flux/flux1-fill-dev.safetensors",
+        "tags": ["fill"],
+        "type": "unet",
+        "src": "https://civitai.com/models/970162",
+        "hash": "03e289f530df51d014f48e675a9ffa2141bc003259bf5f25d75b957e920a41ca",
+        "size": 23804922408
       },
       {
         "url": "https://civitai.com/api/download/models/1095910",
         "src": "https://civitai.com/models/958009",
         "dest": "${BASE_DIR}/unet/Flux/redcraftCADSUpdatedMay4_f1FillNSFW.safetensors",
-        "tags": [
-          "fill",
-          "nsfw"
-        ],
+        "tags": ["fill", "nsfw"],
         "type": "unet",
         "hash": "bc4c6c64d38f476e47a2276dec5e65c32feabc9339cacf26928fab52bde01b10",
         "size": 11902501736
@@ -167,91 +151,151 @@
       {
         "url": "https://civitai.com/api/download/models/1095910",
         "dest": "${BASE_DIR}/unet/Flux/agfluxFillNSFWFp8_agfluxFillNSFWV17Fp8.safetensors",
-        "tags": [
-          "fill",
-          "nsfw"
-        ],
+        "tags": ["fill", "nsfw"],
         "type": "unet",
         "src": "https://civitai.com/models/978482",
         "hash": "e4164e1d31c630ae1b5d96e8f18d73c209b33dbea3c587309f4b4d2decba6b47",
         "size": 11902501736
       }
     ],
-    "WAN21": [
+    "Flux Fill GGUF - Low VRAM": [
       {
-        "url": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/diffusion_models/wan2.1_i2v_720p_14B_fp8_scaled.safetensors",
-        "dest": "${BASE_DIR}/diffusion_models/WAN21/wan2.1_i2v_720p_14B_fp8_scaled.safetensors",
-        "type": "diffusion_models",
-        "hash": "6d7a34b63b70eb608324e546d979167a5e787ac6bca3528e63f54a11572d66aa",
-        "size": 16401356938
-      },
-      {
-        "url": "https://civitai.com/api/download/models/1464208",
-        "dest": "${BASE_DIR}/diffusion_models/WAN21/wanAIWan21VideoModelSafetensors_kijaiWan21I2V14B720P.safetensors",
-        "type": "diffusion_models",
-        "src": "https://civitai.com/models/1295569",
-        "hash": "993d4cf51527a2fdc3b9079efa636cf6ccd8bca063cc695fcc64ed4b4e739305",
-        "size": 16993877896
-      },
-      {
-        "url": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors",
-        "dest": "${BASE_DIR}/vae/WAN21/wan_2.1_vae.safetensors",
-        "type": "vae",
-        "src": "https://civitai.com/models/1295569",
-        "hash": "2fc39d31359a4b0a64f55876d8ff7fa8d780956ae2cb13463b0223e15148976b",
-        "size": 253815318
-      },
-      {
-        "url": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors",
-        "dest": "${BASE_DIR}/text_encoders/WAN21/umt5_xxl_fp8_e4m3fn_scaled.safetensors",
-        "type": "text_encoders",
-        "src": "https://civitai.com/models/1295569",
-        "hash": "c3355d30191f1f066b26d93fba017ae9809dce6c627dda5f6a66eaa651204f68",
-        "size": 6735906897
-      },
-      {
-        "url": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/clip_vision/clip_vision_h.safetensors",
-        "dest": "${BASE_DIR}/clip_vision/WAN21/clip_vision_h.safetensors",
-        "type": "clip_vision",
-        "src": "https://civitai.com/models/1329096",
-        "hash": "64a7ef761bfccbadbaa3da77366aac4185a6c58fa5de5f589b42a65bcc21f161",
-        "size": 1264219396
-      },
-      {
-        "url": "https://civitai.com/api/download/models/1599906",
-        "dest": "${BASE_DIR}/loras/WAN21/Su_MCraft_Ep60.safetensors",
-        "src": "https://civitai.com/models/1403959",
-        "type": "loras",
-        "hash": "bde09ea6ed992bc1f0094ac4c9b20989e5078b6fc713a891b2aab31fb1154d51",
-        "size": 65635088
-      },
-      {
-        "url": "https://civitai.com/api/download/models/1694292",
-        "dest": "${BASE_DIR}/loras/WAN21/fingering_i2v_e248.safetensors",
-        "type": "loras",
-        "tags": [
-          "nsfw"
-        ],
-        "src": "https://civitai.com/models/1444759",
-        "hash": "62b08da970d427899ca322ccf20c82092aa7d92a41b67be13161a2b05f064f69",
-        "size": 359257680
-      },
-      {
-        "url": "https://civitai.com/api/download/models/1537915",
-        "dest": "${BASE_DIR}/loras/WAN21/BouncyWalkV01.safetensors",
-        "type": "loras",
-        "src": "https://civitai.com/models/1361346",
-        "hash": "988d31be7f25c48659b30621520d047b645b7dc9efd95c12081fa415f4fdb24f",
-        "size": 359259432
+        "url": "https://civitai.com/api/download/models/1250708",
+        "dest": "${BASE_DIR}/unet/Flux/fluxFillDevGguf_q5KM.gguf",
+        "tags": ["fill"],
+        "type": "unet",
+        "src": "https://civitai.com/models/1108146",
+        "size": 8432084256
       }
     ],
-    "HiDream GGUF": [
+    "Flux - Lora": [
       {
-        "url": "https://civitai.com/api/download/models/1665293",
-        "src": "https://civitai.com/models/1472075/hidream-i1-full-gguffp8f16-with-comfyui-workflow?modelVersionId=1665293",
-        "dest": "${BASE_DIR}/diffusion_models/HiDream/hidreamI1FULLGGUFFP8F16_q8.gguf",
-        "type": "diffusion_models",
-        "size": 18689407552
+        "url": "https://civitai.com/api/download/models/981081",
+        "dest": "${BASE_DIR}/loras/Flux/FLUX.1-Turbo-Alpha.safetensors",
+        "type": "loras",
+        "src": "https://civitai.com/models/876388/flux1-turbo-alpha",
+        "size": 694082424
+      },
+      {
+        "url": "https://civitai.com/api/download/models/804967",
+        "dest": "${BASE_DIR}/loras/Flux/Hand_v2.safetensors",
+        "type": "loras",
+        "src": "https://civitai.com/models/200255",
+        "hash": "82b169c9500da411fbccaa40538f34f44290a525b9a2710431e91229d281f96e",
+        "size": 343805439
+      },
+      {
+        "url": "https://huggingface.co/RiverZ/ICEdit-normal-lora/resolve/main/pytorch_lora_weights.safetensors",
+        "dest": "${BASE_DIR}/loras/Flux/ICEdit-normal-lora.safetensors",
+        "type": "loras",
+        "src": "https://huggingface.co/RiverZ/ICEdit-normal-lora",
+        "size": 231918592
+      },
+      {
+        "url": "https://huggingface.co/xiaozaa/catvton-flux-lora-alpha/resolve/main/pytorch_lora_weights.safetensors",
+        "dest": "${BASE_DIR}/loras/Flux/catvton-flux-lora-alpha.safetensors",
+        "type": "loras",
+        "src": "https://huggingface.co/xiaozaa/catvton-flux-lora-alpha",
+        "size": 717319984
+      },
+      {
+        "url": "https://huggingface.co/guozinan/PuLID/resolve/main/pulid_flux_v0.9.1.safetensors",
+        "dest": "${BASE_DIR}/pulid/pulid_flux_v0.9.1.safetensors",
+        "type": "pulid",
+        "src": "https://huggingface.co/guozinan/PuLID",
+        "size": 1142099520
+      },
+      {
+        "url": "https://civitai.com/api/download/models/1573489",
+        "dest": "${BASE_DIR}/loras/Flux/cloth_removal_double_reg05-4-2900.safetensors",
+        "src": "https://civitai.com/models/1392143",
+        "tags": ["nsfw"],
+        "type": "loras",
+        "hash": "56c03963a4e24f8a62984dc60db6627174c12585b08fcbf70ecb58d781ec8339",
+        "size": 104667792
+      }
+    ],
+    "Infinite You": [
+      {
+        "url": "https://huggingface.co/ByteDance/InfiniteYou/resolve/main/infu_flux_v1.0/sim_stage1/image_proj_model.bin",
+        "dest": "${BASE_DIR}/infinite_you/sim_stage1/image_proj_model.bin",
+        "type": "infinite_you",
+        "src": "https://huggingface.co/ByteDance/InfiniteYou/",
+        "size": 338413026
+      },
+      {
+        "url": "https://huggingface.co/ByteDance/InfiniteYou/resolve/main/infu_flux_v1.0/sim_stage1/infusenet_sim_fp8e4m3fn.safetensors",
+        "dest": "${BASE_DIR}/infinite_you/sim_stage1/infusenet_sim_fp8e4m3fn.safetensors",
+        "type": "infinite_you",
+        "src": "https://huggingface.co/ByteDance/InfiniteYou/",
+        "size": 2952691776
+      },
+      {
+        "url": "https://huggingface.co/ByteDance/InfiniteYou/resolve/main/infu_flux_v1.0/aes_stage2/image_proj_model.bin",
+        "dest": "${BASE_DIR}/infinite_you/aes_stage2/image_proj_model.bin",
+        "type": "infinite_you",
+        "src": "https://huggingface.co/ByteDance/InfiniteYou/",
+        "size": 338413026
+      },
+      {
+        "url": "https://huggingface.co/ByteDance/InfiniteYou/resolve/main/infu_flux_v1.0/aes_stage2/infusenet_aes_fp8e4m3fn.safetensors",
+        "dest": "${BASE_DIR}/infinite_you/aes_stage2/infusenet_aes_fp8e4m3fn.safetensors",
+        "type": "infinite_you",
+        "src": "https://huggingface.co/ByteDance/InfiniteYou/",
+        "size": 2952691776
+      }
+    ],
+    "Upscale": [
+      {
+        "url": "https://huggingface.co/tomjackson2023/upscale_models/resolve/main/4x-UltraSharp.pth",
+        "dest": "${BASE_DIR}/upscale_models/4x-UltraSharp.pth",
+        "type": "upscale_models",
+        "src": "https://huggingface.co/tomjackson2023/upscale_models",
+        "size": 66961958
+      },
+      {
+        "url": "https://huggingface.co/tomjackson2023/upscale_models/resolve/main/8x_RealESRGAN.pth",
+        "dest": "${BASE_DIR}/upscale_models/8x_RealESRGAN.pth",
+        "type": "upscale_models",
+        "src": "https://huggingface.co/tomjackson2023/upscale_models",
+        "size": 67189359
+      }
+    ],
+    "Upscaling with SDXL & ControlNet": [
+      {
+        "url": "https://civitai.com/api/download/models/1759168",
+        "dest": "${BASE_DIR}/checkpoints/SDXL/juggernautXL_ragnarokBy.safetensors",
+        "type": "checkpoints",
+        "src": "https://civitai.com/models/133005",
+        "size": 7105350162
+      },
+      {
+        "url": "https://huggingface.co/xinsir/controlnet-tile-sdxl-1.0/resolve/main/diffusion_pytorch_model.safetensors",
+        "dest": "${BASE_DIR}/controlnet/SDXL/controlnet-tile-sdxl-1.0.safetensors",
+        "src": "https://huggingface.co/xinsir/controlnet-tile-sdxl-1.0",
+        "type": "controlnet",
+        "size": 2502139104
+      },
+      {
+        "url": "https://huggingface.co/stabilityai/sdxl-vae",
+        "dest": "${BASE_DIR}/vae/SDXL/sdxl_vae.safetensors",
+        "src": "https://huggingface.co/stabilityai/sdxl-vae/resolve/main/sdxl_vae.safetensors",
+        "type": "vae",
+        "size": 334641164
+      },
+      {
+        "url": "https://huggingface.co/zer0int/CLIP-GmP-ViT-L-14/resolve/main/ViT-L-14-BEST-smooth-GmP-ft.safetensors",
+        "dest": "${BASE_DIR}/clip/SDXL/ViT-L-14-BEST-smooth-GmP-ft.safetensors",
+        "src": "https://huggingface.co/zer0int/CLIP-GmP-ViT-L-14",
+        "type": "clip",
+        "size": 932103308
+      },
+      {
+        "url": "https://huggingface.co/openai/clip-vit-large-patch14/resolve/main/model.safetensors",
+        "dest": "${BASE_DIR}/clip/SDXL/clip-vit-large-patch14.safetensors",
+        "src": "https://huggingface.co/openai/clip-vit-large-patch14",
+        "type": "clip",
+        "size": 1710540580
       }
     ],
     "HiDream": [
@@ -310,6 +354,24 @@
         "src": "https://civitai.com/models/636193",
         "hash": "afc8e28272cd15db3919bacdb6918ce9c1ed22e96cb12c4d5ed0fba823529e38",
         "size": 335304388
+      },
+      {
+        "url": "https://civitai.com/api/download/models/1701111",
+        "dest": "${BASE_DIR}/diffusion_models/HiDream/hidream_i1_full_uncensored_fp8_v0.2.safetensors",
+        "type": "diffusion_models",
+        "tags": ["nsfw"],
+        "src": "https://civitai.com/models/1498292",
+        "hash": "7ccb46e6807dd559d435b5d305b89a933aa9dcaa1b5f997aa0c9ee4fce20ee7c",
+        "size": 17106015384
+      }
+    ],
+    "HiDream GGUF - Low VRAM": [
+      {
+        "url": "https://civitai.com/api/download/models/1665293",
+        "src": "https://civitai.com/models/1472075/hidream-i1-full-gguffp8f16-with-comfyui-workflow?modelVersionId=1665293",
+        "dest": "${BASE_DIR}/diffusion_models/HiDream/hidreamI1FULLGGUFFP8F16_q8.gguf",
+        "type": "diffusion_models",
+        "size": 18689407552
       }
     ],
     "HiDream E1": [
@@ -328,7 +390,7 @@
         "size": 34211675392
       }
     ],
-    "HiDream E1 GGUF": [
+    "HiDream E1 GGUF - Low VRAM": [
       {
         "url": "https://huggingface.co/ND911/HiDream_e1_full_bf16-ggufs/resolve/main/hidream_e1_full_bf16-Q4_K_M.gguf",
         "dest": "${BASE_DIR}/diffusion_models/HiDream/hidream_e1_full_bf16-Q4_K_M.gguf",
@@ -344,17 +406,62 @@
         "size": 18694358720
       }
     ],
-    "HiDream NSFW": [
+    "WAN21": [
       {
-        "url": "https://civitai.com/api/download/models/1701111",
-        "dest": "${BASE_DIR}/diffusion_models/HiDream/hidream_i1_full_uncensored_fp8_v0.2.safetensors",
+        "url": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/diffusion_models/wan2.1_i2v_720p_14B_fp8_scaled.safetensors",
+        "src": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged",
+        "dest": "${BASE_DIR}/diffusion_models/WAN21/wan2.1_i2v_720p_14B_fp8_scaled.safetensors",
         "type": "diffusion_models",
-        "tags": [
-          "nsfw"
-        ],
-        "src": "https://civitai.com/models/1498292",
-        "hash": "7ccb46e6807dd559d435b5d305b89a933aa9dcaa1b5f997aa0c9ee4fce20ee7c",
-        "size": 17106015384
+        "hash": "6d7a34b63b70eb608324e546d979167a5e787ac6bca3528e63f54a11572d66aa",
+        "size": 16401356938
+      },
+      {
+        "url": "https://civitai.com/api/download/models/1464208",
+        "dest": "${BASE_DIR}/diffusion_models/WAN21/wanAIWan21VideoModelSafetensors_kijaiWan21I2V14B720P.safetensors",
+        "type": "diffusion_models",
+        "src": "https://civitai.com/models/1295569",
+        "hash": "993d4cf51527a2fdc3b9079efa636cf6ccd8bca063cc695fcc64ed4b4e739305",
+        "size": 16993877896
+      },
+      {
+        "url": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors",
+        "dest": "${BASE_DIR}/vae/WAN21/wan_2.1_vae.safetensors",
+        "type": "vae",
+        "src": "https://civitai.com/models/1295569",
+        "hash": "2fc39d31359a4b0a64f55876d8ff7fa8d780956ae2cb13463b0223e15148976b",
+        "size": 253815318
+      },
+      {
+        "url": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+        "dest": "${BASE_DIR}/text_encoders/WAN21/umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+        "type": "text_encoders",
+        "src": "https://civitai.com/models/1295569",
+        "hash": "c3355d30191f1f066b26d93fba017ae9809dce6c627dda5f6a66eaa651204f68",
+        "size": 6735906897
+      },
+      {
+        "url": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/clip_vision/clip_vision_h.safetensors",
+        "dest": "${BASE_DIR}/clip_vision/WAN21/clip_vision_h.safetensors",
+        "type": "clip_vision",
+        "src": "https://civitai.com/models/1329096",
+        "hash": "64a7ef761bfccbadbaa3da77366aac4185a6c58fa5de5f589b42a65bcc21f161",
+        "size": 1264219396
+      },
+      {
+        "url": "https://civitai.com/api/download/models/1599906",
+        "dest": "${BASE_DIR}/loras/WAN21/Su_MCraft_Ep60.safetensors",
+        "src": "https://civitai.com/models/1403959?modelVersionId=1599906",
+        "type": "loras",
+        "hash": "bde09ea6ed992bc1f0094ac4c9b20989e5078b6fc713a891b2aab31fb1154d51",
+        "size": 65635088
+      },
+      {
+        "url": "https://civitai.com/api/download/models/1537915",
+        "dest": "${BASE_DIR}/loras/WAN21/BouncyWalkV01.safetensors",
+        "type": "loras",
+        "src": "https://civitai.com/models/1361346",
+        "hash": "988d31be7f25c48659b30621520d047b645b7dc9efd95c12081fa415f4fdb24f",
+        "size": 359259432
       }
     ]
   }
