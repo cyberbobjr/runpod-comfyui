@@ -20,12 +20,19 @@ JWT_EXP_MINUTES = 60
 security = HTTPBearer()
 api_router = APIRouter(prefix="/api")
 
+def get_users_file_path():
+    """Retourne le chemin complet du fichier users.json selon COMFYUI_MODEL_DIR ou le répertoire courant."""
+    base_dir = os.environ.get("COMFYUI_MODEL_DIR", ".")
+    return os.path.join(base_dir, USERS_JSON)
+
 def load_users():
-    if not os.path.exists(USERS_JSON):
+    users_path = get_users_file_path()
+    if not os.path.exists(users_path):
         # Création d'un utilisateur par défaut si le fichier n'existe pas
-        with open(USERS_JSON, "w", encoding="utf-8") as f:
+        os.makedirs(os.path.dirname(users_path), exist_ok=True)
+        with open(users_path, "w", encoding="utf-8") as f:
             json.dump({"admin": "admin"}, f)
-    with open(USERS_JSON, "r", encoding="utf-8") as f:
+    with open(users_path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 def verify_user(username, password):
@@ -86,7 +93,8 @@ def change_user(req: ChangeUserRequest, user=Depends(protected)):
     # Met à jour le fichier users.json
     del users[req.old_username]
     users[req.new_username] = req.new_password
-    with open(USERS_JSON, "w", encoding="utf-8") as f:
+    users_path = get_users_file_path()
+    with open(users_path, "w", encoding="utf-8") as f:
         json.dump(users, f)
     return {"ok": True}
 
