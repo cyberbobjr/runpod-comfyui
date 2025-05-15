@@ -1,6 +1,6 @@
 {
   "config": {
-    "BASE_DIR": "D:/models"
+    "BASE_DIR": "/mnt/d/models"
   },
   "groups": {
     "Flux SCHNELL": [
@@ -73,14 +73,19 @@
         "url": "https://huggingface.co/XLabs-AI/flux-dev-fp8/resolve/main/flux-dev-fp8.safetensors",
         "dest": "${BASE_DIR}/unet/Flux/flux-dev-fp8.safetensors",
         "type": "unet",
-        "tags": ["fp8"],
-        "src": "https://huggingface.co/XLabs-AI/flux-dev-fp8"
+        "tags": [
+          "fp8"
+        ],
+        "src": "https://huggingface.co/XLabs-AI/flux-dev-fp8",
+        "size": 11910808904
       },
       {
         "url": "https://huggingface.co/black-forest-labs/FLUX.1-Redux-dev/resolve/main/flux1-redux-dev.safetensors",
         "dest": "${BASE_DIR}/unet/Flux/flux1-redux-dev.safetensors",
         "type": "unet",
-        "tags": ["redux"],
+        "tags": [
+          "redux"
+        ],
         "src": "https://civitai.com/models/969352",
         "hash": "a1b3bdcb4bdc58ce04874b9ca776d61fc3e914bb6beab41efb63e4e2694dca45",
         "size": 129063232
@@ -89,7 +94,9 @@
         "url": "https://huggingface.co/Shakker-Labs/FLUX.1-dev-ControlNet-Union-Pro-2.0/resolve/main/diffusion_pytorch_model.safetensors",
         "dest": "${BASE_DIR}/controlnet/Flux/FLUX.1-dev-ControlNet-Union-Pro-2.0.safetensors",
         "src": "https://huggingface.co/Shakker-Labs/FLUX.1-dev-ControlNet-Union-Pro-2.0",
-        "tags": ["controlnet"],
+        "tags": [
+          "controlnet"
+        ],
         "type": "controlnet",
         "hash": "9d03f63f36206bab2f36aed5cfedc8693c2881397534e9d5f9ae9a0a41362517",
         "size": 4281779224
@@ -98,7 +105,9 @@
         "url": "https://civitai.com/api/download/models/1225329",
         "src": "https://civitai.com/models/796670?modelVersionId=1225329",
         "dest": "${BASE_DIR}/unet/Flux/nsfwMASTERFLUXFp16LoraMerged_v12Hyper8stepFp16.safetensors",
-        "tags": ["nsfw"],
+        "tags": [
+          "nsfw"
+        ],
         "type": "unet",
         "size": 23802903104
       }
@@ -137,7 +146,9 @@
       {
         "url": "https://civitai.com/api/download/models/1641174",
         "dest": "${BASE_DIR}/unet/Flux/nsfwMASTERFLUXFp16LoraMerged_v12Q80Gguf.gguf",
-        "tags": ["nsfw"],
+        "tags": [
+          "nsfw"
+        ],
         "type": "unet",
         "src": "https://civitai.com/models/796670",
         "hash": "129032f32224bf7138f16e18673d8008ba5f84c1ec74063bf4511a8bb4cf553d",
@@ -157,14 +168,18 @@
         "url": "https://civitai.com/api/download/models/1085456",
         "src": "https://civitai.com/models/969431/flux-fill-fp8",
         "dest": "${BASE_DIR}/unet/Flux/fluxFillFP8_v10.safetensors",
-        "tags": ["fp8"],
+        "tags": [
+          "fp8"
+        ],
         "type": "unet"
       },
       {
         "url": "https://civitai.com/api/download/models/1095910",
         "src": "https://civitai.com/models/958009",
         "dest": "${BASE_DIR}/unet/Flux/redcraftCADSUpdatedMay4_f1FillNSFW.safetensors",
-        "tags": ["nsfw"],
+        "tags": [
+          "nsfw"
+        ],
         "type": "unet",
         "hash": "bc4c6c64d38f476e47a2276dec5e65c32feabc9339cacf26928fab52bde01b10",
         "size": 11902501736
@@ -172,7 +187,9 @@
       {
         "url": "https://civitai.com/api/download/models/1095910",
         "dest": "${BASE_DIR}/unet/Flux/agfluxFillNSFWFp8_agfluxFillNSFWV17Fp8.safetensors",
-        "tags": ["nsfw"],
+        "tags": [
+          "nsfw"
+        ],
         "type": "unet",
         "src": "https://civitai.com/models/978482",
         "hash": "e4164e1d31c630ae1b5d96e8f18d73c209b33dbea3c587309f4b4d2decba6b47",
@@ -208,6 +225,9 @@
         "url": "https://huggingface.co/RiverZ/ICEdit-normal-lora/resolve/main/pytorch_lora_weights.safetensors",
         "dest": "${BASE_DIR}/loras/Flux/ICEdit-normal-lora.safetensors",
         "type": "loras",
+        "tags": [
+          "icedit"
+        ],
         "src": "https://huggingface.co/RiverZ/ICEdit-normal-lora",
         "size": 231918592
       },
@@ -229,7 +249,9 @@
         "url": "https://civitai.com/api/download/models/1573489",
         "dest": "${BASE_DIR}/loras/Flux/cloth_removal_double_reg05-4-2900.safetensors",
         "src": "https://civitai.com/models/1392143",
-        "tags": ["nsfw"],
+        "tags": [
+          "nsfw"
+        ],
         "type": "loras",
         "hash": "56c03963a4e24f8a62984dc60db6627174c12585b08fcbf70ecb58d781ec8339",
         "size": 104667792
@@ -315,7 +337,7 @@
         "dest": "${BASE_DIR}/vae/SDXL/sdxl_vae.safetensors",
         "src": "https://huggingface.co/stabilityai/sdxl-vae/resolve/main/sdxl_vae.safetensors",
         "type": "vae",
-        "size": 334641164
+        "size": 19083
       },
       {
         "url": "https://huggingface.co/zer0int/CLIP-GmP-ViT-L-14/resolve/main/ViT-L-14-BEST-smooth-GmP-ft.safetensors",
@@ -393,7 +415,9 @@
         "url": "https://civitai.com/api/download/models/1701111",
         "dest": "${BASE_DIR}/diffusion_models/HiDream/hidream_i1_full_uncensored_fp8_v0.2.safetensors",
         "type": "diffusion_models",
-        "tags": ["nsfw"],
+        "tags": [
+          "nsfw"
+        ],
         "src": "https://civitai.com/models/1498292",
         "hash": "7ccb46e6807dd559d435b5d305b89a933aa9dcaa1b5f997aa0c9ee4fce20ee7c",
         "size": 17106015384
