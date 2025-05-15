@@ -215,6 +215,11 @@ def get_tokens(user=Depends(protected)):
     hf_token, civitai_token = read_env_file()
     return {"hf_token": hf_token, "civitai_token": civitai_token}
 
+def get_env_file_path():
+    """Retourne le chemin complet du fichier .env selon COMFYUI_MODEL_DIR ou le répertoire courant."""
+    base_dir = os.environ.get("COMFYUI_MODEL_DIR", ".")
+    return os.path.join(base_dir, ENV_FILE)
+
 def write_env_file(hf_token: Optional[str], civitai_token: Optional[str]):
     """Écrit les jetons dans le fichier .env."""
     lines = []
@@ -222,15 +227,18 @@ def write_env_file(hf_token: Optional[str], civitai_token: Optional[str]):
         lines.append(f"HF_TOKEN={hf_token}")
     if civitai_token is not None:
         lines.append(f"CIVITAI_TOKEN={civitai_token}")
-    with open(ENV_FILE, "w", encoding="utf-8") as f:
+    env_path = get_env_file_path()
+    os.makedirs(os.path.dirname(env_path), exist_ok=True)
+    with open(env_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
 
 def read_env_file():
     """Lit les jetons depuis le fichier .env."""
     hf_token = None
     civitai_token = None
-    if os.path.exists(ENV_FILE):
-        with open(ENV_FILE, "r", encoding="utf-8") as f:
+    env_path = get_env_file_path()
+    if os.path.exists(env_path):
+        with open(env_path, "r", encoding="utf-8") as f:
             for line in f:
                 if line.startswith("HF_TOKEN="):
                     hf_token = line.strip().split("=", 1)[1]
