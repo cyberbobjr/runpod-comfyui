@@ -211,7 +211,7 @@ const login_error = ref('')
 function apiUrl(path) {
   // Prefix all API routes with /api
   const { protocol, hostname } = window.location
-  return `${protocol}//${hostname}:8000/api${path}`
+  return `${protocol}//${hostname}:8081/api${path}`
 }
 
 function apiFetch(url, opts={}) {

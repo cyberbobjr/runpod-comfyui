@@ -1,7 +1,8 @@
 #!/bin/bash
 # Pour lancer en tâche de fond (background) et écrire les logs dans un fichier :
 # Limite la taille du fichier de log à 10 Mo, conserve 3 archives (logrotate simple via logrotate si dispo)
-LOGFILE="/var/log/comfyui-server.log"
+LOGFILE="comfyui-server.log"
+# LOGFILE="/var/log/comfyui-server.log"
 MAXSIZE=10485760 # 10 Mo
 
 if [ -f "$LOGFILE" ] && [ $(stat -c%s "$LOGFILE") -ge $MAXSIZE ]; then

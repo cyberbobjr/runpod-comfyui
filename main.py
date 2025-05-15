@@ -3,7 +3,8 @@ from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from api import api_router, decode_jwt  # <-- Import du router API et decode_jwt
+from starlette.responses import Response
+from api import api_router, decode_jwt
 
 app = FastAPI()
 
@@ -16,13 +17,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/static", StaticFiles(directory="frontend/dist/assets"), name="static")
-
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
     if request.method == "OPTIONS":
         return await call_next(request)
-    if request.url.path.startswith("/static") or request.url.path == "/" or not request.url.path.startswith("/api"):
+    if request.url.path == "/" or not request.url.path.startswith("/api"):
         return await call_next(request)
     if request.url.path.startswith("/api"):
         if request.url.path == "/api/login":
@@ -58,13 +57,13 @@ async def auth_middleware(request: Request, call_next):
 app.include_router(api_router)
 
 @app.get("/")
-def serve_vue():
+async def serve_index():
+    print("Serve index.html")
     return FileResponse(os.path.join("frontend", "dist", "index.html"))
 
-@app.get("/{full_path:path}")
-def serve_vue_spa(full_path: str):
-    # Ne servir index.html que pour les routes qui ne commencent PAS par /api ou /static
-    if full_path.startswith("api") or full_path.startswith("static"):
-        return JSONResponse(status_code=404, content={"detail": "Not Found"})
-    return FileResponse(os.path.join("frontend", "dist", "index.html"))
+app.mount("/", StaticFiles(directory="frontend/dist"), name="static")
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="127.0.0.1", port=8081, reload=True)
 
