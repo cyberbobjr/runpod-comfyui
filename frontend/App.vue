@@ -139,6 +139,15 @@
                             <span v-else>
                               {{ model.entry.dest ? model.entry.dest.split('/').pop() : model.entry.git }}
                             </span>
+                            <!-- Affichage des tags sous forme de badges -->
+                            <span v-if="model.entry.tags && model.entry.tags.length" class="ms-2">
+                              <span
+                                v-for="tag in (Array.isArray(model.entry.tags) ? model.entry.tags : [model.entry.tags])"
+                                :key="tag"
+                                class="badge bg-secondary me-1"
+                                style="font-size: 0.8em;"
+                              >{{ tag }}</span>
+                            </span>
                           </td>
                           <td>{{ model.entry.type || groupName }}</td>
                           <td>
