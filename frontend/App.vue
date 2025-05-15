@@ -76,6 +76,42 @@
             </div>
           </div>
         </div>
+        <!-- Nouvel accordéon pour les téléchargements en cours -->
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="heading-downloads">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-downloads" aria-expanded="false" aria-controls="collapse-downloads">
+              Active downloads
+            </button>
+          </h2>
+          <div id="collapse-downloads" class="accordion-collapse collapse" aria-labelledby="heading-downloads" data-bs-parent="#settingsAccordion">
+            <div class="accordion-body">
+              <div v-if="activeDownloads.length === 0" class="text-muted">No active downloads.</div>
+              <div v-else>
+                <ul class="list-group">
+                  <li v-for="model in activeDownloads" :key="modelKey(model)" class="list-group-item d-flex align-items-center justify-content-between">
+                    <div>
+                      <strong>{{ model.entry.dest ? model.entry.dest.split('/').pop() : model.entry.git }}</strong>
+                      <span v-if="model.entry.tags && model.entry.tags.length" class="ms-2">
+                        <span
+                          v-for="tag in (Array.isArray(model.entry.tags) ? model.entry.tags : [model.entry.tags])"
+                          :key="tag"
+                          class="badge bg-secondary me-1"
+                          style="font-size: 0.8em;"
+                        >{{ tag }}</span>
+                      </span>
+                    </div>
+                    <div style="min-width:180px;">
+                      <span>{{ model.progress }}%</span>
+                      <div class="progress" style="height: 8px;">
+                        <div class="progress-bar" :style="{width: model.progress + '%'}"></div>
+                      </div>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="card shadow-sm">
         <div class="card-body">
@@ -207,7 +243,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 
 const models = ref([])
 const hf_token = ref('')
@@ -486,8 +522,47 @@ async function changeUser() {
   }
 }
 
+const activeDownloads = computed(() =>
+  models.value.filter(m => m.status === 'downloading')
+)
+
+let downloadsInterval = null
+
+function startDownloadsPolling() {
+  if (downloadsInterval) return
+  downloadsInterval = setInterval(async () => {
+    // Si plus de downloads actifs, on arrête le polling
+    if (activeDownloads.value.length === 0) {
+      stopDownloadsPolling()
+      return
+    }
+    await fetchModels()
+  }, 5000)
+}
+
+function stopDownloadsPolling() {
+  if (downloadsInterval) {
+    clearInterval(downloadsInterval)
+    downloadsInterval = null
+  }
+}
+
+// Surveille les changements dans activeDownloads pour démarrer/arrêter le polling
+watch(
+  activeDownloads,
+  (newVal) => {
+    if (newVal.length > 0) {
+      startDownloadsPolling()
+    } else {
+      stopDownloadsPolling()
+    }
+  },
+  { immediate: true }
+)
+
 onMounted(() => {
   fetchModels()
   fetchTokens()
+  // Le watch ci-dessus s'occupe de démarrer le polling si besoin
 })
 </script>
