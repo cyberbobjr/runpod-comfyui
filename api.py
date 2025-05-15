@@ -20,6 +20,8 @@ JWT_EXP_MINUTES = 60
 security = HTTPBearer()
 api_router = APIRouter(prefix="/api")
 
+DOWNLOAD_EVENTS = {}  # model_id -> threading.Event
+
 def get_users_file_path():
     """Retourne le chemin complet du fichier users.json selon COMFYUI_MODEL_DIR ou le répertoire courant."""
     base_dir = os.environ.get("COMFYUI_MODEL_DIR", ".")
@@ -126,7 +128,7 @@ def list_models(user=Depends(protected)):
 
 @api_router.post("/download")
 def download_model(entry: dict, background_tasks: BackgroundTasks, user=Depends(protected)):
-    """Lance le téléchargement d'un modèle (url ou git)."""
+    """Lance le téléchargement d'un modèle (url ou git), fusionne les requêtes identiques."""
     model_id = get_model_id(entry)
     url = entry.get("url", "")
     hf_token, civitai_token = read_env_file()
@@ -134,13 +136,29 @@ def download_model(entry: dict, background_tasks: BackgroundTasks, user=Depends(
         raise HTTPException(status_code=400, detail="Le token HuggingFace est requis pour ce téléchargement.")
     if "civitai.com" in url and not civitai_token:
         raise HTTPException(status_code=400, detail="Le token CivitAI est requis pour ce téléchargement.")
-    if model_id in PROGRESS and PROGRESS[model_id].get("status") == "downloading":
-        raise HTTPException(status_code=409, detail="Déjà en cours de téléchargement")
-    PROGRESS[model_id] = {"progress": 0, "status": "downloading"}
-    background_tasks.add_task(download_worker, entry, model_id)
-    return {"ok": True}
 
-def download_worker(entry, model_id):
+    # Synchronisation des téléchargements concurrents pour le même modèle
+    event = DOWNLOAD_EVENTS.get(model_id)
+    if event:
+        # Un téléchargement est déjà en cours, attendre la fin
+        event.wait()
+        progress = PROGRESS.get(model_id, {})
+        if progress.get("status") == "done":
+            return {"ok": True}
+        elif progress.get("status") == "error":
+            raise HTTPException(status_code=500, detail=progress.get("error", "Erreur lors du téléchargement"))
+        else:
+            # Statut inattendu, relancer le téléchargement
+            pass
+    else:
+        # Pas de téléchargement en cours, on crée un nouvel event
+        event = threading.Event()
+        DOWNLOAD_EVENTS[model_id] = event
+        PROGRESS[model_id] = {"progress": 0, "status": "downloading"}
+        background_tasks.add_task(download_worker, entry, model_id, event)
+        return {"ok": True}
+
+def download_worker(entry, model_id, event):
     try:
         hf_token, civitai_token = read_env_file()
         if "git" in entry:
@@ -152,6 +170,11 @@ def download_worker(entry, model_id):
     except Exception as e:
         PROGRESS[model_id]["status"] = "error"
         PROGRESS[model_id]["error"] = str(e)
+    finally:
+        # Signale à tous les threads en attente que le téléchargement est terminé
+        event.set()
+        # Nettoyage de l'event pour éviter les fuites mémoire
+        DOWNLOAD_EVENTS.pop(model_id, None)
 
 def download_git_entry(entry, model_id):
     import subprocess
