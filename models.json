@@ -80,6 +80,7 @@
         "url": "https://huggingface.co/black-forest-labs/FLUX.1-Redux-dev/resolve/main/flux1-redux-dev.safetensors",
         "dest": "${BASE_DIR}/unet/Flux/flux1-redux-dev.safetensors",
         "type": "unet",
+        "tags": ["redux"],
         "src": "https://civitai.com/models/969352",
         "hash": "a1b3bdcb4bdc58ce04874b9ca776d61fc3e914bb6beab41efb63e4e2694dca45",
         "size": 129063232
@@ -88,6 +89,7 @@
         "url": "https://huggingface.co/Shakker-Labs/FLUX.1-dev-ControlNet-Union-Pro-2.0/resolve/main/diffusion_pytorch_model.safetensors",
         "dest": "${BASE_DIR}/controlnet/Flux/FLUX.1-dev-ControlNet-Union-Pro-2.0.safetensors",
         "src": "https://huggingface.co/Shakker-Labs/FLUX.1-dev-ControlNet-Union-Pro-2.0",
+        "tags": ["controlnet"],
         "type": "controlnet",
         "hash": "9d03f63f36206bab2f36aed5cfedc8693c2881397534e9d5f9ae9a0a41362517",
         "size": 4281779224
@@ -146,7 +148,6 @@
       {
         "url": "https://huggingface.co/black-forest-labs/FLUX.1-Fill-dev/resolve/main/flux1-fill-dev.safetensors",
         "dest": "${BASE_DIR}/unet/Flux/flux1-fill-dev.safetensors",
-        "tags": ["fill"],
         "type": "unet",
         "src": "https://civitai.com/models/970162",
         "hash": "03e289f530df51d014f48e675a9ffa2141bc003259bf5f25d75b957e920a41ca",
@@ -156,14 +157,14 @@
         "url": "https://civitai.com/api/download/models/1085456",
         "src": "https://civitai.com/models/969431/flux-fill-fp8",
         "dest": "${BASE_DIR}/unet/Flux/fluxFillFP8_v10.safetensors",
-        "tags": ["fill", "fp8"],
+        "tags": ["fp8"],
         "type": "unet"
       },
       {
         "url": "https://civitai.com/api/download/models/1095910",
         "src": "https://civitai.com/models/958009",
         "dest": "${BASE_DIR}/unet/Flux/redcraftCADSUpdatedMay4_f1FillNSFW.safetensors",
-        "tags": ["fill", "nsfw"],
+        "tags": ["nsfw"],
         "type": "unet",
         "hash": "bc4c6c64d38f476e47a2276dec5e65c32feabc9339cacf26928fab52bde01b10",
         "size": 11902501736
@@ -171,7 +172,7 @@
       {
         "url": "https://civitai.com/api/download/models/1095910",
         "dest": "${BASE_DIR}/unet/Flux/agfluxFillNSFWFp8_agfluxFillNSFWV17Fp8.safetensors",
-        "tags": ["fill", "nsfw"],
+        "tags": ["nsfw"],
         "type": "unet",
         "src": "https://civitai.com/models/978482",
         "hash": "e4164e1d31c630ae1b5d96e8f18d73c209b33dbea3c587309f4b4d2decba6b47",
@@ -182,7 +183,6 @@
       {
         "url": "https://civitai.com/api/download/models/1250708",
         "dest": "${BASE_DIR}/unet/Flux/fluxFillDevGguf_q5KM.gguf",
-        "tags": ["fill"],
         "type": "unet",
         "src": "https://civitai.com/models/1108146",
         "size": 8432084256
@@ -282,6 +282,20 @@
       }
     ],
     "Upscaling with SDXL & ControlNet": [
+      {
+        "url": "https://huggingface.co/tomjackson2023/upscale_models/resolve/main/4x-UltraSharp.pth",
+        "dest": "${BASE_DIR}/upscale_models/4x-UltraSharp.pth",
+        "type": "upscale_models",
+        "src": "https://huggingface.co/tomjackson2023/upscale_models",
+        "size": 66961958
+      },
+      {
+        "url": "https://huggingface.co/tomjackson2023/upscale_models/resolve/main/8x_RealESRGAN.pth",
+        "dest": "${BASE_DIR}/upscale_models/8x_RealESRGAN.pth",
+        "type": "upscale_models",
+        "src": "https://huggingface.co/tomjackson2023/upscale_models",
+        "size": 67189359
+      },
       {
         "url": "https://civitai.com/api/download/models/1759168",
         "dest": "${BASE_DIR}/checkpoints/SDXL/juggernautXL_ragnarokBy.safetensors",
