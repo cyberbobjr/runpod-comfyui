@@ -100,15 +100,23 @@ def change_user(req: ChangeUserRequest, user=Depends(protected)):
         json.dump(users, f)
     return {"ok": True}
 
+def get_models_base_dir():
+    """Retourne le dossier racine des modèles selon la règle COMFYUI_MODEL_DIR/models ou config.BASE_DIR."""
+    if os.environ.get("COMFYUI_MODEL_DIR"):
+        return os.path.join(os.environ["COMFYUI_MODEL_DIR"], "models")
+    else:
+        return load_base_dir()
+
 @api_router.get("/models")
 def list_models(user=Depends(protected)):
     """Liste tous les modèles du JSON et leur état sur le disque."""
     groups = load_models()
-    base_dir = os.environ.get("COMFYUI_MODEL_DIR") or load_base_dir()
+    base_dir = get_models_base_dir()
     result = []
     for group, entries in groups.items():
         for entry in entries:
             dest = entry.get("dest")
+            # Remplace ${BASE_DIR} par le chemin déterminé ci-dessus
             path = dest.replace("${BASE_DIR}", base_dir) if dest else None
             exists = os.path.exists(path) if path else False
             model_id = get_model_id(entry)
@@ -178,7 +186,7 @@ def download_worker(entry, model_id, event):
 
 def download_git_entry(entry, model_id):
     import subprocess
-    base_dir = os.environ.get("COMFYUI_MODEL_DIR") or load_base_dir()
+    base_dir = get_models_base_dir()
     dest_dir = entry["dest"].replace("${BASE_DIR}", base_dir)
     if os.path.exists(dest_dir):
         PROGRESS[model_id]["progress"] = 100
@@ -190,7 +198,7 @@ def download_git_entry(entry, model_id):
 
 def download_url_entry(entry, model_id, hf_token=None, civitai_token=None):
     import requests
-    base_dir = os.environ.get("COMFYUI_MODEL_DIR") or load_base_dir()
+    base_dir = get_models_base_dir()
     url = entry["url"]
     dest = entry["dest"].replace("${BASE_DIR}", base_dir)
     os.makedirs(os.path.dirname(dest), exist_ok=True)
@@ -218,7 +226,7 @@ def download_url_entry(entry, model_id, hf_token=None, civitai_token=None):
 @api_router.post("/delete")
 def delete_model(entry: dict, user=Depends(protected)):
     """Supprime un modèle du disque."""
-    base_dir = os.environ.get("COMFYUI_MODEL_DIR") or load_base_dir()
+    base_dir = get_models_base_dir()
     dest = entry.get("dest")
     if not dest:
         raise HTTPException(status_code=400, detail="Pas de chemin de destination")
