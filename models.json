@@ -534,7 +534,19 @@
         "url": "https://civitai.com/api/download/models/1740524",
         "dest": "${BASE_DIR}/loras/WAN21/orgasm_v4_e48.safetensors",
         "type": "loras",
+        "tags": [
+          "nsfw"
+        ],
         "src": "https://civitai.com/models/1472688/female-orgasm-lora-for-wan21-i2v-and-hunyuan-video"
+      },
+      {
+        "url": "https://civitai.com/api/download/models/1619900",
+        "dest": "${BASE_DIR}/loras/WAN21/BouncingForwardBendsV01.safetensors",
+        "type": "loras",
+        "tags": [
+          "nsfw"
+        ],
+        "src": "https://civitai.com/models/1433071/bouncy-forward-bends-wan-i2v-14b?modelVersionId=1619900"
       }
     ]
   }
