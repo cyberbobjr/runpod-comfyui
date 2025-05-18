@@ -194,6 +194,15 @@
         "src": "https://civitai.com/models/978482",
         "hash": "e4164e1d31c630ae1b5d96e8f18d73c209b33dbea3c587309f4b4d2decba6b47",
         "size": 11902501736
+      },
+      {
+        "url": "https://civitai.com/api/download/models/1745151",
+        "dest": "${BASE_DIR}/unet/Flux/agfluxFillNSFWFp8_agfluxFillNSFWV17Fp8.safetensors",
+        "tags": [
+          "nsfw"
+        ],
+        "type": "unet",
+        "src": "https://civitai.com/models/958009?modelVersionId=1745151"
       }
     ],
     "Flux Fill GGUF": [
@@ -520,6 +529,12 @@
         "src": "https://civitai.com/models/1361346",
         "hash": "988d31be7f25c48659b30621520d047b645b7dc9efd95c12081fa415f4fdb24f",
         "size": 359259432
+      },
+      {
+        "url": "https://civitai.com/api/download/models/1740524",
+        "dest": "${BASE_DIR}/loras/WAN21/orgasm_v4_e48.safetensors",
+        "type": "loras",
+        "src": "https://civitai.com/models/1472688/female-orgasm-lora-for-wan21-i2v-and-hunyuan-video"
       }
     ]
   }
