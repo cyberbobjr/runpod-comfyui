@@ -13,7 +13,7 @@ function apiUrl(path) {
     // Force l'utilisation du port 8081 sur le même host
     const host = window.location.hostname
     const protocol = window.location.protocol
-    let base = `${protocol}//${host}:8081`
+    let base = `${protocol}//${host}`
     if (path.startsWith('/')) {
         return `${base}/api${path}`
     }

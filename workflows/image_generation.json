@@ -2,7 +2,7 @@
   "id": "3d8a9c06-7337-4334-be83-e18f4f918391",
   "revision": 0,
   "last_node_id": 667,
-  "last_link_id": 4280,
+  "last_link_id": 4295,
   "nodes": [
     {
       "id": 94,
@@ -356,7 +356,7 @@
         }
       },
       "widgets_values": [
-        808466373885008,
+        808466373885009,
         "increment",
         20,
         1,
@@ -472,6 +472,8 @@
         }
       ],
       "properties": {
+        "cnr_id": "bjornulf_custom_nodes",
+        "ver": "0.77.0",
         "lora_1": "FLUX\\NSFW\\breast-size2.safetensors",
         "strength_model_1": -3,
         "strength_clip_1": 1,
@@ -515,8 +517,6 @@
         "strength_clip_19": 1,
         "strength_model_20": 1,
         "strength_clip_20": 1,
-        "cnr_id": "bjornulf_custom_nodes",
-        "ver": "0.77.0",
         "Node name for S&R": "Bjornulf_LoopLoraSelector",
         "widget_ue_connectable": {
           "number_of_loras": true,
@@ -613,7 +613,7 @@
         }
       },
       "widgets_values": [
-        224637798613472,
+        941620550967202,
         "randomize"
       ]
     },
@@ -667,26 +667,31 @@
       "mode": 4,
       "inputs": [
         {
+          "dir": 3,
           "name": "any_01",
           "type": "INT",
           "link": 490
         },
         {
+          "dir": 3,
           "name": "any_02",
           "type": "INT",
           "link": 491
         },
         {
+          "dir": 3,
           "name": "any_03",
           "type": "INT",
           "link": null
         },
         {
+          "dir": 3,
           "name": "any_04",
           "type": "INT",
           "link": null
         },
         {
+          "dir": 3,
           "name": "any_05",
           "type": "INT",
           "link": null
@@ -694,6 +699,7 @@
       ],
       "outputs": [
         {
+          "dir": 4,
           "label": "INT",
           "name": "*",
           "shape": 3,
@@ -723,7 +729,7 @@
       ],
       "flags": {},
       "order": 166,
-      "mode": 2,
+      "mode": 4,
       "inputs": [
         {
           "name": "image",
@@ -779,7 +785,7 @@
         "collapsed": false
       },
       "order": 5,
-      "mode": 0,
+      "mode": 4,
       "inputs": [],
       "outputs": [
         {
@@ -818,7 +824,7 @@
         "collapsed": false
       },
       "order": 6,
-      "mode": 0,
+      "mode": 4,
       "inputs": [],
       "outputs": [
         {
@@ -853,7 +859,7 @@
       ],
       "flags": {},
       "order": 97,
-      "mode": 0,
+      "mode": 4,
       "inputs": [
         {
           "name": "control_net",
@@ -931,7 +937,7 @@
         "collapsed": true
       },
       "order": 7,
-      "mode": 0,
+      "mode": 4,
       "inputs": [],
       "outputs": [
         {
@@ -967,7 +973,7 @@
         "collapsed": true
       },
       "order": 8,
-      "mode": 0,
+      "mode": 4,
       "inputs": [],
       "outputs": [
         {
@@ -1161,7 +1167,7 @@
         }
       },
       "widgets_values": [
-        987597075983764,
+        987597075983765,
         "increment",
         30,
         1,
@@ -1185,7 +1191,7 @@
       ],
       "flags": {},
       "order": 129,
-      "mode": 0,
+      "mode": 4,
       "inputs": [
         {
           "name": "image",
@@ -1260,7 +1266,7 @@
       ],
       "flags": {},
       "order": 186,
-      "mode": 0,
+      "mode": 4,
       "inputs": [
         {
           "name": "images",
@@ -1290,29 +1296,34 @@
       ],
       "flags": {},
       "order": 179,
-      "mode": 0,
+      "mode": 4,
       "inputs": [
         {
+          "dir": 3,
           "name": "any_01",
           "type": "IMAGE",
           "link": 726
         },
         {
+          "dir": 3,
           "name": "any_02",
           "type": "IMAGE",
           "link": 671
         },
         {
+          "dir": 3,
           "name": "any_03",
           "type": "IMAGE",
           "link": 672
         },
         {
+          "dir": 3,
           "name": "any_04",
           "type": "IMAGE",
           "link": null
         },
         {
+          "dir": 3,
           "name": "any_05",
           "type": "IMAGE",
           "link": null
@@ -1320,6 +1331,7 @@
       ],
       "outputs": [
         {
+          "dir": 4,
           "label": "IMAGE",
           "name": "*",
           "shape": 3,
@@ -1350,7 +1362,7 @@
       ],
       "flags": {},
       "order": 168,
-      "mode": 2,
+      "mode": 4,
       "inputs": [
         {
           "name": "image",
@@ -1446,11 +1458,13 @@
       "mode": 4,
       "inputs": [
         {
+          "dir": 3,
           "name": "image_a",
           "type": "IMAGE",
           "link": 867
         },
         {
+          "dir": 3,
           "name": "image_b",
           "type": "IMAGE",
           "link": 866
@@ -2094,7 +2108,7 @@
         130
       ],
       "flags": {},
-      "order": 147,
+      "order": 149,
       "mode": 0,
       "inputs": [
         {
@@ -2224,7 +2238,7 @@
       ],
       "flags": {},
       "order": 15,
-      "mode": 0,
+      "mode": 4,
       "inputs": [],
       "outputs": [
         {
@@ -2260,7 +2274,7 @@
       ],
       "flags": {},
       "order": 167,
-      "mode": 0,
+      "mode": 4,
       "inputs": [
         {
           "name": "image",
@@ -2317,43 +2331,6 @@
       ]
     },
     {
-      "id": 539,
-      "type": "VAELoader",
-      "pos": [
-        -11890,
-        -3780
-      ],
-      "size": [
-        470,
-        60
-      ],
-      "flags": {},
-      "order": 16,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "VAE",
-          "type": "VAE",
-          "slot_index": 0,
-          "links": [
-            981
-          ]
-        }
-      ],
-      "properties": {
-        "cnr_id": "comfy-core",
-        "ver": "0.3.26",
-        "Node name for S&R": "VAELoader",
-        "widget_ue_connectable": {
-          "vae_name": true
-        }
-      },
-      "widgets_values": [
-        "flux\\ae.safetensors"
-      ]
-    },
-    {
       "id": 389,
       "type": "LoadAndResizeImage",
       "pos": [
@@ -2366,7 +2343,7 @@
       ],
       "flags": {},
       "order": 94,
-      "mode": 0,
+      "mode": 4,
       "inputs": [
         {
           "name": "width",
@@ -2456,7 +2433,7 @@
         130
       ],
       "flags": {},
-      "order": 17,
+      "order": 16,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -2501,7 +2478,7 @@
         60
       ],
       "flags": {},
-      "order": 18,
+      "order": 17,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -2539,7 +2516,7 @@
       ],
       "flags": {},
       "order": 185,
-      "mode": 0,
+      "mode": 4,
       "inputs": [
         {
           "name": "positive",
@@ -2791,7 +2768,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 19,
+      "order": 18,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -2827,7 +2804,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 20,
+      "order": 19,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -2863,7 +2840,7 @@
       "flags": {
         "collapsed": false
       },
-      "order": 21,
+      "order": 20,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -2985,26 +2962,31 @@
       "mode": 0,
       "inputs": [
         {
+          "dir": 3,
           "name": "any_01",
           "type": "GEN_CHARACTER,STRING",
           "link": 1942
         },
         {
+          "dir": 3,
           "name": "any_02",
           "type": "GEN_CHARACTER,STRING",
           "link": 1943
         },
         {
+          "dir": 3,
           "name": "any_03",
           "type": "GEN_CHARACTER,STRING",
           "link": 1944
         },
         {
+          "dir": 3,
           "name": "any_04",
           "type": "GEN_CHARACTER,STRING",
           "link": null
         },
         {
+          "dir": 3,
           "name": "any_05",
           "type": "GEN_CHARACTER,STRING",
           "link": null
@@ -3012,6 +2994,7 @@
       ],
       "outputs": [
         {
+          "dir": 4,
           "label": "GEN_CHARACTER,STRING",
           "name": "*",
           "shape": 3,
@@ -3040,7 +3023,7 @@
         200
       ],
       "flags": {},
-      "order": 22,
+      "order": 21,
       "mode": 2,
       "inputs": [
         {
@@ -3085,7 +3068,7 @@
         660
       ],
       "flags": {},
-      "order": 23,
+      "order": 22,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -3122,7 +3105,7 @@
         360
       ],
       "flags": {},
-      "order": 24,
+      "order": 23,
       "mode": 0,
       "inputs": [],
       "outputs": [],
@@ -3358,7 +3341,7 @@
       "flags": {
         "collapsed": false
       },
-      "order": 25,
+      "order": 24,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -3448,7 +3431,7 @@
         130
       ],
       "flags": {},
-      "order": 26,
+      "order": 25,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -3493,7 +3476,7 @@
         60
       ],
       "flags": {},
-      "order": 27,
+      "order": 26,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -3583,7 +3566,7 @@
       "flags": {
         "collapsed": false
       },
-      "order": 28,
+      "order": 27,
       "mode": 0,
       "inputs": [
         {
@@ -3698,7 +3681,7 @@
         420
       ],
       "flags": {},
-      "order": 29,
+      "order": 28,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -3745,26 +3728,31 @@
       "mode": 4,
       "inputs": [
         {
+          "dir": 3,
           "name": "any_01",
           "type": "IMAGE",
           "link": 580
         },
         {
+          "dir": 3,
           "name": "any_02",
           "type": "IMAGE",
           "link": 581
         },
         {
+          "dir": 3,
           "name": "any_03",
           "type": "IMAGE",
           "link": null
         },
         {
+          "dir": 3,
           "name": "any_04",
           "type": "IMAGE",
           "link": null
         },
         {
+          "dir": 3,
           "name": "any_05",
           "type": "IMAGE",
           "link": null
@@ -3772,6 +3760,7 @@
       ],
       "outputs": [
         {
+          "dir": 4,
           "label": "IMAGE",
           "name": "*",
           "shape": 3,
@@ -3804,7 +3793,7 @@
       "flags": {
         "collapsed": false
       },
-      "order": 30,
+      "order": 29,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -3879,7 +3868,7 @@
       "flags": {
         "collapsed": false
       },
-      "order": 31,
+      "order": 30,
       "mode": 4,
       "inputs": [
         {
@@ -3968,7 +3957,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 32,
+      "order": 31,
       "mode": 4,
       "inputs": [
         {
@@ -4012,7 +4001,7 @@
         78
       ],
       "flags": {},
-      "order": 33,
+      "order": 32,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -4051,7 +4040,7 @@
         82
       ],
       "flags": {},
-      "order": 34,
+      "order": 33,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -4124,11 +4113,13 @@
       "mode": 4,
       "inputs": [
         {
+          "dir": 3,
           "name": "image_a",
           "type": "IMAGE",
           "link": 585
         },
         {
+          "dir": 3,
           "name": "image_b",
           "type": "IMAGE",
           "link": 2453
@@ -4282,7 +4273,7 @@
         512,
         true,
         1024,
-        1091242513317312,
+        697295668667164,
         "randomize",
         20,
         1,
@@ -4319,11 +4310,11 @@
       ],
       "size": [
         350,
-        290
+        302
       ],
       "flags": {},
       "order": 150,
-      "mode": 0,
+      "mode": 4,
       "inputs": [
         {
           "name": "image",
@@ -4378,7 +4369,9 @@
         false,
         "default",
         false
-      ]
+      ],
+      "color": "#222e40",
+      "bgcolor": "#364254"
     },
     {
       "id": 230,
@@ -4392,7 +4385,7 @@
         440
       ],
       "flags": {},
-      "order": 35,
+      "order": 34,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -4436,7 +4429,7 @@
         88
       ],
       "flags": {},
-      "order": 36,
+      "order": 35,
       "mode": 4,
       "inputs": [
         {
@@ -4479,7 +4472,7 @@
         58
       ],
       "flags": {},
-      "order": 37,
+      "order": 36,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -4517,7 +4510,7 @@
         60
       ],
       "flags": {},
-      "order": 38,
+      "order": 37,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -4601,7 +4594,7 @@
         }
       },
       "widgets_values": [
-        1121251975225546,
+        635218126431995,
         "randomize",
         20,
         1,
@@ -4622,7 +4615,7 @@
         490
       ],
       "flags": {},
-      "order": 39,
+      "order": 38,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -4727,7 +4720,7 @@
         126
       ],
       "flags": {},
-      "order": 164,
+      "order": 165,
       "mode": 0,
       "inputs": [
         {
@@ -4778,7 +4771,7 @@
         82
       ],
       "flags": {},
-      "order": 40,
+      "order": 39,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -4830,7 +4823,7 @@
           "type": "MODEL",
           "slot_index": 0,
           "links": [
-            4279
+            4294
           ]
         }
       ],
@@ -4877,9 +4870,10 @@
         }
       ],
       "properties": {
-        "cnr_id": "ComfyUI-OpenAINode",
+        "aux_id": "cyberbobjr/ComfyUI-OpenAINode",
         "ver": "027bcd4c43216dc4c41756997d6765f8dd9dcbe3",
         "Node name for S&R": "OpenAINode",
+        "cnr_id": "ComfyUI-OpenAINode",
         "widget_ue_connectable": {
           "prompt": true,
           "api_url": true,
@@ -4901,7 +4895,7 @@
         "<|im_end|>",
         "deepseek-chat",
         500,
-        805529262637334,
+        262311953592128,
         "randomize"
       ]
     },
@@ -4917,7 +4911,7 @@
         370
       ],
       "flags": {},
-      "order": 41,
+      "order": 40,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -5050,7 +5044,7 @@
         82
       ],
       "flags": {},
-      "order": 42,
+      "order": 41,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -5059,7 +5053,7 @@
           "type": "MODEL",
           "links": [
             2512,
-            4280
+            4295
           ]
         }
       ],
@@ -5088,10 +5082,10 @@
       ],
       "size": [
         400,
-        256
+        280
       ],
       "flags": {},
-      "order": 43,
+      "order": 42,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -5118,7 +5112,8 @@
         "studio",
         "NONE",
         "NONE",
-        ""
+        925882726648338,
+        "randomize"
       ]
     },
     {
@@ -5133,7 +5128,7 @@
         320
       ],
       "flags": {},
-      "order": 44,
+      "order": 43,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -5153,14 +5148,13 @@
         "widget_ue_connectable": {}
       },
       "widgets_values": [
-        740523321228087,
+        740523321228088,
         "increment",
         "RANDOM",
         "RANDOM",
         "RANDOM",
         "RANDOM",
-        "RANDOM",
-        ""
+        "RANDOM"
       ]
     },
     {
@@ -5209,7 +5203,7 @@
         "widget_ue_connectable": {}
       },
       "widgets_values": [
-        184853817857708,
+        184853817857709,
         "increment",
         "RANDOM",
         "RANDOM",
@@ -5331,9 +5325,7 @@
         "Node name for S&R": "ShowText|pysssss",
         "widget_ue_connectable": {}
       },
-      "widgets_values": [
-        "photography style, using a black and white color scheme, with studio lighting\nfull body from worm's eye view\n- one Bulgarian Caucasian (Fair skin, variety of hair colors, refined features, height ranging from petite to tall.) young woman, with a hourglass figure build, with porcelain skin, brown eyes, burgundy hair, fishtail braid haircut, round ass, extremely large breasts, wearing Spanish Armada Naval Uniform\nin a dystopian medieval scene, located in enchanted castle, during the midnight, with tropical conditions"
-      ],
+      "widgets_values": [],
       "color": "#323",
       "bgcolor": "#535"
     },
@@ -5349,7 +5341,7 @@
         82
       ],
       "flags": {},
-      "order": 45,
+      "order": 44,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -5390,7 +5382,7 @@
         400
       ],
       "flags": {},
-      "order": 46,
+      "order": 45,
       "mode": 4,
       "inputs": [],
       "outputs": [],
@@ -5460,7 +5452,7 @@
         58
       ],
       "flags": {},
-      "order": 47,
+      "order": 46,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -5544,7 +5536,7 @@
         106
       ],
       "flags": {},
-      "order": 148,
+      "order": 147,
       "mode": 0,
       "inputs": [
         {
@@ -5557,13 +5549,13 @@
           "dir": 3,
           "name": "any_02",
           "type": "MODEL",
-          "link": 4279
+          "link": 4294
         },
         {
           "dir": 3,
           "name": "any_03",
           "type": "MODEL",
-          "link": 4280
+          "link": 4295
         },
         {
           "dir": 3,
@@ -5572,6 +5564,7 @@
           "link": null
         },
         {
+          "dir": 3,
           "name": "any_05",
           "type": "MODEL",
           "link": null
@@ -5579,6 +5572,7 @@
       ],
       "outputs": [
         {
+          "dir": 4,
           "label": "MODEL",
           "name": "*",
           "shape": 3,
@@ -5609,7 +5603,7 @@
       "flags": {
         "collapsed": false
       },
-      "order": 165,
+      "order": 164,
       "mode": 0,
       "inputs": [
         {
@@ -5749,7 +5743,7 @@
         110
       ],
       "flags": {},
-      "order": 48,
+      "order": 47,
       "mode": 4,
       "inputs": [
         {
@@ -5791,7 +5785,7 @@
         58
       ],
       "flags": {},
-      "order": 49,
+      "order": 48,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -5906,7 +5900,7 @@
         520
       ],
       "flags": {},
-      "order": 50,
+      "order": 49,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -5949,7 +5943,7 @@
         58
       ],
       "flags": {},
-      "order": 51,
+      "order": 50,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -5983,7 +5977,7 @@
         90
       ],
       "flags": {},
-      "order": 52,
+      "order": 51,
       "mode": 4,
       "inputs": [
         {
@@ -6031,7 +6025,7 @@
       "flags": {
         "collapsed": false
       },
-      "order": 53,
+      "order": 52,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -6069,26 +6063,31 @@
       "mode": 4,
       "inputs": [
         {
+          "dir": 3,
           "name": "any_01",
           "type": "CONDITIONING",
           "link": 3547
         },
         {
+          "dir": 3,
           "name": "any_02",
           "type": "CONDITIONING",
           "link": 3548
         },
         {
+          "dir": 3,
           "name": "any_03",
           "type": "CONDITIONING",
           "link": null
         },
         {
+          "dir": 3,
           "name": "any_04",
           "type": "CONDITIONING",
           "link": null
         },
         {
+          "dir": 3,
           "name": "any_05",
           "type": "CONDITIONING",
           "link": null
@@ -6096,6 +6095,7 @@
       ],
       "outputs": [
         {
+          "dir": 4,
           "label": "CONDITIONING",
           "name": "*",
           "shape": 3,
@@ -6126,7 +6126,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 54,
+      "order": 53,
       "mode": 4,
       "inputs": [
         {
@@ -6298,7 +6298,7 @@
       "flags": {
         "collapsed": false
       },
-      "order": 55,
+      "order": 54,
       "mode": 4,
       "inputs": [
         {
@@ -6344,7 +6344,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 56,
+      "order": 55,
       "mode": 4,
       "inputs": [
         {
@@ -6438,7 +6438,7 @@
         58
       ],
       "flags": {},
-      "order": 57,
+      "order": 56,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -6478,7 +6478,7 @@
       "flags": {
         "collapsed": false
       },
-      "order": 58,
+      "order": 57,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -6518,26 +6518,31 @@
       "mode": 4,
       "inputs": [
         {
+          "dir": 3,
           "name": "any_01",
           "type": "IMAGE",
           "link": 791
         },
         {
+          "dir": 3,
           "name": "any_02",
           "type": "IMAGE",
           "link": 792
         },
         {
+          "dir": 3,
           "name": "any_03",
           "type": "IMAGE",
           "link": 793
         },
         {
+          "dir": 3,
           "name": "any_04",
           "type": "IMAGE",
           "link": null
         },
         {
+          "dir": 3,
           "name": "any_05",
           "type": "IMAGE",
           "link": null
@@ -6545,6 +6550,7 @@
       ],
       "outputs": [
         {
+          "dir": 4,
           "label": "IMAGE",
           "name": "*",
           "shape": 3,
@@ -6715,11 +6721,13 @@
       "mode": 4,
       "inputs": [
         {
+          "dir": 3,
           "name": "any_01",
           "type": "CONDITIONING",
           "link": 2060
         },
         {
+          "dir": 3,
           "name": "any_02",
           "type": "CONDITIONING",
           "link": 2041
@@ -6742,6 +6750,7 @@
       ],
       "outputs": [
         {
+          "dir": 4,
           "label": "CONDITIONING",
           "name": "*",
           "shape": 3,
@@ -6772,7 +6781,7 @@
       "flags": {
         "allow_interaction": true
       },
-      "order": 59,
+      "order": 58,
       "mode": 0,
       "inputs": [],
       "outputs": [],
@@ -6804,7 +6813,7 @@
       "flags": {
         "allow_interaction": true
       },
-      "order": 60,
+      "order": 59,
       "mode": 0,
       "inputs": [],
       "outputs": [],
@@ -6836,7 +6845,7 @@
       "flags": {
         "allow_interaction": true
       },
-      "order": 61,
+      "order": 60,
       "mode": 0,
       "inputs": [],
       "outputs": [],
@@ -6868,7 +6877,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 62,
+      "order": 61,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -6991,7 +7000,7 @@
       },
       "widgets_values": [
         3.0000000000000004,
-        182804461793720,
+        437504902880646,
         "randomize",
         8,
         1,
@@ -7073,7 +7082,7 @@
         490
       ],
       "flags": {},
-      "order": 63,
+      "order": 62,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -7109,7 +7118,7 @@
       "flags": {
         "collapsed": false
       },
-      "order": 64,
+      "order": 63,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -7130,7 +7139,7 @@
         }
       },
       "widgets_values": [
-        808466373884794,
+        808466373884795,
         "increment"
       ]
     },
@@ -7146,7 +7155,7 @@
         490
       ],
       "flags": {},
-      "order": 65,
+      "order": 64,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -7257,7 +7266,7 @@
         106
       ],
       "flags": {},
-      "order": 66,
+      "order": 65,
       "mode": 4,
       "inputs": [
         {
@@ -7324,9 +7333,7 @@
         "Node name for S&R": "ShowText|pysssss",
         "widget_ue_connectable": {}
       },
-      "widgets_values": [
-        "photography style, using a black and white color scheme, with studio lighting\nfull body from worm's eye view\n- one Bulgarian Caucasian (Fair skin, variety of hair colors, refined features, height ranging from petite to tall.) young woman, with a hourglass figure build, with porcelain skin, brown eyes, burgundy hair, fishtail braid haircut, round ass, extremely large breasts, wearing Spanish Armada Naval Uniform\nin a dystopian medieval scene, located in enchanted castle, during the midnight, with tropical conditions"
-      ],
+      "widgets_values": [],
       "color": "#232",
       "bgcolor": "#353"
     },
@@ -7344,7 +7351,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 67,
+      "order": 66,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -7380,7 +7387,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 68,
+      "order": 67,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -7414,7 +7421,7 @@
         170
       ],
       "flags": {},
-      "order": 69,
+      "order": 68,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -7464,7 +7471,7 @@
         210
       ],
       "flags": {},
-      "order": 70,
+      "order": 69,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -7501,7 +7508,7 @@
         466
       ],
       "flags": {},
-      "order": 71,
+      "order": 70,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -7581,7 +7588,7 @@
         "widget_ue_connectable": {}
       },
       "widgets_values": [
-        null,
+        {},
         {
           "type": "PowerLoraLoaderHeaderWidget"
         },
@@ -7615,7 +7622,7 @@
           "strength": 0.9,
           "strengthTwo": null
         },
-        null,
+        {},
         ""
       ],
       "color": "#323",
@@ -7673,7 +7680,7 @@
         278
       ],
       "flags": {},
-      "order": 72,
+      "order": 71,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -7743,7 +7750,7 @@
         250
       ],
       "flags": {},
-      "order": 125,
+      "order": 128,
       "mode": 0,
       "inputs": [
         {
@@ -7789,7 +7796,7 @@
         "widget_ue_connectable": {}
       },
       "widgets_values": [
-        null,
+        {},
         {
           "type": "PowerLoraLoaderHeaderWidget"
         },
@@ -7800,30 +7807,12 @@
           "strengthTwo": null
         },
         {
-          "lora": "FLUX\\aidmaImageUprader-FLUX-v0.3.safetensors",
-          "on": false,
-          "strength": 0.8,
-          "strengthTwo": null
-        },
-        {
-          "lora": "FLUX\\NSFW\\breast-size2.safetensors",
-          "on": false,
-          "strength": 3,
-          "strengthTwo": null
-        },
-        {
           "on": false,
           "lora": "FLUX\\flux.1-turbo-alpha.safetensors",
           "strength": 1,
           "strengthTwo": null
         },
-        {
-          "on": false,
-          "lora": "FLUX\\NSFW\\aidmaNSFWunlock-FLUX-V0.2.safetensors",
-          "strength": 0.9,
-          "strengthTwo": null
-        },
-        null,
+        {},
         ""
       ],
       "color": "#323",
@@ -7842,7 +7831,7 @@
         490
       ],
       "flags": {},
-      "order": 73,
+      "order": 72,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -7882,26 +7871,31 @@
       "mode": 0,
       "inputs": [
         {
+          "dir": 3,
           "name": "any_01",
           "type": "CONDITIONING",
           "link": 782
         },
         {
+          "dir": 3,
           "name": "any_02",
           "type": "CONDITIONING",
           "link": 783
         },
         {
+          "dir": 3,
           "name": "any_03",
           "type": "CONDITIONING",
           "link": null
         },
         {
+          "dir": 3,
           "name": "any_04",
           "type": "CONDITIONING",
           "link": null
         },
         {
+          "dir": 3,
           "name": "any_05",
           "type": "CONDITIONING",
           "link": null
@@ -7909,6 +7903,7 @@
       ],
       "outputs": [
         {
+          "dir": 4,
           "label": "CONDITIONING",
           "name": "*",
           "shape": 3,
@@ -7939,7 +7934,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 74,
+      "order": 73,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -8048,7 +8043,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 75,
+      "order": 74,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -8169,7 +8164,7 @@
         274
       ],
       "flags": {},
-      "order": 76,
+      "order": 75,
       "mode": 0,
       "inputs": [
         {
@@ -8220,7 +8215,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 77,
+      "order": 76,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -8335,7 +8330,7 @@
         106
       ],
       "flags": {},
-      "order": 78,
+      "order": 77,
       "mode": 0,
       "inputs": [
         {
@@ -8366,51 +8361,6 @@
       ]
     },
     {
-      "id": 535,
-      "type": "DualCLIPLoader",
-      "pos": [
-        -12470,
-        -3680
-      ],
-      "size": [
-        570,
-        130
-      ],
-      "flags": {},
-      "order": 79,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "CLIP",
-          "type": "CLIP",
-          "slot_index": 0,
-          "links": [
-            974
-          ]
-        }
-      ],
-      "properties": {
-        "cnr_id": "comfy-core",
-        "ver": "0.3.26",
-        "Node name for S&R": "DualCLIPLoader",
-        "widget_ue_connectable": {
-          "clip_name1": true,
-          "clip_name2": true,
-          "type": true,
-          "device": true
-        }
-      },
-      "widgets_values": [
-        "Flux\\clip_l.safetensors",
-        "Flux\\t5xxl_fp8_e4m3fn.safetensors",
-        "flux",
-        "default"
-      ],
-      "color": "#223",
-      "bgcolor": "#335"
-    },
-    {
       "id": 647,
       "type": "Anything Everywhere3",
       "pos": [
@@ -8422,7 +8372,7 @@
         70
       ],
       "flags": {},
-      "order": 126,
+      "order": 125,
       "mode": 0,
       "inputs": [
         {
@@ -8461,40 +8411,6 @@
       "widgets_values": []
     },
     {
-      "id": 555,
-      "type": "LoaderGGUF",
-      "pos": [
-        -12470,
-        -3790
-      ],
-      "size": [
-        560,
-        70
-      ],
-      "flags": {},
-      "order": 80,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "MODEL",
-          "type": "MODEL",
-          "links": [
-            1177
-          ]
-        }
-      ],
-      "properties": {
-        "cnr_id": "gguf",
-        "ver": "2.0.3",
-        "Node name for S&R": "LoaderGGUF",
-        "widget_ue_connectable": {}
-      },
-      "widgets_values": [
-        "Flux\\flux1-dev-Q8_0.gguf"
-      ]
-    },
-    {
       "id": 646,
       "type": "KSamplerSelect",
       "pos": [
@@ -8506,7 +8422,7 @@
         58
       ],
       "flags": {},
-      "order": 81,
+      "order": 78,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -8540,7 +8456,7 @@
         490
       ],
       "flags": {},
-      "order": 82,
+      "order": 79,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -8634,7 +8550,7 @@
         58
       ],
       "flags": {},
-      "order": 83,
+      "order": 80,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -8670,7 +8586,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 84,
+      "order": 81,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -8706,7 +8622,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 85,
+      "order": 82,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -8742,7 +8658,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 127,
+      "order": 126,
       "mode": 0,
       "inputs": [
         {
@@ -8770,40 +8686,6 @@
       "widgets_values": []
     },
     {
-      "id": 554,
-      "type": "Fast Groups Bypasser (rgthree)",
-      "pos": [
-        -12790,
-        -4190
-      ],
-      "size": [
-        300,
-        490
-      ],
-      "flags": {},
-      "order": 86,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "OPT_CONNECTION",
-          "type": "*",
-          "links": []
-        }
-      ],
-      "properties": {
-        "matchColors": "",
-        "matchTitle": "",
-        "showNav": true,
-        "sort": "alphanumeric",
-        "customSortAlphabet": "",
-        "toggleRestriction": "default",
-        "widget_ue_connectable": {}
-      },
-      "color": "#222",
-      "bgcolor": "#000"
-    },
-    {
       "id": 629,
       "type": "Fast Muter (rgthree)",
       "pos": [
@@ -8819,11 +8701,13 @@
       "mode": 4,
       "inputs": [
         {
+          "dir": 3,
           "name": "GroundingDinoSAM2Segment (segment anything2)",
           "type": "*",
           "link": 3102
         },
         {
+          "dir": 3,
           "name": "",
           "type": "*",
           "link": null
@@ -8831,6 +8715,7 @@
       ],
       "outputs": [
         {
+          "dir": 4,
           "name": "OPT_CONNECTION",
           "type": "*",
           "links": null
@@ -8855,7 +8740,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 87,
+      "order": 83,
       "mode": 0,
       "inputs": [],
       "outputs": [],
@@ -8884,11 +8769,13 @@
       "mode": 4,
       "inputs": [
         {
+          "dir": 3,
           "name": "Grow Mask With Blur",
           "type": "*",
           "link": 947
         },
         {
+          "dir": 3,
           "name": "",
           "type": "*",
           "link": null
@@ -8896,6 +8783,7 @@
       ],
       "outputs": [
         {
+          "dir": 4,
           "name": "OPT_CONNECTION",
           "type": "*",
           "links": []
@@ -8920,7 +8808,7 @@
       "flags": {
         "allow_interaction": true
       },
-      "order": 88,
+      "order": 84,
       "mode": 0,
       "inputs": [],
       "outputs": [],
@@ -8956,26 +8844,31 @@
       "mode": 4,
       "inputs": [
         {
+          "dir": 3,
           "name": "any_01",
           "type": "MASK",
           "link": 3104
         },
         {
+          "dir": 3,
           "name": "any_02",
           "type": "MASK",
           "link": 3105
         },
         {
+          "dir": 3,
           "name": "any_03",
           "type": "MASK",
           "link": null
         },
         {
+          "dir": 3,
           "name": "any_04",
           "type": "MASK",
           "link": null
         },
         {
+          "dir": 3,
           "name": "any_05",
           "type": "MASK",
           "link": null
@@ -8983,6 +8876,7 @@
       ],
       "outputs": [
         {
+          "dir": 4,
           "label": "MASK",
           "name": "*",
           "shape": 3,
@@ -9074,7 +8968,7 @@
         150
       ],
       "flags": {},
-      "order": 89,
+      "order": 85,
       "mode": 4,
       "inputs": [
         {
@@ -9120,7 +9014,7 @@
         60
       ],
       "flags": {},
-      "order": 128,
+      "order": 127,
       "mode": 4,
       "inputs": [
         {
@@ -9247,7 +9141,7 @@
       "flags": {
         "collapsed": false
       },
-      "order": 149,
+      "order": 148,
       "mode": 4,
       "inputs": [
         {
@@ -9333,7 +9227,7 @@
         }
       },
       "widgets_values": [
-        987597075983221,
+        987597075983222,
         "increment",
         50,
         1,
@@ -9487,7 +9381,7 @@
         60
       ],
       "flags": {},
-      "order": 90,
+      "order": 86,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -9521,7 +9415,7 @@
         490
       ],
       "flags": {},
-      "order": 91,
+      "order": 87,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -9555,7 +9449,7 @@
         490
       ],
       "flags": {},
-      "order": 92,
+      "order": 88,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -9593,21 +9487,25 @@
       "mode": 0,
       "inputs": [
         {
+          "dir": 3,
           "name": "👨‍🦰📝 Text Generator (Character Male)",
           "type": "*",
           "link": 1935
         },
         {
+          "dir": 3,
           "name": "👾📝 Text Generator (Character Creature)",
           "type": "*",
           "link": 1936
         },
         {
+          "dir": 3,
           "name": "👩‍🦰📝 Text Generator (Character Female)",
           "type": "*",
           "link": 1937
         },
         {
+          "dir": 3,
           "name": "",
           "type": "*",
           "link": null
@@ -9615,6 +9513,7 @@
       ],
       "outputs": [
         {
+          "dir": 4,
           "name": "OPT_CONNECTION",
           "type": "*",
           "links": []
@@ -9644,26 +9543,31 @@
       "mode": 0,
       "inputs": [
         {
+          "dir": 3,
           "name": "🌄📝 Text Generator (Scene)",
           "type": "*",
           "link": 2101
         },
         {
+          "dir": 3,
           "name": "🔧👨‍🔧📝 Text Generator (Object for Character)",
           "type": "*",
           "link": 2102
         },
         {
+          "dir": 3,
           "name": "💃🕺📝 Text Generator (Character Pose)",
           "type": "*",
           "link": 2113
         },
         {
+          "dir": 3,
           "name": "🎨📝 Text Generator (Style)",
           "type": "*",
           "link": 2114
         },
         {
+          "dir": 3,
           "name": "",
           "type": "*",
           "link": null
@@ -9671,6 +9575,7 @@
       ],
       "outputs": [
         {
+          "dir": 4,
           "name": "OPT_CONNECTION",
           "type": "*",
           "links": null
@@ -9697,24 +9602,28 @@
       ],
       "flags": {},
       "order": 178,
-      "mode": 0,
+      "mode": 4,
       "inputs": [
         {
+          "dir": 3,
           "name": "Canny Edge",
           "type": "*",
           "link": 723
         },
         {
+          "dir": 3,
           "name": "Depth Anything V2 - Relative",
           "type": "*",
           "link": 724
         },
         {
+          "dir": 3,
           "name": "DWPose Estimator",
           "type": "*",
           "link": 725
         },
         {
+          "dir": 3,
           "name": "",
           "type": "*",
           "link": null
@@ -9722,6 +9631,7 @@
       ],
       "outputs": [
         {
+          "dir": 4,
           "name": "OPT_CONNECTION",
           "type": "*",
           "links": null
@@ -9731,6 +9641,156 @@
         "toggleRestriction": "max one",
         "widget_ue_connectable": {}
       }
+    },
+    {
+      "id": 554,
+      "type": "Fast Groups Bypasser (rgthree)",
+      "pos": [
+        -12790,
+        -4190
+      ],
+      "size": [
+        300,
+        490
+      ],
+      "flags": {},
+      "order": 89,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "OPT_CONNECTION",
+          "type": "*",
+          "links": []
+        }
+      ],
+      "properties": {
+        "matchColors": "",
+        "matchTitle": "",
+        "showNav": true,
+        "sort": "alphanumeric",
+        "customSortAlphabet": "",
+        "toggleRestriction": "default",
+        "widget_ue_connectable": {}
+      },
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 555,
+      "type": "LoaderGGUF",
+      "pos": [
+        -12470,
+        -3790
+      ],
+      "size": [
+        560,
+        70
+      ],
+      "flags": {},
+      "order": 90,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            1177
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "gguf",
+        "ver": "2.0.3",
+        "Node name for S&R": "LoaderGGUF",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "Flux/flux1-dev-Q8_0.gguf"
+      ]
+    },
+    {
+      "id": 535,
+      "type": "DualCLIPLoader",
+      "pos": [
+        -12470,
+        -3680
+      ],
+      "size": [
+        570,
+        130
+      ],
+      "flags": {},
+      "order": 91,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "slot_index": 0,
+          "links": [
+            974
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.26",
+        "Node name for S&R": "DualCLIPLoader",
+        "widget_ue_connectable": {
+          "clip_name1": true,
+          "clip_name2": true,
+          "type": true,
+          "device": true
+        }
+      },
+      "widgets_values": [
+        "Flux/clip_l.safetensors",
+        "Flux/t5xxl_fp8_e4m3fn.safetensors",
+        "flux",
+        "default"
+      ],
+      "color": "#223",
+      "bgcolor": "#335"
+    },
+    {
+      "id": 539,
+      "type": "VAELoader",
+      "pos": [
+        -11890,
+        -3780
+      ],
+      "size": [
+        470,
+        60
+      ],
+      "flags": {},
+      "order": 92,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "slot_index": 0,
+          "links": [
+            981
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.26",
+        "Node name for S&R": "VAELoader",
+        "widget_ue_connectable": {
+          "vae_name": true
+        }
+      },
+      "widgets_values": [
+        "Flux/ae.safetensors"
+      ]
     }
   ],
   "links": [
@@ -11391,7 +11451,7 @@
       "MASK"
     ],
     [
-      4279,
+      4294,
       622,
       0,
       619,
@@ -11399,7 +11459,7 @@
       "MODEL"
     ],
     [
-      4280,
+      4295,
       609,
       0,
       619,
@@ -11626,17 +11686,9 @@
         3824.6337678259138
       ]
     },
-    "frontendVersion": "1.18.9",
+    "frontendVersion": "1.18.10",
     "groupNodes": {},
     "ue_links": [
-      {
-        "downstream": 247,
-        "downstream_slot": 4,
-        "upstream": "539",
-        "upstream_slot": 0,
-        "controller": 542,
-        "type": "VAE"
-      },
       {
         "downstream": 65,
         "downstream_slot": 0,
@@ -11735,19 +11787,19 @@
       }
     ],
     "links_added_by_ue": [
-      4266,
-      4267,
-      4268,
-      4269,
-      4270,
-      4271,
-      4272,
-      4273,
-      4274,
-      4275,
-      4276,
-      4277,
-      4278
+      4281,
+      4282,
+      4283,
+      4284,
+      4285,
+      4286,
+      4287,
+      4288,
+      4289,
+      4290,
+      4291,
+      4292,
+      4293
     ],
     "VHS_latentpreview": false,
     "VHS_latentpreviewrate": 0,
