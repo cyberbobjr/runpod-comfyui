@@ -4,11 +4,13 @@
 LOGFILE="comfyui-server.log"
 # LOGFILE="/var/log/comfyui-server.log"
 MAXSIZE=10485760 # 10 Mo
-
+export COMFYUI_MODEL_DIR="D:/runpod-volume"
 if [ -f "$LOGFILE" ] && [ $(stat -c%s "$LOGFILE") -ge $MAXSIZE ]; then
     mv "$LOGFILE" "$LOGFILE.1"
     [ -f "$LOGFILE.1" ] && mv "$LOGFILE.1" "$LOGFILE.2"
     [ -f "$LOGFILE.2" ] && mv "$LOGFILE.2" "$LOGFILE.3"
 fi
 
-nohup uvicorn main:app --reload --host 0.0.0.0 --port 8081 >> "$LOGFILE" 2>&1 &
+# nohup uvicorn main:app --reload --host 0.0.0.0 --port 8081 >> "$LOGFILE" 2>&1 &
+# nohup uvicorn main:app --reload --host 0.0.0.0 --port 8081
+python main.py

@@ -1,6 +1,6 @@
 {
   "config": {
-    "BASE_DIR": "/mnt/d/models"
+    "BASE_DIR": "D:/runpod-volume/models"
   },
   "groups": {
     "Flux SCHNELL": [
@@ -141,7 +141,8 @@
         "url": "https://huggingface.co/city96/FLUX.1-dev-gguf/resolve/main/flux1-dev-Q8_0.gguf",
         "dest": "${BASE_DIR}/unet/Flux/flux1-dev-Q8_0.gguf",
         "type": "unet",
-        "src": "https://huggingface.co/city96/FLUX.1-dev-gguf"
+        "src": "https://huggingface.co/city96/FLUX.1-dev-gguf",
+        "size": 12708281504
       },
       {
         "url": "https://civitai.com/api/download/models/1641174",
@@ -171,7 +172,8 @@
         "tags": [
           "fp8"
         ],
-        "type": "unet"
+        "type": "unet",
+        "size": 11902532704
       },
       {
         "url": "https://civitai.com/api/download/models/1095910",
@@ -193,16 +195,7 @@
         "type": "unet",
         "src": "https://civitai.com/models/978482",
         "hash": "e4164e1d31c630ae1b5d96e8f18d73c209b33dbea3c587309f4b4d2decba6b47",
-        "size": 11902501736
-      },
-      {
-        "url": "https://civitai.com/api/download/models/1745151",
-        "dest": "${BASE_DIR}/unet/Flux/agfluxFillNSFWFp8_agfluxFillNSFWV17Fp8.safetensors",
-        "tags": [
-          "nsfw"
-        ],
-        "type": "unet",
-        "src": "https://civitai.com/models/958009?modelVersionId=1745151"
+        "size": 11902498728
       }
     ],
     "Flux Fill GGUF": [
@@ -421,15 +414,13 @@
         "size": 335304388
       },
       {
-        "url": "https://civitai.com/api/download/models/1701111",
-        "dest": "${BASE_DIR}/diffusion_models/HiDream/hidream_i1_full_uncensored_fp8_v0.2.safetensors",
+        "url": "https://civitai.com/api/download/models/1796117",
+        "dest": "${BASE_DIR}/diffusion_models/HiDream/hidreamI1FP8Uncensored_fullV033Alpha.safetensors",
         "type": "diffusion_models",
         "tags": [
           "nsfw"
         ],
-        "src": "https://civitai.com/models/1498292",
-        "hash": "7ccb46e6807dd559d435b5d305b89a933aa9dcaa1b5f997aa0c9ee4fce20ee7c",
-        "size": 17106015384
+        "src": "https://civitai.com/models/1498292"
       }
     ],
     "HiDream GGUF": [
@@ -537,7 +528,8 @@
         "tags": [
           "nsfw"
         ],
-        "src": "https://civitai.com/models/1472688/female-orgasm-lora-for-wan21-i2v-and-hunyuan-video"
+        "src": "https://civitai.com/models/1472688/female-orgasm-lora-for-wan21-i2v-and-hunyuan-video",
+        "size": 538826520
       },
       {
         "url": "https://civitai.com/api/download/models/1619900",
@@ -546,7 +538,8 @@
         "tags": [
           "nsfw"
         ],
-        "src": "https://civitai.com/models/1433071/bouncy-forward-bends-wan-i2v-14b?modelVersionId=1619900"
+        "src": "https://civitai.com/models/1433071/bouncy-forward-bends-wan-i2v-14b?modelVersionId=1619900",
+        "size": 359259464
       }
     ]
   }

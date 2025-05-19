@@ -7,13 +7,14 @@ const token = ref(localStorage.getItem('token') || '')
 const login_user = ref('')
 const login_pass = ref('')
 const login_error = ref('')
+const totalSize = ref(null)
 
 // Remplace la fonction apiUrl pour ne pas forcer le port 8081 et utiliser le même host/port que le frontend
 function apiUrl(path) {
-    // Force l'utilisation du port 8081 sur le même host
     const host = window.location.hostname
     const protocol = window.location.protocol
-    let base = `${protocol}//${host}`
+    const port = window.location.port
+    let base = `${protocol}//${host}:${port}`
     if (path.startsWith('/')) {
         return `${base}/api${path}`
     }
@@ -52,6 +53,14 @@ async function fetchTokens() {
     civitai_token.value = data.civitai_token || ''
 }
 
+async function fetchTotalSize() {
+    if (!token.value) return
+    const res = await apiFetch('/total_size')
+    if (handle401(res)) return
+    const data = await res.json()
+    totalSize.value = data.total_size
+}
+
 async function saveTokens() {
     const res = await apiFetch('/tokens', {
         method: 'POST',
@@ -70,6 +79,16 @@ async function download(model) {
     })
     if (handle401(res)) return
     pollProgress(model)
+}
+
+async function stopDownload(model) {
+    const res = await apiFetch('/stop_download', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(model.entry)
+    })
+    if (handle401(res)) return
+    fetchModels()
 }
 
 async function del(model) {
@@ -116,6 +135,7 @@ async function doLogin() {
         localStorage.setItem('token', data.token)
         fetchModels()
         fetchTokens()
+        fetchTotalSize()
     } else {
         login_error.value = "Invalid credentials"
     }
@@ -319,14 +339,20 @@ function useAppLogic() {
         console.log('App.logic.js onMounted called') // Debug: vérifier si onMounted est appelé
         fetchModels()
         fetchTokens()
+        fetchTotalSize()
     })
 }
+
+// Met à jour la taille totale à chaque changement de modèles (ex: après download/delete)
+watch(models, () => {
+    fetchTotalSize()
+})
 
 export {
     models, hf_token, civitai_token, token,
     login_user, login_pass, login_error,
     apiUrl, apiFetch, handle401, fetchModels, fetchTokens, saveTokens,
-    download, del, pollProgress, doLogin, logout,
+    download, stopDownload, del, pollProgress, doLogin, logout,
     missingTokenMsg, confirmDownload, confirmDelete,
     selected, modelKey, allChecked, toggleAll,
     selectedToDelete, selectedToDownload,
@@ -335,5 +361,6 @@ export {
     old_username, old_password, new_username, new_password,
     change_user_msg, change_user_ok, changeUser,
     activeDownloads, useDownloadsPolling,
-    useAppLogic // <-- Ajout de l'export
+    useAppLogic,
+    totalSize, // <-- Ajout export
 }

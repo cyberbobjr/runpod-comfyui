@@ -21,6 +21,7 @@ security = HTTPBearer()
 api_router = APIRouter(prefix="/api")
 
 DOWNLOAD_EVENTS = {}  # model_id -> threading.Event
+STOP_EVENTS = {}      # model_id -> threading.Event  # <-- Ajouté
 
 def get_users_file_path():
     """Retourne le chemin complet du fichier users.json selon COMFYUI_MODEL_DIR ou le répertoire courant."""
@@ -125,6 +126,26 @@ def list_models(user=Depends(protected)):
             entry_with_tags = dict(entry)
             if "tags" not in entry_with_tags:
                 entry_with_tags["tags"] = []
+            # Vérifie la taille sur le disque si le modèle existe et qu'une taille attendue est définie
+            if exists and entry.get("size") is not None:
+                try:
+                    actual_size = os.path.getsize(path)
+                    expected_size = entry.get("size")
+                    if actual_size != expected_size:
+                        # Ajoute "incorrect size" si ce n'est pas déjà présent
+                        tags = entry_with_tags["tags"]
+                        if "incorrect size" not in tags:
+                            tags.append("incorrect size")
+                    else:
+                        # Retire "incorrect size" si la taille est correcte et le tag est présent
+                        tags = entry_with_tags["tags"]
+                        if "incorrect size" in tags:
+                            tags.remove("incorrect size")
+                except Exception:
+                    # Si erreur lors de la lecture de la taille, ajoute le tag
+                    tags = entry_with_tags["tags"]
+                    if "incorrect size" not in tags:
+                        tags.append("incorrect size")
             result.append({
                 "group": group,
                 "entry": entry_with_tags,
@@ -163,28 +184,44 @@ def download_model(entry: dict, background_tasks: BackgroundTasks, user=Depends(
         event = threading.Event()
         DOWNLOAD_EVENTS[model_id] = event
         PROGRESS[model_id] = {"progress": 0, "status": "downloading"}
-        background_tasks.add_task(download_worker, entry, model_id, event)
+        # Ajout d'un stop_event pour ce téléchargement
+        stop_event = threading.Event()
+        STOP_EVENTS[model_id] = stop_event
+        background_tasks.add_task(download_worker, entry, model_id, event, stop_event)
         return {"ok": True}
 
-def download_worker(entry, model_id, event):
+@api_router.post("/stop_download")
+def stop_download(entry: dict, user=Depends(protected)):
+    """Arrête un téléchargement en cours pour un modèle donné."""
+    model_id = get_model_id(entry)
+    stop_event = STOP_EVENTS.get(model_id)
+    if stop_event:
+        stop_event.set()
+        return {"ok": True, "msg": "Arrêt demandé"}
+    else:
+        return {"ok": False, "msg": "Aucun téléchargement actif pour ce modèle"}
+
+def download_worker(entry, model_id, event, stop_event):
     try:
         hf_token, civitai_token = read_env_file()
         if "git" in entry:
-            download_git_entry(entry, model_id)
+            download_git_entry(entry, model_id, stop_event)
         else:
-            download_url_entry(entry, model_id, hf_token, civitai_token)
-        PROGRESS[model_id]["progress"] = 100
-        PROGRESS[model_id]["status"] = "done"
+            download_url_entry(entry, model_id, hf_token, civitai_token, stop_event)
+        if not stop_event.is_set():
+            PROGRESS[model_id]["progress"] = 100
+            PROGRESS[model_id]["status"] = "done"
+        else:
+            PROGRESS[model_id]["status"] = "stopped"
     except Exception as e:
         PROGRESS[model_id]["status"] = "error"
         PROGRESS[model_id]["error"] = str(e)
     finally:
-        # Signale à tous les threads en attente que le téléchargement est terminé
         event.set()
-        # Nettoyage de l'event pour éviter les fuites mémoire
         DOWNLOAD_EVENTS.pop(model_id, None)
+        STOP_EVENTS.pop(model_id, None)
 
-def download_git_entry(entry, model_id):
+def download_git_entry(entry, model_id, stop_event=None):
     import subprocess
     base_dir = get_models_base_dir()
     dest_dir = entry["dest"].replace("${BASE_DIR}", base_dir)
@@ -194,9 +231,17 @@ def download_git_entry(entry, model_id):
         return
     os.makedirs(os.path.dirname(dest_dir), exist_ok=True)
     proc = subprocess.Popen(["git", "clone", entry["git"], dest_dir])
-    proc.wait()
+    while proc.poll() is None:
+        if stop_event and stop_event.is_set():
+            proc.terminate()
+            PROGRESS[model_id]["status"] = "stopped"
+            return
+        # Sleep un peu pour ne pas boucler trop vite
+        import time
+        time.sleep(0.5)
+    # ...existing code...
 
-def download_url_entry(entry, model_id, hf_token=None, civitai_token=None):
+def download_url_entry(entry, model_id, hf_token=None, civitai_token=None, stop_event=None):
     import requests
     base_dir = get_models_base_dir()
     url = entry["url"]
@@ -217,11 +262,14 @@ def download_url_entry(entry, model_id, hf_token=None, civitai_token=None):
     downloaded = 0
     with open(dest, "wb") as f:
         for chunk in r.iter_content(chunk_size=8192):
+            if stop_event and stop_event.is_set():
+                PROGRESS[model_id]["status"] = "stopped"
+                break
             if chunk:
                 f.write(chunk)
                 downloaded += len(chunk)
                 PROGRESS[model_id]["progress"] = int(downloaded * 100 / total) if total else 0
-    PROGRESS[model_id]["progress"] = 100
+    # ...existing code...
 
 @api_router.post("/delete")
 def delete_model(entry: dict, user=Depends(protected)):
@@ -299,3 +347,21 @@ def load_base_dir():
     with open(MODELS_JSON, "r", encoding="utf-8") as f:
         data = json.load(f)
     return data.get("config", {}).get("BASE_DIR", "")
+
+def get_total_dir_size(path):
+    total = 0
+    for dirpath, dirnames, filenames in os.walk(path):
+        for f in filenames:
+            fp = os.path.join(dirpath, f)
+            try:
+                total += os.path.getsize(fp)
+            except Exception:
+                pass
+    return total
+
+@api_router.get("/total_size")
+def total_size(user=Depends(protected)):
+    """Retourne la taille totale (en octets) du répertoire base_dir."""
+    base_dir = os.environ.get("COMFYUI_MODEL_DIR", ".")
+    size = get_total_dir_size(base_dir)
+    return {"base_dir": base_dir, "total_size": size}

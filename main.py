@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.responses import Response
 from api import api_router, decode_jwt
+from file_manager_api import file_router
 
 app = FastAPI()
 
@@ -55,6 +56,7 @@ async def auth_middleware(request: Request, call_next):
     return await call_next(request)
 
 app.include_router(api_router)
+app.include_router(file_router)
 
 @app.get("/")
 async def serve_index():

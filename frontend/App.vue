@@ -36,7 +36,16 @@
     </div>
     <div v-else>
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="mb-0">ComfyUI Model Manager</h1>
+        <h1 class="mb-0">
+          ComfyUI Model Manager
+          <span
+            v-if="totalSize !== null"
+            class="fs-6 text-muted"
+            style="margin-left:1em;"
+          >
+            (Total size: {{ formatSize(totalSize) }})
+          </span>
+        </h1>
         <button class="btn btn-outline-secondary" @click="logout">
           Logout
         </button>
@@ -220,6 +229,12 @@
                         ></div>
                       </div>
                     </div>
+                    <button
+                      class="btn btn-outline-danger btn-sm ms-3"
+                      @click="stopDownload(model)"
+                    >
+                      Stop
+                    </button>
                   </li>
                 </ul>
               </div>
@@ -443,8 +458,10 @@ import {
   change_user_ok,
   changeUser,
   activeDownloads,
+  stopDownload,
   useDownloadsPolling,
   useAppLogic, // <-- Ajout import
+  totalSize,
 } from "./App.logic.js";
 
 useAppLogic(); // <-- Ajouté ici
