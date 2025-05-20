@@ -18,7 +18,8 @@ JWT_ALGO = "HS256"
 JWT_EXP_MINUTES = 60
 
 security = HTTPBearer()
-api_router = APIRouter(prefix="/api")
+api_router = APIRouter(prefix="/api/models")
+auth_router = APIRouter(prefix="/api/auth")
 
 DOWNLOAD_EVENTS = {}  # model_id -> threading.Event
 STOP_EVENTS = {}      # model_id -> threading.Event  # <-- Ajouté
@@ -77,7 +78,7 @@ class ChangeUserRequest(BaseModel):
     new_username: str
     new_password: str
 
-@api_router.post("/login")
+@auth_router.post("/login")
 def login(req: LoginRequest):
     if verify_user(req.username, req.password):
         token = create_jwt(req.username)
@@ -108,7 +109,7 @@ def get_models_base_dir():
     else:
         return load_base_dir()
 
-@api_router.get("/models")
+@api_router.get("/")
 def list_models(user=Depends(protected)):
     """Liste tous les modèles du JSON et leur état sur le disque."""
     groups = load_models()
@@ -239,7 +240,6 @@ def download_git_entry(entry, model_id, stop_event=None):
         # Sleep un peu pour ne pas boucler trop vite
         import time
         time.sleep(0.5)
-    # ...existing code...
 
 def download_url_entry(entry, model_id, hf_token=None, civitai_token=None, stop_event=None):
     import requests
@@ -269,7 +269,6 @@ def download_url_entry(entry, model_id, hf_token=None, civitai_token=None, stop_
                 f.write(chunk)
                 downloaded += len(chunk)
                 PROGRESS[model_id]["progress"] = int(downloaded * 100 / total) if total else 0
-    # ...existing code...
 
 @api_router.post("/delete")
 def delete_model(entry: dict, user=Depends(protected)):

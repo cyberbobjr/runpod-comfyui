@@ -10,8 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "bootswatch": "^5.3.6",
     "vue": "^3.4.0",
-    "vue-router": "^4.5.1"
+    "vue-router": "^4.5.1",
+    "vue3-tree": "^0.11.5"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.5.0",

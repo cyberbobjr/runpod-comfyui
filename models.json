@@ -379,28 +379,32 @@
       {
         "url": "https://huggingface.co/Comfy-Org/HiDream-I1_ComfyUI/resolve/main/split_files/text_encoders/clip_g_hidream.safetensors",
         "dest": "${BASE_DIR}/text_encoders/HiDream/clip_g_hidream.safetensors",
-        "type": "text_encoders",
+        "type": "clip",
+        "tags": [],
         "hash": "3771e70e36450e5199f30bad61a53faae85a2e02606974bcda0a6a573c0519d5",
         "size": 1389743104
       },
       {
         "url": "https://huggingface.co/Comfy-Org/HiDream-I1_ComfyUI/resolve/main/split_files/text_encoders/clip_l_hidream.safetensors",
         "dest": "${BASE_DIR}/text_encoders/HiDream/clip_l_hidream.safetensors",
-        "type": "text_encoders",
+        "type": "clip",
+        "tags": [],
         "hash": "706fdb88e22e18177b207837c02f4b86a652abca0302821f2bfa24ac6aea4f71",
         "size": 247586528
       },
       {
         "url": "https://huggingface.co/Comfy-Org/HiDream-I1_ComfyUI/resolve/main/split_files/text_encoders/llama_3.1_8b_instruct_fp8_scaled.safetensors",
         "dest": "${BASE_DIR}/text_encoders/HiDream/llama_3.1_8b_instruct_fp8_scaled.safetensors",
-        "type": "text_encoders",
+        "type": "clip",
+        "tags": [],
         "hash": "9f86897bbeb933ef4fd06297740edb8dd962c94efcd92b373a11460c33765ea6",
         "size": 9081258056
       },
       {
         "url": "https://huggingface.co/Comfy-Org/HiDream-I1_ComfyUI/resolve/main/split_files/text_encoders/t5xxl_fp8_e4m3fn_scaled.safetensors",
         "dest": "${BASE_DIR}/text_encoders/HiDream/t5xxl_fp8_e4m3fn_scaled.safetensors",
-        "type": "text_encoders",
+        "type": "clip",
+        "tags": [],
         "src": "https://civitai.com/models/922390",
         "hash": "a498f0485dc9536735258018417c3fd7758dc3bccc0a645feaa472b34955557a",
         "size": 5157348688
@@ -421,6 +425,39 @@
           "nsfw"
         ],
         "src": "https://civitai.com/models/1498292"
+      },
+      {
+        "url": "https://huggingface.co/Comfy-Org/HiDream-I1_ComfyUI/resolve/main/split_files/text_encoders/clip_g_hidream.safetensors",
+        "dest": "${BASE_DIR}/clip/HiDream/clip_g_hidream.safetensors",
+        "type": "clip",
+        "tags": [],
+        "hash": "3771e70e36450e5199f30bad61a53faae85a2e02606974bcda0a6a573c0519d5",
+        "size": 1389743104
+      },
+      {
+        "url": "https://huggingface.co/Comfy-Org/HiDream-I1_ComfyUI/resolve/main/split_files/text_encoders/clip_l_hidream.safetensors",
+        "dest": "${BASE_DIR}/clip/HiDream/clip_l_hidream.safetensors",
+        "type": "clip",
+        "tags": [],
+        "hash": "706fdb88e22e18177b207837c02f4b86a652abca0302821f2bfa24ac6aea4f71",
+        "size": 247586528
+      },
+      {
+        "url": "https://huggingface.co/Comfy-Org/HiDream-I1_ComfyUI/resolve/main/split_files/text_encoders/llama_3.1_8b_instruct_fp8_scaled.safetensors",
+        "dest": "${BASE_DIR}/clip/HiDream/llama_3.1_8b_instruct_fp8_scaled.safetensors",
+        "type": "clip",
+        "tags": [],
+        "hash": "9f86897bbeb933ef4fd06297740edb8dd962c94efcd92b373a11460c33765ea6",
+        "size": 9081258056
+      },
+      {
+        "url": "https://huggingface.co/Comfy-Org/HiDream-I1_ComfyUI/resolve/main/split_files/text_encoders/t5xxl_fp8_e4m3fn_scaled.safetensors",
+        "dest": "${BASE_DIR}/clip/HiDream/t5xxl_fp8_e4m3fn_scaled.safetensors",
+        "type": "clip",
+        "tags": [],
+        "src": "https://civitai.com/models/922390",
+        "hash": "a498f0485dc9536735258018417c3fd7758dc3bccc0a645feaa472b34955557a",
+        "size": 5157348688
       }
     ],
     "HiDream GGUF": [
@@ -540,6 +577,23 @@
         ],
         "src": "https://civitai.com/models/1433071/bouncy-forward-bends-wan-i2v-14b?modelVersionId=1619900",
         "size": 359259464
+      }
+    ],
+    "SDXL - Pony": [
+      {
+        "url": "https://civitai.com/api/download/models/1761857",
+        "dest": "${BASE_DIR}/checkpoints/Pony/aniversePonyXL_v60.safetensors",
+        "type": "checkpoint",
+        "tags": [],
+        "src": "https://civitai.com/models/594253/aniverse-pony-xl"
+      },
+      {
+        "url": "https://civitai.com/api/download/models/654689?type=Model&format=SafeTensor&size=full&fp=fp16",
+        "dest": "${BASE_DIR}/checkpoints/Pony/nostramix_v20SDXLVAE.safetensors",
+        "type": "checkpoint",
+        "tags": [],
+        "src": "https://civitai.com/models/586582?modelVersionId=654689",
+        "size": 6938040682
       }
     ]
   }

@@ -39,14 +39,14 @@ function handle401(res) {
 
 async function fetchModels() {
     if (!token.value) return
-    const res = await apiFetch('/models')
+    const res = await apiFetch('/models/') // <-- Ajoute le slash final
     if (handle401(res)) return
     models.value = await res.json()
 }
 
 async function fetchTokens() {
     if (!token.value) return
-    const res = await apiFetch('/tokens')
+    const res = await apiFetch('/models/tokens')
     if (handle401(res)) return
     const data = await res.json()
     hf_token.value = data.hf_token || ''
@@ -55,14 +55,14 @@ async function fetchTokens() {
 
 async function fetchTotalSize() {
     if (!token.value) return
-    const res = await apiFetch('/total_size')
+    const res = await apiFetch('/models/total_size')
     if (handle401(res)) return
     const data = await res.json()
     totalSize.value = data.total_size
 }
 
 async function saveTokens() {
-    const res = await apiFetch('/tokens', {
+    const res = await apiFetch('/models/tokens', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ hf_token: hf_token.value, civitai_token: civitai_token.value })
@@ -72,7 +72,7 @@ async function saveTokens() {
 }
 
 async function download(model) {
-    const res = await apiFetch('/download', {
+    const res = await apiFetch('/models/download', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(model.entry)
@@ -82,7 +82,7 @@ async function download(model) {
 }
 
 async function stopDownload(model) {
-    const res = await apiFetch('/stop_download', {
+    const res = await apiFetch('/models/stop_download', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(model.entry)
@@ -92,7 +92,7 @@ async function stopDownload(model) {
 }
 
 async function del(model) {
-    const res = await apiFetch('/delete', {
+    const res = await apiFetch('/models/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(model.entry)
@@ -103,7 +103,7 @@ async function del(model) {
 
 function pollProgress(model) {
     const interval = setInterval(async () => {
-        const res = await apiFetch('/progress', {
+        const res = await apiFetch('/models/progress', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(model.entry)
@@ -124,7 +124,7 @@ function pollProgress(model) {
 
 async function doLogin() {
     login_error.value = ''
-    const res = await apiFetch('/login', {
+    const res = await apiFetch('/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: login_user.value, password: login_pass.value })
@@ -267,7 +267,7 @@ const change_user_ok = ref(false)
 async function changeUser() {
     change_user_msg.value = ''
     change_user_ok.value = false
-    const res = await apiFetch('/change_user', {
+    const res = await apiFetch('/models/change_user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
