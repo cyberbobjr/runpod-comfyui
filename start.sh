@@ -3,7 +3,12 @@
 # Limite la taille du fichier de log à 10 Mo, conserve 3 archives (logrotate simple via logrotate si dispo)
 LOGFILE="comfyui-server.log"
 MAXSIZE=10485760 # 10 Mo
-export COMFYUI_MODEL_DIR="D:/runpod-volume"
+
+# Set COMFYUI_MODEL_DIR only if it doesn't exist
+if [ -z "${COMFYUI_MODEL_DIR}" ]; then
+    export COMFYUI_MODEL_DIR="D:/runpod-volume"
+fi
+
 if [ -f "$LOGFILE" ] && [ $(stat -c%s "$LOGFILE") -ge $MAXSIZE ]; then
     mv "$LOGFILE" "$LOGFILE.1"
     [ -f "$LOGFILE.1" ] && mv "$LOGFILE.1" "$LOGFILE.2"
