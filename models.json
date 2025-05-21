@@ -586,14 +586,6 @@
         "type": "checkpoint",
         "tags": [],
         "src": "https://civitai.com/models/594253/aniverse-pony-xl"
-      },
-      {
-        "url": "https://civitai.com/api/download/models/654689?type=Model&format=SafeTensor&size=full&fp=fp16",
-        "dest": "${BASE_DIR}/checkpoints/Pony/nostramix_v20SDXLVAE.safetensors",
-        "type": "checkpoint",
-        "tags": [],
-        "src": "https://civitai.com/models/586582?modelVersionId=654689",
-        "size": 6938040682
       }
     ]
   }
