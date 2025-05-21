@@ -100,11 +100,6 @@
                   </div>
                   <div>
                     <button 
-                      class="btn btn-sm btn-outline-primary me-2"
-                      @click="currentGroup = groupName">
-                      <i class="fas fa-plus"></i>
-                    </button>
-                    <button 
                       class="btn btn-sm btn-outline-secondary me-2"
                       @click="prepareEditGroup(groupName)">
                       <i class="fas fa-edit"></i>
