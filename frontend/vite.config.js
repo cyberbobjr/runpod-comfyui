@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [vue()],
   publicDir: 'public',
   build: {
@@ -15,6 +15,18 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
+      // Add this alias to use the Vue build with the template compiler
+      'vue': 'vue/dist/vue.esm-bundler.js'
+    }
+  },
+  server: {
+    proxy: {
+      // Proxy /api to backend in dev mode
+      '/api': {
+        target: 'http://localhost:8082',
+        changeOrigin: true,
+        secure: false,
+      }
     }
   }
-})
+}))

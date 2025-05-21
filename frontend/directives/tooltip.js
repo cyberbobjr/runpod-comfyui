@@ -1,3 +1,5 @@
+import tippy from 'tippy.js'; // Make sure this import is present
+
 // Directive pour des tooltips améliorés avec Tippy.js
 export const tooltip = {
   mounted(el, binding) {

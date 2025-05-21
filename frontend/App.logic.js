@@ -1,4 +1,5 @@
 import { ref, onMounted, computed, watch } from 'vue'
+import { useConfirm } from './plugins/confirm-dialog'; // Import useConfirm
 
 const models = ref([])
 const hf_token = ref('')
@@ -8,6 +9,9 @@ const login_user = ref('')
 const login_pass = ref('')
 const login_error = ref('')
 const totalSize = ref(null)
+
+// Initialize confirm and alert from useConfirm
+const { confirm, alert } = useConfirm();
 
 // Remplace la fonction apiUrl pour ne pas forcer le port 8081 et utiliser le même host/port que le frontend
 function apiUrl(path) {
@@ -68,7 +72,7 @@ async function saveTokens() {
         body: JSON.stringify({ hf_token: hf_token.value, civitai_token: civitai_token.value })
     })
     if (handle401(res)) return
-    alert('Tokens saved')
+    await alert({ title: 'Success', message: 'Tokens saved' }); // Replaced window.alert
 }
 
 async function download(model) {
@@ -159,19 +163,27 @@ function missingTokenMsg(model) {
     return msg
 }
 
-function confirmDownload(model) {
+async function confirmDownload(model) {
     const msg = missingTokenMsg(model)
     if (msg) {
-        window.alert(msg.trim())
+        await alert({ title: 'Token Required', message: msg.trim() }); // Replaced window.alert
         return
     }
-    if (window.confirm(`Do you really want to download this model?`)) {
+    const confirmed = await confirm({ // Replaced window.confirm
+        title: 'Confirm Download',
+        message: 'Do you really want to download this model?'
+    });
+    if (confirmed) {
         download(model)
     }
 }
 
-function confirmDelete(model) {
-    if (window.confirm(`Do you really want to delete this model?`)) {
+async function confirmDelete(model) {
+    const confirmed = await confirm({ // Replaced window.confirm
+        title: 'Confirm Delete',
+        message: 'Do you really want to delete this model?'
+    });
+    if (confirmed) {
         del(model)
     }
 }
@@ -202,9 +214,13 @@ const selectedToDownload = computed(() =>
     models.value.filter(m => selected.value[modelKey(m)] && !m.exists && m.status !== 'downloading')
 )
 
-function confirmDeleteSelected() {
+async function confirmDeleteSelected() {
     if (selectedToDelete.value.length === 0) return
-    if (window.confirm(`Do you really want to delete ${selectedToDelete.value.length} model(s)?`)) {
+    const confirmed = await confirm({ // Replaced window.confirm
+        title: 'Confirm Delete Selected',
+        message: `Do you really want to delete ${selectedToDelete.value.length} model(s)?`
+    });
+    if (confirmed) {
         for (const m of selectedToDelete.value) {
             del(m)
             selected.value[modelKey(m)] = false
@@ -212,7 +228,7 @@ function confirmDeleteSelected() {
     }
 }
 
-function confirmDownloadSelected() {
+async function confirmDownloadSelected() {
     if (selectedToDownload.value.length === 0) return
     let missing = []
     for (const m of selectedToDownload.value) {
@@ -220,10 +236,17 @@ function confirmDownloadSelected() {
         if (msg) missing.push(`- ${m.entry.dest ? m.entry.dest.split('/').pop() : m.entry.git} :\n${msg.trim()}`)
     }
     if (missing.length) {
-        window.alert('Some models cannot be downloaded:\n\n' + missing.join('\n\n'))
+        await alert({ // Replaced window.alert
+            title: 'Download Warning',
+            message: 'Some models cannot be downloaded:\n\n' + missing.join('\n\n')
+        });
         return
     }
-    if (window.confirm(`Do you really want to download ${selectedToDownload.value.length} model(s)?`)) {
+    const confirmed = await confirm({ // Replaced window.confirm
+        title: 'Confirm Download Selected',
+        message: `Do you really want to download ${selectedToDownload.value.length} model(s)?`
+    });
+    if (confirmed) {
         for (const m of selectedToDownload.value) {
             download(m)
             selected.value[modelKey(m)] = false

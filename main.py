@@ -97,13 +97,14 @@ async def serve_index():
 # Cette route doit être placée après les routes spécifiques mais avant le catch-all statique
 @app.get("/{full_path:path}")
 async def serve_spa(full_path: str):
-    # Ne pas intercepter les routes API
+    # Ne pas intercepter les routes API (corrigé pour être strict)
     if full_path.startswith("api/"):
-        return Response(status_code=404)
+        # Laisser FastAPI gérer la 404 pour les routes API inconnues
+        return JSONResponse(status_code=404, content={"detail": "Not Found"})
     logger.info(f"Serving SPA for path: {full_path}")
     return FileResponse(os.path.join("frontend", "dist", "index.html"))
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="127.0.0.1", port=8081, reload=True)
+    uvicorn.run("main:app", host="127.0.0.1", port=8082, reload=True)
 

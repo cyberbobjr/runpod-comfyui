@@ -35,7 +35,7 @@
       </div>
     </div>
     <div v-else class="d-flex flex-column flex-grow-1">
-      <div class="d-flex justify-content-between align-items-center mb-3">
+      <div class="d-flex justify-content-between align-items-center mb-3 bg-primary p-3 rounded">
         <h1 class="mb-0">
           ComfyUI Model Manager
           <span
@@ -56,7 +56,23 @@
             to="/models"
             class="nav-link"
             :class="{ active: $route.path === '/models' }"
-            >Model Management</router-link
+            ><i class="fas fa-download me-1"></i>Install Models</router-link
+          >
+        </li>
+        <li class="nav-item">
+          <router-link
+            to="/install-bundles"
+            class="nav-link"
+            :class="{ active: $route.path === '/install-bundles' }"
+            ><i class="fas fa-cubes me-1"></i>Install Bundles</router-link
+          >
+        </li>
+        <li class="nav-item">
+          <router-link
+            to="/bundles"
+            class="nav-link"
+            :class="{ active: $route.path === '/bundles' }"
+            >Bundle Management</router-link
           >
         </li>
         <li class="nav-item">
@@ -75,12 +91,22 @@
             >JSON Editor</router-link
           >
         </li>
+        <li class="nav-item">
+          <router-link
+            to="/settings"
+            class="nav-link"
+            :class="{ active: $route.path === '/settings' }"
+            >Settings</router-link
+          >
+        </li>
       </ul>
       <div class="flex-grow-1" style="overflow-y: auto;">
         <router-view />
       </div>
     </div>
   </div>
+  <!-- Make sure this is at the end of your template -->
+  <GlobalConfirmDialog />
 </template>
 
 <script setup>

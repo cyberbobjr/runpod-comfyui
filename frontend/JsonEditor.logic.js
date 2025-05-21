@@ -1,5 +1,6 @@
 import { ref, onMounted, reactive, computed } from 'vue';
 import { apiFetch, handle401, token, useAppLogic } from './App.logic.js';
+import { useConfirm } from './plugins/confirm-dialog';
 
 // État des données et UI
 const jsonData = ref(null);
@@ -14,6 +15,11 @@ const showEditGroupModal = ref(false);
 const showModelModal = ref(false);
 const newGroupName = ref('');
 const oldGroupName = ref('');
+// Track which accordions are open
+const openAccordions = ref({
+  mainAccordion: ['collapseList'], // Start with model list open
+  modelsGroups: [] // To store open model group IDs
+});
 
 // État des formulaires
 const formData = reactive({
@@ -45,6 +51,15 @@ const modelFormData = ref({
 // État pour la base de répertoire
 const baseDir = ref('');
 
+// Variables pour stocker la position de défilement
+const scrollPositions = ref({
+  pageScroll: 0,
+  expandedGroups: []
+});
+
+// Variables pour le dialogue de confirmation
+const { confirm, alert } = useConfirm();
+
 // Fonctions utilitaires
 const resetForm = () => {
   modelFormData.value = {
@@ -72,9 +87,33 @@ const resetForm = () => {
   formData.size = null;
 };
 
+// Sauvegarder l'état de défilement et des accordéons ouverts
+const saveScrollState = () => {
+  // Sauvegarder la position de défilement de la page
+  scrollPositions.value.pageScroll = window.scrollY;
+  
+  // Sauvegarder les groupes de modèles actuellement ouverts
+  scrollPositions.value.expandedGroups = [...openAccordions.value.modelsGroups];
+};
+
+// Restaurer l'état de défilement et des accordéons
+const restoreScrollState = () => {
+  // Attendre que le DOM soit mis à jour
+  setTimeout(() => {
+    // Restaurer les accordéons qui étaient ouverts
+    openAccordions.value.modelsGroups = [...scrollPositions.value.expandedGroups];
+    
+    // Restaurer la position de défilement
+    window.scrollTo(0, scrollPositions.value.pageScroll);
+  }, 50);
+};
+
 // Charger les données JSON du modèle
 const fetchJsonData = async () => {
   if (!token.value) return;
+  
+  // Sauvegarder l'état avant de charger les données
+  saveScrollState();
   
   isLoading.value = true;
   jsonError.value = null;
@@ -98,6 +137,9 @@ const fetchJsonData = async () => {
     jsonError.value = `Failed to load models: ${error.message}`;
   } finally {
     isLoading.value = false;
+    
+    // Restaurer l'état après le chargement des données
+    restoreScrollState();
   }
 };
 
@@ -193,7 +235,14 @@ const updateGroupName = async () => {
 
 // Supprimer un groupe
 const deleteGroup = async (groupName) => {
-  if (!confirm(`Are you sure you want to delete the group "${groupName}" and all its models?`)) {
+  const confirmed = await confirm({
+    title: 'Confirm Deletion',
+    message: `Are you sure you want to delete the group "${groupName}" and all its models?`,
+    confirmLabel: 'Delete',
+    cancelLabel: 'Cancel'
+  });
+  
+  if (!confirmed) {
     return;
   }
   
@@ -320,38 +369,32 @@ const editModelEntry = (groupName, model) => {
 
 // Mettre à jour un modèle
 const updateModelEntry = async () => {
-  if (!currentGroup.value) {
+  if (!modelFormData.value.group) {
     showSaveMessage('Group selection is required', false);
     return;
   }
   
   // Validation des champs obligatoires
-  if (!formData.dest && !formData.git) {
+  if (!modelFormData.value.entry.dest && !modelFormData.value.entry.git) {
     showSaveMessage('Either "dest" or "git" field is required', false);
     return;
   }
   
-  // Préparer les données du modèle
-  const modelEntry = {
-    url: formData.url || undefined,
-    dest: formData.dest || undefined,
-    git: formData.git || undefined,
-    type: formData.type || undefined,
-    tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()) : [],
-    src: formData.src || undefined,
-    hash: formData.hash || undefined,
-    size: formData.size ? parseInt(formData.size, 10) : undefined
-    // La propriété headers a été supprimée
-  };
+  if (!modelFormData.value.entry.url && !modelFormData.value.entry.git) {
+    showSaveMessage('Either "url" or "git" field is required', false);
+    return;
+  }
+  
+  isSubmitting.value = true;
   
   try {
+    // Sauvegarder l'état avant de mettre à jour
+    saveScrollState();
+    
     const res = await apiFetch('/jsonmodels/entry', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        group: currentGroup.value, 
-        entry: modelEntry 
-      })
+      body: JSON.stringify(modelFormData.value)
     });
     
     if (handle401(res)) return;
@@ -367,14 +410,26 @@ const updateModelEntry = async () => {
   } catch (error) {
     console.error('Error updating model:', error);
     showSaveMessage(`Failed to update model: ${error.message}`, false);
+  } finally {
+    isSubmitting.value = false;
   }
 };
 
 // Supprimer un modèle
 const deleteModelEntry = async (groupName, model) => {
-  if (!confirm('Are you sure you want to delete this model entry?')) {
+  const confirmed = await confirm({
+    title: 'Confirm Deletion',
+    message: 'Are you sure you want to delete this model entry?',
+    confirmLabel: 'Delete',
+    cancelLabel: 'Cancel'
+  });
+  
+  if (!confirmed) {
     return;
   }
+  
+  // Sauvegarder l'état avant de supprimer
+  saveScrollState();
   
   // Identifiant pour la recherche (dest ou git)
   const modelId = model.dest || model.git;
@@ -410,12 +465,21 @@ const deleteModelEntry = async (groupName, model) => {
 
 // Afficher un message de succès/erreur temporaire
 const showSaveMessage = (message, isSuccess) => {
-  saveMessage.value = message;
-  saveSuccess.value = isSuccess;
-  
-  setTimeout(() => {
-    saveMessage.value = '';
-  }, 3000);
+  if (!isSuccess) {
+    alert({
+      title: isSuccess ? 'Success' : 'Error',
+      message: message,
+      confirmLabel: 'OK',
+      hideCancel: true
+    });
+  } else {
+    saveMessage.value = message;
+    saveSuccess.value = isSuccess;
+    
+    setTimeout(() => {
+      saveMessage.value = '';
+    }, 3000);
+  }
 };
 
 // Vérifie si un modèle a le tag NSFW
@@ -424,6 +488,21 @@ const isNSFW = (model) => {
   if (!tags) return false;
   if (Array.isArray(tags)) return tags.some(t => t.toLowerCase() === 'nsfw');
   return String(tags).toLowerCase().includes('nsfw');
+};
+
+// Toggle an accordion's open state
+const toggleAccordion = (accordionGroup, accordionId) => {
+  const index = openAccordions.value[accordionGroup].indexOf(accordionId);
+  if (index === -1) {
+    openAccordions.value[accordionGroup].push(accordionId);
+  } else {
+    openAccordions.value[accordionGroup].splice(index, 1);
+  }
+};
+
+// Check if an accordion is open
+const isAccordionOpen = (accordionGroup, accordionId) => {
+  return openAccordions.value[accordionGroup].includes(accordionId);
 };
 
 // Exporter les fonctions et variables
@@ -456,5 +535,12 @@ export {
   deleteModelEntry,
   resetForm,
   useAppLogic,
-  isNSFW
+  isNSFW,
+  openAccordions,
+  toggleAccordion,
+  isAccordionOpen,
+  scrollPositions,
+  saveScrollState,
+  restoreScrollState,
+  confirm, alert
 };

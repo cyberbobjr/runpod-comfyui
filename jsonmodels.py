@@ -1,10 +1,11 @@
 import os
 import json
 import logging
-from fastapi import APIRouter, HTTPException, Depends, Body
+from fastapi import APIRouter, HTTPException, Depends, Body, File, UploadFile
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional, Any, Union
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+import shutil
 from api import protected, get_env_file_path
 
 # Configuration du logging
@@ -15,6 +16,8 @@ logger = logging.getLogger(__name__)
 jsonmodels_router = APIRouter(prefix="/api/jsonmodels")
 
 MODELS_JSON = "models.json"
+WORKFLOW_DIR = "workflows"
+INSTALLED_BUNDLES_FILE = "installed_bundles.json"
 
 def get_models_json_path():
     """Retourne le chemin complet du fichier models.json en essayant plusieurs emplacements possibles."""
@@ -73,7 +76,7 @@ def load_models_json():
         try:
             logger.info(f"Création d'un fichier models.json vide à {models_path}")
             os.makedirs(os.path.dirname(models_path) or ".", exist_ok=True)
-            empty_data = {"config": {"BASE_DIR": ""}, "groups": {}}
+            empty_data = {"config": {"BASE_DIR": ""}, "groups": {}, "bundles": {}}
             with open(models_path, "w", encoding="utf-8") as f:
                 json.dump(empty_data, f, indent=2)
             return empty_data
@@ -87,6 +90,9 @@ def load_models_json():
     try:
         with open(models_path, "r", encoding="utf-8") as f:
             data = json.load(f)
+            # Assurer que la structure de base existe
+            if "bundles" not in data:
+                data["bundles"] = {}
             logger.info(f"Fichier models.json chargé avec succès depuis {models_path}")
             return data
     except json.JSONDecodeError as e:
@@ -188,6 +194,7 @@ class ModelEntry(BaseModel):
     hash: Optional[str] = None
     size: Optional[int] = None
     headers: Optional[Dict[str, str]] = None
+    system_requirements: Optional[Dict[str, Any]] = None
 
 class ModelEntryRequest(BaseModel):
     group: str
@@ -202,6 +209,29 @@ class UpdateModelGroupRequest(BaseModel):
 
 class ConfigUpdateRequest(BaseModel):
     base_dir: str
+
+class ModelFilters(BaseModel):
+    include_tags: List[str] = Field(default_factory=list)
+    exclude_tags: List[str] = Field(default_factory=list)
+
+class HardwareProfile(BaseModel):
+    description: str
+    model_filters: ModelFilters
+
+class Bundle(BaseModel):
+    description: str
+    workflows: List[str]  # Changed from workflow: str
+    models: List[str]
+    hardware_profiles: Dict[str, HardwareProfile] = Field(default_factory=dict)
+    workflow_params: Optional[Dict[str, Any]] = None
+
+class BundleRequest(BaseModel):
+    name: str
+    bundle: Bundle
+
+class BundleInstallRequest(BaseModel):
+    bundle: str
+    profile: str
 
 @jsonmodels_router.get("/", response_model=Dict[str, Any])
 def get_models_data(user=Depends(protected)):
@@ -260,6 +290,14 @@ def update_group_name(update_request: UpdateModelGroupRequest, user=Depends(prot
     data["groups"][update_request.new_group] = data["groups"][update_request.old_group]
     del data["groups"][update_request.old_group]
     
+    # Mettre aussi à jour les références dans les bundles
+    if "bundles" in data:
+        for bundle_name, bundle in data["bundles"].items():
+            if "models" in bundle and update_request.old_group in bundle["models"]:
+                # Remplacer l'ancien nom de groupe par le nouveau
+                index = bundle["models"].index(update_request.old_group)
+                bundle["models"][index] = update_request.new_group
+    
     save_models_json(data)
     return {"ok": True, "message": f"Groupe renommé de '{update_request.old_group}' à '{update_request.new_group}'"}
 
@@ -273,6 +311,19 @@ def delete_group(group_request: ModelGroupRequest, user=Depends(protected)):
     
     if group_request.group not in data["groups"]:
         raise HTTPException(status_code=404, detail=f"Le groupe '{group_request.group}' n'existe pas")
+    
+    # Vérifier si le groupe est utilisé dans des bundles
+    group_used_in_bundles = []
+    if "bundles" in data:
+        for bundle_name, bundle in data["bundles"].items():
+            if "models" in bundle and group_request.group in bundle["models"]:
+                group_used_in_bundles.append(bundle_name)
+    
+    if group_used_in_bundles:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Le groupe '{group_request.group}' est utilisé dans les bundles suivants: {', '.join(group_used_in_bundles)}"
+        )
     
     del data["groups"][group_request.group]
     save_models_json(data)
@@ -366,8 +417,8 @@ def update_model_entry(entry_request: ModelEntryRequest, user=Depends(protected)
         data["groups"][entry_request.group].append(entry_request.entry.dict(exclude_none=True))
     
     save_models_json(data)
-    # Correction de l'expression ternaire pour utiliser la syntaxe Python
-    return {"ok": True, "message": "Entrée de modèle mise à jour avec succès" if found else "Entrée de modèle ajoutée avec succès"}
+    message = "Entrée de modèle mise à jour avec succès" if found else "Entrée de modèle ajoutée avec succès"
+    return {"ok": True, "message": message}
 
 @jsonmodels_router.delete("/entry")
 def delete_model_entry(entry_request: ModelEntryRequest, user=Depends(protected)):
@@ -394,3 +445,268 @@ def delete_model_entry(entry_request: ModelEntryRequest, user=Depends(protected)
     
     save_models_json(data)
     return {"ok": True, "message": "Entrée de modèle supprimée avec succès"}
+
+@jsonmodels_router.get("/bundles", response_model=Dict[str, Bundle])
+def get_bundles(user=Depends(protected)):
+    """Récupère tous les bundles disponibles."""
+    data = load_models_json()
+    return data.get("bundles", {})
+
+@jsonmodels_router.post("/bundle")
+def create_bundle(bundle_request: BundleRequest, user=Depends(protected)):
+    """Crée un nouveau bundle."""
+    data = load_models_json()
+    
+    if "bundles" not in data:
+        data["bundles"] = {}
+    
+    if bundle_request.name in data["bundles"]:
+        raise HTTPException(status_code=400, detail=f"Le bundle '{bundle_request.name}' existe déjà")
+    
+    # Vérifier que les groupes de modèles référencés existent
+    for model_group in bundle_request.bundle.models:
+        if model_group not in data.get("groups", {}):
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Le groupe de modèles '{model_group}' référencé dans le bundle n'existe pas"
+            )
+    
+    # Vérifier si le fichier de workflow existe
+    workflow_path = os.path.join(WORKFLOW_DIR, bundle_request.bundle.workflow)
+    if not os.path.exists(workflow_path):
+        logger.warning(f"Le fichier de workflow '{workflow_path}' n'existe pas")
+        # C'est juste un avertissement, pas une erreur, car le fichier pourrait être ajouté plus tard
+    
+    data["bundles"][bundle_request.name] = bundle_request.bundle.dict(exclude_none=True)
+    save_models_json(data)
+    return {"ok": True, "message": f"Bundle '{bundle_request.name}' créé"}
+
+@jsonmodels_router.put("/bundle")
+def update_bundle(bundle_request: BundleRequest, user=Depends(protected)):
+    """Met à jour un bundle existant."""
+    data = load_models_json()
+    
+    if "bundles" not in data:
+        data["bundles"] = {}
+    
+    # Vérifier que les groupes de modèles référencés existent
+    for model_group in bundle_request.bundle.models:
+        if model_group not in data.get("groups", {}):
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Le groupe de modèles '{model_group}' référencé dans le bundle n'existe pas"
+            )
+    
+    was_updated = bundle_request.name in data["bundles"]
+    data["bundles"][bundle_request.name] = bundle_request.bundle.dict(exclude_none=True)
+    save_models_json(data)
+    
+    message = f"Bundle '{bundle_request.name}' " + ("mis à jour" if was_updated else "créé")
+    return {"ok": True, "message": message}
+
+@jsonmodels_router.delete("/bundle")
+def delete_bundle(bundle_name: str = Body(..., embed=True), user=Depends(protected)):
+    """Supprime un bundle."""
+    data = load_models_json()
+    
+    if "bundles" not in data or bundle_name not in data["bundles"]:
+        raise HTTPException(status_code=404, detail=f"Bundle '{bundle_name}' introuvable")
+    
+    del data["bundles"][bundle_name]
+    save_models_json(data)
+    
+    return {"ok": True, "message": f"Bundle '{bundle_name}' supprimé"}
+
+@jsonmodels_router.post("/workflow")
+async def upload_workflow(
+    workflow_file: UploadFile = File(...),
+    user=Depends(protected)
+):
+    """Upload a workflow file to the workflow directory."""
+    # Create workflow directory if it doesn't exist
+    os.makedirs(WORKFLOW_DIR, exist_ok=True)
+    
+    # Save the file
+    file_path = os.path.join(WORKFLOW_DIR, workflow_file.filename)
+    
+    try:
+        with open(file_path, "wb") as f:
+            shutil.copyfileobj(workflow_file.file, f)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to upload workflow: {str(e)}")
+    
+    return {"ok": True, "message": f"Workflow '{workflow_file.filename}' uploaded successfully"}
+
+@jsonmodels_router.get("/workflows", response_model=List[str])
+def list_workflows(user=Depends(protected)):
+    """List all available workflow files."""
+    if not os.path.exists(WORKFLOW_DIR):
+        return []
+    
+    try:
+        files = os.listdir(WORKFLOW_DIR)
+        return [f for f in files if f.endswith('.json')]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to list workflows: {str(e)}")
+
+@jsonmodels_router.delete("/workflow/{filename}")
+def delete_workflow(filename: str, user=Depends(protected)):
+    """Delete a workflow file."""
+    file_path = os.path.join(WORKFLOW_DIR, filename)
+    
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail=f"Workflow '{filename}' not found")
+    
+    try:
+        os.remove(file_path)
+        return {"ok": True, "message": f"Workflow '{filename}' deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete workflow: {str(e)}")
+
+def get_installed_bundles_path():
+    """Retourne le chemin du fichier de suivi des bundles installés."""
+    base_dir = os.environ.get("COMFYUI_MODEL_DIR", ".")
+    return os.path.join(base_dir, INSTALLED_BUNDLES_FILE)
+
+def load_installed_bundles():
+    """Charge la liste des bundles installés."""
+    path = get_installed_bundles_path()
+    if not os.path.exists(path):
+        return []
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+def save_installed_bundles(bundles):
+    """Sauvegarde la liste des bundles installés."""
+    path = get_installed_bundles_path()
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(bundles, f, indent=2)
+
+@jsonmodels_router.get("/installed-bundles", response_model=List[str])
+def get_installed_bundles(user=Depends(protected)):
+    """Get list of installed bundles."""
+    bundles = load_installed_bundles()
+    # Retourne juste le nom du bundle (et profil) sous forme "bundle:profile"
+    return [f"{b['bundle']}:{b['profile']}" for b in bundles]
+
+@jsonmodels_router.post("/install-bundle")
+def install_bundle(request: BundleInstallRequest, user=Depends(protected)):
+    """Install a bundle with specific hardware profile."""
+    data = load_models_json()
+    
+    if "bundles" not in data or request.bundle not in data["bundles"]:
+        raise HTTPException(status_code=404, detail=f"Bundle '{request.bundle}' not found")
+    
+    bundle = data["bundles"][request.bundle]
+    
+    if "hardware_profiles" not in bundle or request.profile not in bundle["hardware_profiles"]:
+        raise HTTPException(status_code=404, detail=f"Hardware profile '{request.profile}' not found in bundle")
+    
+    # TODO: Implement the actual installation logic
+    # This would involve:
+    # 1. Finding all models that match the bundle and profile
+    # 2. Downloading the missing models
+    # 3. Recording the installation
+    
+    # For now, we'll just return a success message
+    # Enregistrer l'installation
+    bundles = load_installed_bundles()
+    # Éviter les doublons
+    if not any(b["bundle"] == request.bundle and b["profile"] == request.profile for b in bundles):
+        bundles.append({"bundle": request.bundle, "profile": request.profile})
+        save_installed_bundles(bundles)
+    return {"ok": True, "message": f"Bundle '{request.bundle}' with profile '{request.profile}' installed successfully"}
+
+@jsonmodels_router.post("/uninstall-bundle")
+def uninstall_bundle(request: BundleInstallRequest, user=Depends(protected)):
+    """Uninstall a bundle with specific hardware profile and remove unused files."""
+    data = load_models_json()
+    bundles = load_installed_bundles()
+    # Trouver le bundle à désinstaller
+    if "bundles" not in data or request.bundle not in data["bundles"]:
+        raise HTTPException(status_code=404, detail=f"Bundle '{request.bundle}' not found")
+    bundle = data["bundles"][request.bundle]
+    # Retirer l'installation
+    bundles = [b for b in bundles if not (b["bundle"] == request.bundle and b["profile"] == request.profile)]
+    save_installed_bundles(bundles)
+
+    # 1. Identifier tous les bundles installés restants
+    installed_bundle_names = set((b["bundle"], b["profile"]) for b in bundles)
+    # 2. Collecter tous les modèles et workflows utilisés par les autres bundles installés
+    used_models = set()
+    used_workflows = set()
+    for b in bundles:
+        bdata = data["bundles"].get(b["bundle"])
+        if not bdata:
+            continue
+        # Ajout des modèles
+        for group in bdata.get("models", []):
+            group_entries = data.get("groups", {}).get(group, [])
+            for entry in group_entries:
+                if entry.get("dest"):
+                    used_models.add(entry["dest"])
+        # Ajout des workflows
+        for wf in bdata.get("workflows", []):
+            used_workflows.add(wf)
+
+    # 3. Pour le bundle à désinstaller, supprimer les fichiers non utilisés ailleurs
+    # Modèles
+    for group in bundle.get("models", []):
+        group_entries = data.get("groups", {}).get(group, [])
+        for entry in group_entries:
+            dest = entry.get("dest")
+            if dest and dest not in used_models:
+                # Résoudre le chemin réel
+                base_dir = data.get("config", {}).get("BASE_DIR", "")
+                if dest.startswith("${BASE_DIR}/"):
+                    rel_path = dest.replace("${BASE_DIR}/", "")
+                    file_path = os.path.join(base_dir, rel_path)
+                else:
+                    file_path = dest
+                if os.path.exists(file_path):
+                    try:
+                        os.remove(file_path)
+                        logger.info(f"Fichier modèle supprimé: {file_path}")
+                    except Exception as e:
+                        logger.warning(f"Impossible de supprimer le fichier modèle {file_path}: {e}")
+    # Workflows
+    for wf in bundle.get("workflows", []):
+        if wf not in used_workflows:
+            wf_path = os.path.join(WORKFLOW_DIR, wf)
+            if os.path.exists(wf_path):
+                try:
+                    os.remove(wf_path)
+                    logger.info(f"Fichier workflow supprimé: {wf_path}")
+                except Exception as e:
+                    logger.warning(f"Impossible de supprimer le workflow {wf_path}: {e}")
+
+    return {"ok": True, "message": f"Bundle '{request.bundle}' with profile '{request.profile}' uninstalled successfully"}
+
+@jsonmodels_router.get("/workflow/{filename}")
+def download_workflow(filename: str, download: bool = False, user=Depends(protected)):
+    """Get a workflow file."""
+    file_path = os.path.join(WORKFLOW_DIR, filename)
+    
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail=f"Workflow '{filename}' not found")
+    
+    if download:
+        # Envoie le fichier en tant que fichier à télécharger
+        return FileResponse(
+            file_path,
+            media_type="application/json",
+            filename=filename
+        )
+    else:
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            return JSONResponse(
+                content=json.loads(content)
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to read workflow: {str(e)}")

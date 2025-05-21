@@ -2,123 +2,6 @@
   <div>
     <div class="accordion mb-4" id="settingsAccordion">
       <div class="accordion-item">
-        <h2 class="accordion-header" id="heading-tokens">
-          <button
-            class="accordion-button"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#collapse-tokens"
-            aria-expanded="true"
-            aria-controls="collapse-tokens"
-          >
-            Configure tokens
-          </button>
-        </h2>
-        <div
-          id="collapse-tokens"
-          class="accordion-collapse collapse show"
-          aria-labelledby="heading-tokens"
-          data-bs-parent="#settingsAccordion"
-        >
-          <div class="accordion-body">
-            <div class="row g-2 align-items-center">
-              <div class="col-md-5">
-                <input
-                  v-model="hf_token"
-                  placeholder="HuggingFace Token"
-                  class="form-control"
-                />
-              </div>
-              <div class="col-md-5">
-                <input
-                  v-model="civitai_token"
-                  placeholder="CivitAI Token"
-                  class="form-control"
-                />
-              </div>
-              <div class="col-md-2">
-                <button @click="saveTokens" class="btn btn-success w-100">
-                  Save
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="accordion-item">
-        <h2 class="accordion-header" id="heading-user">
-          <button
-            class="accordion-button collapsed"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#collapse-user"
-            aria-expanded="false"
-            aria-controls="collapse-user"
-          >
-            Change username/password
-          </button>
-        </h2>
-        <div
-          id="collapse-user"
-          class="accordion-collapse collapse"
-          aria-labelledby="heading-user"
-          data-bs-parent="#settingsAccordion"
-        >
-          <div class="accordion-body">
-            <form @submit.prevent="changeUser">
-              <div class="row g-2 align-items-center mb-2">
-                <div class="col-md-3">
-                  <input
-                    v-model="old_username"
-                    placeholder="Current username"
-                    class="form-control"
-                    autocomplete="username"
-                  />
-                </div>
-                <div class="col-md-3">
-                  <input
-                    v-model="old_password"
-                    placeholder="Current password"
-                    type="password"
-                    class="form-control"
-                    autocomplete="current-password"
-                  />
-                </div>
-                <div class="col-md-3">
-                  <input
-                    v-model="new_username"
-                    placeholder="New username"
-                    class="form-control"
-                    autocomplete="username"
-                  />
-                </div>
-                <div class="col-md-3">
-                  <input
-                    v-model="new_password"
-                    placeholder="New password"
-                    type="password"
-                    class="form-control"
-                    autocomplete="new-password"
-                  />
-                </div>
-              </div>
-              <button class="btn btn-warning" type="submit">
-                Change credentials
-              </button>
-              <span
-                v-if="change_user_msg"
-                :class="{
-                  'text-success': change_user_ok,
-                  'text-danger': !change_user_ok,
-                }"
-                style="margin-left: 1em"
-                >{{ change_user_msg }}</span
-              >
-            </form>
-          </div>
-        </div>
-      </div>
-      <div class="accordion-item">
         <h2 class="accordion-header" id="heading-downloads">
           <button
             class="accordion-button collapsed"
@@ -191,7 +74,12 @@
         </div>
       </div>
     </div>
-    <div class="card shadow-sm">
+
+    <div class="card shadow-sm flex-grow-1" style="overflow: hidden">
+      <!-- Unification du header avec FileManager -->
+      <div class="card-header bg-primary">
+        <h2 class="mb-0 text-white">Model Manager</h2>
+      </div>
       <div class="card-body">
         <h2 class="card-title h5 mb-3">Available models</h2>
         <div class="mb-3 d-flex gap-2">
@@ -376,9 +264,6 @@
 
 <script setup>
 import {
-  hf_token,
-  civitai_token,
-  saveTokens,
   selected,
   modelKey,
   allChecked,
@@ -390,18 +275,12 @@ import {
   groupedModels,
   formatSize,
   isNSFW,
-  old_username,
-  old_password,
-  new_username,
-  new_password,
-  change_user_msg,
-  change_user_ok,
-  changeUser,
   activeDownloads,
   stopDownload,
   confirmDownload,
-  confirmDelete,
-} from "./ModelManager.logic.js";
+  confirmDelete
+} from "./App.logic.js";
+
 import { useDownloadsPolling, useAppLogic } from "./App.logic.js";
 
 useAppLogic();

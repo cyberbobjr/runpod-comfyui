@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { apiFetch, handle401, token } from './App.logic.js'
+import { useConfirm } from './plugins/confirm-dialog'
 
 const currentPath = ref('')
 const dirs = ref([]); // Ensure this is initialized as an empty array
@@ -11,6 +12,9 @@ const errorMsg = ref('')
 const refreshKey = ref(0)
 const folderStructure = ref([]); // Ensure this is initialized as an empty array
 const expandedFolders = ref({})
+
+// Dialog handlers
+const { confirm, alert } = useConfirm();
 
 // Active le mode DEBUG
 const DEBUG = true;
@@ -244,7 +248,16 @@ async function deleteFileOrDir(file) {
     
     errorMsg.value = '';
     const path = joinPath(currentPath.value, fileName);
-    if (!window.confirm(`Delete "${fileName}"?`)) return;
+    
+    const confirmed = await confirm({
+        title: 'Confirm Deletion',
+        message: `Delete "${fileName}"?`,
+        confirmLabel: 'Delete',
+        cancelLabel: 'Cancel'
+    });
+    
+    if (!confirmed) return;
+    
     const res = await apiFetch('/file/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -494,5 +507,6 @@ export {
     formatDate, formatSize, fetchAllDirs, folderStructure, 
     toggleFolder, isFolderExpanded, expandedFolders, navigateToFolder,
     downloadFile, uploadFile,
-    fetchSubdirectories, createDirectory
+    fetchSubdirectories, createDirectory,
+    confirm, alert
 }

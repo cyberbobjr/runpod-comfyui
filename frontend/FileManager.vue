@@ -110,14 +110,20 @@ import {
   folderStructure,
   expandedFolders,
   downloadFile,
-  uploadFile, // Ajouter l'import manquant ici
+  uploadFile, 
   fetchSubdirectories,
   createDirectory,
   dirs,
+  // Import confirm and alert if needed directly, or use $confirm/$alert
+  // For prompt, we'll import useConfirm to get the prompt function
 } from "./FileManager.logic.js";
 import { ref, watch, onMounted } from "vue";
 import FolderTree from "./components/FolderTree.vue";
 import DirectoryDetails from "./components/DirectoryDetails.vue";
+import { useConfirm } from './plugins/confirm-dialog'; // Import for prompt
+
+// Initialize confirm, alert, and prompt from useConfirm
+const { confirm, alert, prompt } = useConfirm();
 
 // Flag to indicate if folder tree is ready
 const treeReady = ref(false);
@@ -185,20 +191,34 @@ async function initFolderStructure() {
   }
 }
 
-function promptRename(file) {
-  const newName = window.prompt(
-    "Rename to:",
-    typeof file === "string" ? file : file.name
-  );
-  if (newName && newName !== (typeof file === "string" ? file : file.name)) {
+async function promptRename(file) {
+  const originalName = typeof file === "string" ? file : file.name;
+  const newName = await prompt({
+    title: 'Rename File/Directory',
+    message: `Rename "${originalName}" to:`,
+    promptInitialValue: originalName,
+    confirmLabel: 'Rename',
+  });
+  // newName will be null if canceled, or the string value if confirmed
+  if (newName !== null && newName !== originalName) {
     renameFileOrDir(file, newName);
   }
 }
 
-function promptCopy(file) {
+async function promptCopy(file) {
   const fileName = typeof file === "string" ? file : file.name;
-  const newName = window.prompt("Copy to (filename):", fileName + ".copy");
-  if (newName && newName !== fileName) {
+  const defaultCopyName = fileName.includes('.') 
+    ? fileName.substring(0, fileName.lastIndexOf('.')) + ".copy" + fileName.substring(fileName.lastIndexOf('.'))
+    : fileName + ".copy";
+
+  const newName = await prompt({
+    title: 'Copy File/Directory',
+    message: `Copy "${fileName}" to (filename):`,
+    promptInitialValue: defaultCopyName,
+    confirmLabel: 'Copy',
+  });
+
+  if (newName !== null && newName !== fileName) {
     copyFile(file, newName);
   }
 }
@@ -254,13 +274,17 @@ function shortenUrl(url) {
 }
 
 async function promptCreateDirectory() {
-  const dirName = window.prompt("Enter the name of the new directory:");
-  if (dirName) {
-    const success = await createDirectory(dirName);
+  const dirName = await prompt({
+    title: 'Create Directory',
+    message: 'Enter the name of the new directory:',
+    promptPlaceholder: 'New Folder Name',
+    confirmLabel: 'Create',
+  });
+
+  if (dirName !== null && dirName.trim() !== "") { // Check if not null and not empty
+    const success = await createDirectory(dirName.trim());
     if (success) {
-      // Rafraîchir la structure des dossiers pour afficher le nouveau répertoire
       await initFolderStructure();
-      // Rafraîchir les fichiers et sous-répertoires du répertoire courant
       await fetchSubdirectories();
       await fetchFiles();
     }
