@@ -14,6 +14,7 @@ const uploadedBundles = ref([]);
 const installedBundles = ref([]);
 const showBundleDetailsModal = ref(false);
 const selectedBundle = ref(null);
+const openAccordionPanels = ref(new Set());
 
 // Load uploaded bundles
 const loadUploadedBundles = async () => {
@@ -182,10 +183,20 @@ const viewBundleDetails = (bundle) => {
   showBundleDetailsModal.value = true;
 };
 
+// Toggle accordion panel
+const toggleAccordionPanel = (profileName) => {
+  if (openAccordionPanels.value.has(profileName)) {
+    openAccordionPanels.value.delete(profileName);
+  } else {
+    openAccordionPanels.value.add(profileName);
+  }
+};
+
 // Close bundle details modal
 const closeBundleDetails = () => {
   showBundleDetailsModal.value = false;
   selectedBundle.value = null;
+  openAccordionPanels.value.clear();
 };
 
 // Get model display name
@@ -503,49 +514,67 @@ onMounted(async () => {
             <p v-else class="text-text-muted">No workflows defined.</p>
           </div>
 
-          <!-- Hardware Profiles -->
+          <!-- Hardware Profiles Accordion -->
           <div>
             <h4 class="font-medium text-text-light mb-3 flex items-center">
               <FontAwesomeIcon :icon="faServer" class="mr-2" />Hardware Profiles ({{ Object.keys(selectedBundle.hardware_profiles || {}).length }})
             </h4>
-            <div v-if="Object.keys(selectedBundle.hardware_profiles || {}).length > 0" class="space-y-4">
+            <div v-if="Object.keys(selectedBundle.hardware_profiles || {}).length > 0" class="space-y-2">
               <div 
                 v-for="(profile, profileName) in selectedBundle.hardware_profiles" 
                 :key="profileName"
-                class="border border-border rounded-lg p-4"
+                class="border border-border rounded-lg overflow-hidden"
               >
-                <div class="flex items-center justify-between mb-3">
-                  <h5 class="font-medium text-text-light flex items-center">
-                    <FontAwesomeIcon :icon="faServer" class="mr-2" />{{ profileName }}
-                  </h5>
-                  <span class="text-sm text-text-muted">{{ profile.models?.length || 0 }} models</span>
-                </div>
-                <p v-if="profile.description" class="text-text-muted mb-3">{{ profile.description }}</p>
+                <!-- Accordion Header -->
+                <button
+                  @click="toggleAccordionPanel(profileName)"
+                  class="w-full px-4 py-3 bg-background-mute hover:bg-background-soft transition-colors duration-200 flex items-center justify-between text-left"
+                >
+                  <div class="flex items-center">
+                    <FontAwesomeIcon :icon="faServer" class="mr-2 text-primary" />
+                    <span class="font-medium text-text-light">{{ profileName }}</span>
+                    <span class="ml-2 text-sm text-text-muted">({{ profile.models?.length || 0 }} models)</span>
+                  </div>
+                  <FontAwesomeIcon 
+                    :icon="faDownload" 
+                    :class="['transition-transform duration-200', openAccordionPanels.has(profileName) ? 'rotate-180' : '']"
+                    class="text-text-muted"
+                  />
+                </button>
                 
-                <!-- Models in this profile -->
-                <div v-if="profile.models?.length > 0">
-                  <h6 class="text-sm font-medium text-text-light mb-2">Models:</h6>
-                  <div class="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto">
-                    <div 
-                      v-for="(model, index) in profile.models" 
-                      :key="index"
-                      class="flex items-center justify-between p-2 bg-background-soft rounded border text-sm"
-                    >
-                      <div class="flex-1 min-w-0">
-                        <div class="font-medium text-text-light truncate">
-                          {{ getModelDisplayName(model) }}
-                        </div>
-                        <div class="text-xs text-text-muted">
-                          <span class="inline-flex items-center mr-2">
-                            <FontAwesomeIcon :icon="faCubes" class="mr-1" />{{ model.type }}
-                          </span>
-                          <span v-if="model.tags && model.tags.length > 0" class="inline-flex items-center">
-                            Tags: {{ model.tags.join(', ') }}
-                          </span>
+                <!-- Accordion Content -->
+                <div 
+                  v-show="openAccordionPanels.has(profileName)"
+                  class="px-4 pb-4 bg-background-soft"
+                >
+                  <p v-if="profile.description" class="text-text-muted mb-3 mt-2">{{ profile.description }}</p>
+                  
+                  <!-- Models in this profile -->
+                  <div v-if="profile.models?.length > 0">
+                    <h6 class="text-sm font-medium text-text-light mb-2">Models:</h6>
+                    <div class="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto">
+                      <div 
+                        v-for="(model, index) in profile.models" 
+                        :key="index"
+                        class="flex items-center justify-between p-3 bg-background rounded border text-sm"
+                      >
+                        <div class="flex-1 min-w-0">
+                          <div class="font-medium text-text-light truncate">
+                            {{ getModelDisplayName(model) }}
+                          </div>
+                          <div class="text-xs text-text-muted mt-1">
+                            <span class="inline-flex items-center mr-3">
+                              <FontAwesomeIcon :icon="faCubes" class="mr-1" />{{ model.type }}
+                            </span>
+                            <span v-if="model.tags && model.tags.length > 0" class="inline-flex items-center">
+                              Tags: {{ model.tags.join(', ') }}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
+                  <div v-else class="text-text-muted text-sm">No models in this profile.</div>
                 </div>
               </div>
             </div>
@@ -606,5 +635,9 @@ onMounted(async () => {
 
 .gap-2 {
   gap: 8px;
+}
+
+.rotate-180 {
+  transform: rotate(180deg);
 }
 </style>

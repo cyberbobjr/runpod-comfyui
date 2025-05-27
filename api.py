@@ -5,7 +5,7 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, Depends, Body
 from typing import Dict, Optional
 from pydantic import BaseModel
 # Import authentication from auth.py instead
-from auth import protected,  create_jwt, verify_user, load_users
+from auth import protected, create_jwt, verify_user, load_users, hash_password, get_users_file_path
 from model_utils import ModelManager
 
 MODELS_JSON = "models.json"
@@ -38,64 +38,64 @@ def login(req: LoginRequest):
     if verify_user(req.username, req.password):
         token = create_jwt(req.username)
         return {"token": token}
-    raise HTTPException(status_code=401, detail="Identifiants invalides")
+    raise HTTPException(status_code=401, detail="Invalid credentials")
 
 @api_router.post("/change_user")
 def change_user(req: ChangeUserRequest, user=Depends(protected)):
     users = load_users()
-    # Vérifie l'ancien login/mot de passe
-    if users.get(req.old_username) != req.old_password:
+    # Check old login/password using verify_user for proper hash verification
+    if not verify_user(req.old_username, req.old_password):
         raise HTTPException(status_code=401, detail="Invalid current username or password")
-    # Empêche de remplacer par un login déjà existant (autre que soi-même)
+    # Prevent replacing with an already existing login (other than oneself)
     if req.new_username != req.old_username and req.new_username in users:
         raise HTTPException(status_code=409, detail="Username already exists")
-    # Met à jour le fichier users.json
+    # Update the users.json file with hashed password
     del users[req.old_username]
-    users[req.new_username] = req.new_password
+    users[req.new_username] = hash_password(req.new_password)
     users_path = get_users_file_path()
     with open(users_path, "w", encoding="utf-8") as f:
         json.dump(users, f)
     return {"ok": True}
 
 def get_models_base_dir():
-    """Retourne le dossier racine des modèles selon la règle COMFYUI_MODEL_DIR/models ou config.BASE_DIR."""
+    """Returns the models root directory according to COMFYUI_MODEL_DIR/models or config.BASE_DIR rule."""
     return ModelManager.get_models_dir()
 
 @api_router.get("/")
 def list_models(user=Depends(protected)):
-    """Liste tous les modèles du JSON et leur état sur le disque."""
+    """Lists all models from JSON and their status on disk."""
     groups = load_models()
     base_dir = get_models_base_dir()
     result = []
     for group, entries in groups.items():
         for entry in entries:
             dest = entry.get("dest")
-            # Remplace ${BASE_DIR} par le chemin déterminé ci-dessus
+            # Replace ${BASE_DIR} with the path determined above
             path = dest.replace("${BASE_DIR}", base_dir) if dest else None
             exists = os.path.exists(path) if path else False
             model_id = get_model_id(entry)
             progress = PROGRESS.get(model_id, {})
-            # Ajout explicite des tags dans la réponse (copie de entry pour ne pas modifier l'original)
+            # Explicit addition of tags in response (copy of entry to not modify original)
             entry_with_tags = dict(entry)
             if "tags" not in entry_with_tags:
                 entry_with_tags["tags"] = []
-            # Vérifie la taille sur le disque si le modèle existe et qu'une taille attendue est définie
+            # Check disk size if model exists and expected size is defined
             if exists and entry.get("size") is not None:
                 try:
                     actual_size = os.path.getsize(path)
                     expected_size = entry.get("size")
                     if actual_size != expected_size:
-                        # Ajoute "incorrect size" si ce n'est pas déjà présent
+                        # Add "incorrect size" if not already present
                         tags = entry_with_tags["tags"]
                         if "incorrect size" not in tags:
                             tags.append("incorrect size")
                     else:
-                        # Retire "incorrect size" si la taille est correcte et le tag est présent
+                        # Remove "incorrect size" if size is correct and tag is present
                         tags = entry_with_tags["tags"]
                         if "incorrect size" in tags:
                             tags.remove("incorrect size")
                 except Exception:
-                    # Si erreur lors de la lecture de la taille, ajoute le tag
+                    # If error reading size, add the tag
                     tags = entry_with_tags["tags"]
                     if "incorrect size" not in tags:
                         tags.append("incorrect size")
@@ -110,34 +110,34 @@ def list_models(user=Depends(protected)):
 
 @api_router.post("/download")
 def download_model(entry: dict, background_tasks: BackgroundTasks, user=Depends(protected)):
-    """Lance le téléchargement d'un modèle (url ou git), fusionne les requêtes identiques."""
+    """Starts downloading a model (url or git), merges identical requests."""
     model_id = get_model_id(entry)
     url = entry.get("url", "")
     hf_token, civitai_token = read_env_file()
     if "huggingface.co" in url and not hf_token:
-        raise HTTPException(status_code=400, detail="Le token HuggingFace est requis pour ce téléchargement.")
+        raise HTTPException(status_code=400, detail="HuggingFace token is required for this download.")
     if "civitai.com" in url and not civitai_token:
-        raise HTTPException(status_code=400, detail="Le token CivitAI est requis pour ce téléchargement.")
+        raise HTTPException(status_code=400, detail="CivitAI token is required for this download.")
 
-    # Synchronisation des téléchargements concurrents pour le même modèle
+    # Synchronization of concurrent downloads for the same model
     event = DOWNLOAD_EVENTS.get(model_id)
     if event:
-        # Un téléchargement est déjà en cours, attendre la fin
+        # A download is already in progress, wait for completion
         event.wait()
         progress = PROGRESS.get(model_id, {})
         if progress.get("status") == "done":
             return {"ok": True}
         elif progress.get("status") == "error":
-            raise HTTPException(status_code=500, detail=progress.get("error", "Erreur lors du téléchargement"))
+            raise HTTPException(status_code=500, detail=progress.get("error", "Error during download"))
         else:
-            # Statut inattendu, relancer le téléchargement
+            # Unexpected status, restart download
             pass
     else:
-        # Pas de téléchargement en cours, on crée un nouvel event
+        # No download in progress, create a new event
         event = threading.Event()
         DOWNLOAD_EVENTS[model_id] = event
         PROGRESS[model_id] = {"progress": 0, "status": "downloading"}
-        # Ajout d'un stop_event pour ce téléchargement
+        # Add a stop_event for this download
         stop_event = threading.Event()
         STOP_EVENTS[model_id] = stop_event
         background_tasks.add_task(download_worker, entry, model_id, event, stop_event)
@@ -145,14 +145,14 @@ def download_model(entry: dict, background_tasks: BackgroundTasks, user=Depends(
 
 @api_router.post("/stop_download")
 def stop_download(entry: dict, user=Depends(protected)):
-    """Arrête un téléchargement en cours pour un modèle donné."""
+    """Stops an ongoing download for a given model."""
     model_id = get_model_id(entry)
     stop_event = STOP_EVENTS.get(model_id)
     if stop_event:
         stop_event.set()
-        return {"ok": True, "msg": "Arrêt demandé"}
+        return {"ok": True, "msg": "Stop requested"}
     else:
-        return {"ok": False, "msg": "Aucun téléchargement actif pour ce modèle"}
+        return {"ok": False, "msg": "No active download for this model"}
 
 def download_worker(entry, model_id, event, stop_event):
     try:
@@ -189,7 +189,7 @@ def download_git_entry(entry, model_id, stop_event=None):
             proc.terminate()
             PROGRESS[model_id]["status"] = "stopped"
             return
-        # Sleep un peu pour ne pas boucler trop vite
+        # Sleep a bit to not loop too fast
         import time
         time.sleep(0.5)
 
@@ -200,7 +200,7 @@ def download_url_entry(entry, model_id, hf_token=None, civitai_token=None, stop_
     dest = entry["dest"].replace("${BASE_DIR}", base_dir)
     os.makedirs(os.path.dirname(dest), exist_ok=True)
     headers = entry.get("headers", {})
-    # Ajout des tokens si besoin
+    # Add tokens if needed
     if "civitai.com" in url and civitai_token:
         if "token=" not in url:
             sep = "&" if "?" in url else "?"
@@ -224,28 +224,28 @@ def download_url_entry(entry, model_id, hf_token=None, civitai_token=None, stop_
 
 @api_router.post("/progress")
 def get_progress(entry: dict = Body(...), user=Depends(protected)):
-    """Retourne la progression d'un téléchargement (POST avec entry dans le body)."""
+    """Returns download progress (POST with entry in body)."""
     model_id = get_model_id(entry)
     return PROGRESS.get(model_id, {"progress": 0, "status": "idle"})
 
 @api_router.post("/tokens")
 def set_tokens(cfg: TokenConfig, user=Depends(protected)):
-    """Définit les jetons d'API dans le fichier .env."""
+    """Sets API tokens in the .env file."""
     write_env_file(cfg.hf_token, cfg.civitai_token)
     return {"ok": True}
 
 @api_router.get("/tokens")
 def get_tokens(user=Depends(protected)):
-    """Retourne les jetons d'API stockés dans le fichier .env."""
+    """Returns API tokens stored in the .env file."""
     hf_token, civitai_token = read_env_file()
     return {"hf_token": hf_token, "civitai_token": civitai_token}
 
 def get_env_file_path():
-    """Retourne le chemin complet du fichier .env selon COMFYUI_MODEL_DIR ou le répertoire courant."""
+    """Returns the full path of the .env file according to COMFYUI_MODEL_DIR or current directory."""
     return ModelManager.get_env_file_path()
 
 def write_env_file(hf_token: Optional[str], civitai_token: Optional[str]):
-    """Écrit les jetons dans le fichier .env."""
+    """Writes tokens to the .env file."""
     lines = []
     if hf_token is not None:
         lines.append(f"HF_TOKEN={hf_token}")
@@ -257,7 +257,7 @@ def write_env_file(hf_token: Optional[str], civitai_token: Optional[str]):
         f.write("\n".join(lines))
 
 def read_env_file():
-    """Lit les jetons depuis le fichier .env."""
+    """Reads tokens from the .env file."""
     hf_token = None
     civitai_token = None
     env_path = get_env_file_path()
@@ -276,7 +276,7 @@ def load_models():
     return groups
 
 def get_model_id(entry):
-    # Utilise dest comme identifiant unique
+    # Use dest as unique identifier
     return entry.get("dest") or entry.get("git")
 
 def load_base_dir():
@@ -295,7 +295,7 @@ def get_total_dir_size(path):
 
 @api_router.get("/total_size")
 def total_size(user=Depends(protected)):
-    """Retourne la taille totale (en octets) du répertoire base_dir."""
+    """Returns the total size (in bytes) of the base_dir directory."""
     base_dir = os.environ.get("COMFYUI_MODEL_DIR", ".")
     size = get_total_dir_size(base_dir)
     return {"base_dir": base_dir, "total_size": size}

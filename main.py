@@ -103,13 +103,13 @@ async def startup_event():
         logger.error("Impossible d'importer get_models_json_path")
 
 # Monter d'abord les fichiers statiques pour qu'ils soient prioritaires
-app.mount("/assets", StaticFiles(directory="frontend/dist/assets"), name="assets")
+app.mount("/assets", StaticFiles(directory="front/dist/assets"), name="assets")
 
 # Ensuite, ajouter les routes SPA pour tout le reste
 @app.get("/")
 async def serve_index():
     logger.info("Serving index.html")
-    return FileResponse(os.path.join("frontend", "dist", "index.html"))
+    return FileResponse(os.path.join("front", "dist", "index.html"))
 
 # Cette route doit être placée après les routes spécifiques mais avant le catch-all statique
 @app.get("/{full_path:path}")
@@ -118,7 +118,7 @@ async def serve_spa(full_path: str):
     if full_path.startswith("api/"):
         return JSONResponse(status_code=404, content={"detail": "Not Found"})
     logger.info(f"Serving SPA for path: {full_path}")
-    return FileResponse(os.path.join("frontend", "dist", "index.html"))
+    return FileResponse(os.path.join("front", "dist", "index.html"))
 
 if __name__ == "__main__":
     import uvicorn

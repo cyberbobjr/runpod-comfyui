@@ -45,7 +45,7 @@ const router = createRouter({
     {
       path: '/settings',
       name: 'settings',
-      component: () => import('../views/PlaceholderView.vue'),
+      component: () => import('../components/ChangePasswordComponent.vue'),
       props: { feature: 'Settings' },
       meta: { requiresAuth: true }
     },

@@ -43,7 +43,15 @@ import {
   faMinusCircle,
   faSave,
   faUndo,
-  faExternalLinkAlt
+  faExternalLinkAlt,
+  faKey,
+  faLock,
+  faUser,
+  faUserEdit,
+  faShieldAlt,
+  faEye,
+  faEyeSlash,
+  faSpinner
 } from '@fortawesome/free-solid-svg-icons'
 
 // Add icons to the library
@@ -84,7 +92,15 @@ library.add(
   faMinusCircle,
   faSave,
   faUndo,
-  faExternalLinkAlt
+  faExternalLinkAlt,
+  faKey,
+  faLock,
+  faUser,
+  faUserEdit,
+  faShieldAlt,
+  faEye,
+  faEyeSlash,
+  faSpinner
 )
 
 import './assets/main.css'

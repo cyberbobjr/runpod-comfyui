@@ -98,6 +98,218 @@ f:\runpod-comfyui\
 └── README.md              # This file
 ```
 
+## Installation & Setup
+
+### Prerequisites
+
+- **Python 3.8+**: Required for the FastAPI backend
+- **Node.js 16+**: Required for the Vue.js frontend
+- **Git**: For cloning repositories and downloading Git-based models
+
+### Backend Setup
+
+1. **Clone the repository:**
+   ```bash
+   git clone <repository-url>
+   cd runpod-comfyui
+   ```
+
+2. **Create and activate a virtual environment:**
+   ```bash
+   python -m venv venv
+   
+   # On Windows
+   venv\Scripts\activate
+   
+   # On Linux/Mac
+   source venv/bin/activate
+   ```
+
+3. **Install Python dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Configure environment variables:**
+   Create a `.env` file in the root directory:
+   ```env
+   # Base directory for all model files (required)
+   BASE_DIR=C:\ComfyUI
+   
+   # Optional: Alternative base directory
+   COMFYUI_MODEL_DIR=C:\ComfyUI
+   
+   # API tokens for authenticated downloads (optional)
+   HF_TOKEN=your_huggingface_token_here
+   CIVITAI_TOKEN=your_civitai_token_here 
+   ```
+
+5. **Initialize the models configuration:**
+   Create or modify `models.json` with your model definitions:
+   ```json
+   {
+     "groups": {
+       "Flux": [
+         {
+           "url": "https://huggingface.co/black-forest-labs/FLUX.1-dev",
+           "dest": "models/checkpoints/flux1-dev.safetensors",
+           "type": "checkpoint",
+           "tags": ["flux", "base", "fp16"]
+         }
+       ]
+     }
+   }
+   ```
+
+### Frontend Setup
+
+1. **Navigate to the frontend directory:**
+   ```bash
+   cd front
+   ```
+
+2. **Install Node.js dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Build the frontend for production:**
+   ```bash
+   npm run build
+   ```
+
+## Running the Application
+
+### Development Mode
+
+1. **Start the backend server:**
+   ```bash
+   # From the root directory
+   python main.py
+   ```
+   The API will be available at `http://localhost:8000`
+
+2. **Start the frontend development server:**
+   ```bash
+   # In a separate terminal, from the front/ directory
+   cd front
+   npm run dev
+   ```
+   The frontend will be available at `http://localhost:5173`
+
+### Production Mode
+
+1. **Build the frontend:**
+   ```bash
+   cd front
+   npm run build
+   ```
+
+2. **Start the production server:**
+   ```bash
+   # From the root directory
+   python main.py
+   ```
+   The application will be available at `http://localhost:8000`
+
+### Docker Setup (Optional)
+
+Create a `Dockerfile` for containerized deployment:
+
+```dockerfile
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y git nodejs npm
+
+# Copy backend files
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+# Copy frontend files and build
+COPY front/ ./front/
+WORKDIR /app/front
+RUN npm install && npm run build
+
+# Copy backend source
+WORKDIR /app
+COPY . .
+
+# Expose port
+EXPOSE 8000
+
+# Start the application
+CMD ["python", "main.py"]
+```
+
+## Initial Configuration
+
+### First-Time Setup
+
+1. **Access the application:**
+   Open your browser and navigate to `http://localhost:8000`
+
+2. **Login with default credentials:**
+   - Username: `admin`
+   - Password: `admin`
+
+3. **Configure base directory:**
+   - Go to the Models section
+   - Set your ComfyUI installation path in the configuration
+
+4. **Add API tokens (optional):**
+   - Navigate to the configuration section
+   - Add your HuggingFace and CivitAI tokens for authenticated downloads
+
+### Directory Structure Setup
+
+The application will automatically create the following directory structure in your `BASE_DIR`:
+
+```
+${BASE_DIR}/
+├── models/                    # Model files organized by type
+│   ├── checkpoints/          # Base diffusion models
+│   ├── loras/               # LoRA models
+│   ├── vae/                 # VAE models
+│   ├── controlnet/          # ControlNet models
+│   └── upscale_models/      # Upscaler models
+├── user/default/workflows/   # Workflow JSON files
+├── bundles/                 # Bundle packages
+└── ComfyUI/                 # ComfyUI installation (if applicable)
+    └── workflows/           # ComfyUI workflow deployment
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Port already in use:**
+   ```bash
+   # Change the port in main.py or kill the process
+   netstat -ano | findstr :8000
+   taskkill /PID <process_id> /F
+   ```
+
+2. **Permission errors:**
+   - Ensure the `BASE_DIR` has write permissions
+   - Run as administrator on Windows if needed
+
+3. **Module not found errors:**
+   - Verify virtual environment is activated
+   - Reinstall dependencies: `pip install -r requirements.txt`
+
+4. **Frontend build errors:**
+   - Clear npm cache: `npm cache clean --force`
+   - Delete `node_modules` and reinstall: `rm -rf node_modules && npm install`
+
+### Logs and Debugging
+
+- Backend logs are displayed in the console where you run `python main.py`
+- Frontend build logs are shown during the `npm run build` process
+- API documentation is available at `http://localhost:8000/docs`
+
 ## Key Components
 
 ### DownloadManager
