@@ -576,7 +576,7 @@ def export_bundle(bundle_id: str, user=Depends(protected)):
     - Body: ZIP file containing bundle JSON and workflow files
     
     Filename format:
-    - bundle_{bundle_name}_{bundle_id}.zip
+    - bundle_{bundle_name}_v{version}.zip
     - Spaces in name are replaced by underscores
     """
     bundle_data = load_bundle(bundle_id)
@@ -585,7 +585,7 @@ def export_bundle(bundle_id: str, user=Depends(protected)):
     return FileResponse(
         bundle_path,
         media_type="application/zip",
-        filename=f"bundle_{bundle_data['name'].replace(' ', '_')}_{bundle_id}.zip"
+        filename=f"bundle_{bundle_data['name'].replace(' ', '_')}_v{bundle_data.get('version', '1.0.0')}.zip"
     )
 
 @bundle_router.post("/install", response_model=BundleInstallResponse)

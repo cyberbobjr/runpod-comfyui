@@ -77,6 +77,13 @@
                       <FontAwesomeIcon icon="edit" class="mr-1" />Edit
                     </button>
                     <button 
+                      class="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+                      @click="downloadBundle(bundle.id, bundle.name)"
+                      title="Download bundle as ZIP"
+                    >
+                      <FontAwesomeIcon icon="download" class="mr-1" />Download
+                    </button>
+                    <button 
                       class="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
                       @click="handleDeleteBundle(bundle.id)"
                     >
@@ -92,256 +99,328 @@
           <FontAwesomeIcon icon="info-circle" class="mr-2 mt-0.5" />
           <span>No bundles available. Create your first bundle below.</span>
         </div>
+        
+        <!-- New Bundle Button -->
+        <div class="mt-4 flex justify-end">
+          <button 
+            type="button" 
+            class="btn btn-primary"
+            @click="createNewBundle"
+          >
+            <FontAwesomeIcon icon="plus-circle" class="mr-1" />New Bundle
+          </button>
+        </div>
       </div>
     </div>
 
-    <!-- Create/Edit Bundle Card -->
-    <div class="card">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-semibold text-text-light flex items-center">
-          <FontAwesomeIcon :icon="currentBundle.id ? 'edit' : 'plus-circle'" class="mr-2" />
-          {{ currentBundle.id ? 'Edit Bundle' : 'Create New Bundle' }}
-        </h3>
-        <button 
-          v-if="currentBundle.id"
-          type="button" 
-          class="btn btn-outline"
-          @click="createNewBundle"
-        >
-          <FontAwesomeIcon icon="plus-circle" class="mr-1" />New Bundle
-        </button>
-      </div>
-      
+    <!-- Create/Edit Bundle Form -->
+    <div v-if="showBundleForm" class="space-y-6">
       <form @submit.prevent="handleSaveBundle" class="space-y-6">
-        <!-- Basic Info -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="form-label flex items-center">
-              <FontAwesomeIcon icon="tag" class="mr-2" />Name
-            </label>
-            <input 
-              type="text" 
-              class="form-input w-full" 
-              v-model="currentBundle.name"
-              required
+        <!-- General Information Card -->
+        <div class="card">
+          <div 
+            class="flex justify-between items-center cursor-pointer p-1 -m-1 rounded hover:bg-background-soft transition-colors"
+            @click="showGeneralSection = !showGeneralSection"
+          >
+            <h4 class="text-lg font-medium text-text-light flex items-center">
+              <FontAwesomeIcon icon="info-circle" class="mr-2" />General Information
+              <span v-if="currentBundle.id" class="ml-2 text-sm text-blue-600">(Editing: {{ currentBundle.name }})</span>
+              <span v-else class="ml-2 text-sm text-green-600">(New Bundle)</span>
+            </h4>
+            <FontAwesomeIcon 
+              :icon="showGeneralSection ? 'chevron-up' : 'chevron-down'" 
+              class="text-text-muted"
             />
           </div>
-          <div>
-            <label class="form-label flex items-center">
-              <FontAwesomeIcon icon="code-branch" class="mr-2" />Version
-            </label>
-            <input 
-              type="text" 
-              class="form-input w-full" 
-              v-model="currentBundle.version"
-              placeholder="1.0.0"
-              pattern="^\d+\.\d+\.\d+$"
-              title="Version must be in x.y.z format (e.g., 1.0.0)"
-            />
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="form-label flex items-center">
-              <FontAwesomeIcon icon="user" class="mr-2" />Author
-            </label>
-            <input 
-              type="text" 
-              class="form-input w-full" 
-              v-model="currentBundle.author"
-              placeholder="Bundle author"
-            />
-          </div>
-          <div>
-            <label class="form-label flex items-center">
-              <FontAwesomeIcon icon="globe" class="mr-2" />Website
-            </label>
-            <input 
-              type="url" 
-              class="form-input w-full" 
-              v-model="currentBundle.website"
-              placeholder="https://example.com"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label class="form-label flex items-center">
-            <FontAwesomeIcon icon="info-circle" class="mr-2" />Description
-          </label>
-          <textarea 
-            class="form-input w-full" 
-            v-model="currentBundle.description"
-            rows="3"
-          ></textarea>
-        </div>
-
-        <!-- Workflow Selection -->
-        <div>
-          <label class="form-label flex items-center">
-            <FontAwesomeIcon icon="sitemap" class="mr-2" />Workflows
-          </label>
           
-          <!-- Selected Workflows Display -->
-          <div class="bg-background-soft border border-border rounded-lg p-3 min-h-[60px] mb-2">
-            <div v-if="currentBundle.workflows.length > 0" class="flex flex-wrap gap-2">
-              <span 
-                v-for="workflow in currentBundle.workflows" 
-                :key="workflow" 
-                class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-600 text-white group"
-              >
-                <FontAwesomeIcon icon="file-code" class="mr-1" />{{ workflow }}
-                <button 
-                  type="button" 
-                  class="ml-2 w-4 h-4 flex items-center justify-center rounded-full bg-blue-500 hover:bg-red-500 text-white text-xs transition-colors duration-200 flex-shrink-0"
-                  @click.stop="removeWorkflowFromSelection(workflow)"
-                  title="Remove workflow"
+          <div v-if="showGeneralSection" class="mt-4 space-y-4">
+            <!-- Basic Info -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="form-label flex items-center">
+                  <FontAwesomeIcon icon="tag" class="mr-2" />Name
+                </label>
+                <input 
+                  type="text" 
+                  class="form-input w-full" 
+                  v-model="currentBundle.name"
+                  required
+                />
+              </div>
+              <div>
+                <label class="form-label flex items-center">
+                  <FontAwesomeIcon icon="code-branch" class="mr-2" />Version
+                </label>
+                <input 
+                  type="text" 
+                  class="form-input w-full" 
+                  v-model="currentBundle.version"
+                  placeholder="1.0.0"
+                  pattern="^\d+\.\d+\.\d+$"
+                  title="Version must be in x.y.z format (e.g., 1.0.0)"
+                />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="form-label flex items-center">
+                  <FontAwesomeIcon icon="user" class="mr-2" />Author
+                </label>
+                <input 
+                  type="text" 
+                  class="form-input w-full" 
+                  v-model="currentBundle.author"
+                  placeholder="Bundle author"
+                />
+              </div>
+              <div>
+                <label class="form-label flex items-center">
+                  <FontAwesomeIcon icon="globe" class="mr-2" />Website
+                </label>
+                <input 
+                  type="url" 
+                  class="form-input w-full" 
+                  v-model="currentBundle.website"
+                  placeholder="https://example.com"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label class="form-label flex items-center">
+                <FontAwesomeIcon icon="info" class="mr-2" />Description
+              </label>
+              <textarea 
+                class="form-input w-full" 
+                v-model="currentBundle.description"
+                rows="3"
+                placeholder="Describe your bundle..."
+              ></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Workflows Card -->
+        <div class="card">
+          <div 
+            class="flex justify-between items-center cursor-pointer p-1 -m-1 rounded hover:bg-background-soft transition-colors"
+            @click="showWorkflowsSection = !showWorkflowsSection"
+          >
+            <h4 class="text-lg font-medium text-text-light flex items-center">
+              <FontAwesomeIcon icon="sitemap" class="mr-2" />Workflows
+              <span v-if="currentBundle.workflows.length > 0" class="ml-2 text-sm text-blue-600">
+                ({{ currentBundle.workflows.length }} selected)
+              </span>
+            </h4>
+            <FontAwesomeIcon 
+              :icon="showWorkflowsSection ? 'chevron-up' : 'chevron-down'" 
+              class="text-text-muted"
+            />
+          </div>
+          
+          <div v-if="showWorkflowsSection" class="mt-4 space-y-4">
+            <!-- Selected Workflows Display -->
+            <div class="bg-background-soft border border-border rounded-lg p-3 min-h-[60px]">
+              <div v-if="currentBundle.workflows.length > 0" class="flex flex-wrap gap-2">
+                <span 
+                  v-for="workflow in currentBundle.workflows" 
+                  :key="workflow" 
+                  class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-600 text-white group"
                 >
-                  <FontAwesomeIcon icon="times" />
-                </button>
-              </span>
+                  <FontAwesomeIcon icon="file-code" class="mr-1" />{{ workflow }}
+                  <button 
+                    type="button" 
+                    class="ml-2 w-4 h-4 flex items-center justify-center rounded-full bg-blue-500 hover:bg-red-500 text-white text-xs transition-colors duration-200 flex-shrink-0"
+                    @click.stop="removeWorkflowFromSelection(workflow)"
+                    title="Remove workflow"
+                  >
+                    <FontAwesomeIcon icon="times" />
+                  </button>
+                </span>
+              </div>
+              <div v-else class="text-text-muted text-sm flex items-center">
+                <FontAwesomeIcon icon="info-circle" class="mr-1" />No workflows selected. Choose from the dropdown below.
+              </div>
             </div>
-            <div v-else class="text-text-muted text-sm flex items-center">
-              <FontAwesomeIcon icon="info-circle" class="mr-1" />No workflows selected. Choose from the dropdown below.
-            </div>
-          </div>
-          
-          <!-- Workflow Dropdown -->
-          <div class="relative">
-            <button 
-              type="button"
-              class="form-input w-full text-left flex items-center justify-between"
-              @click="showWorkflowDropdown = !showWorkflowDropdown"
-            >
-              <span class="flex items-center">
-                <FontAwesomeIcon icon="plus-circle" class="mr-2" />Add Workflows
-              </span>
-              <FontAwesomeIcon :icon="showWorkflowDropdown ? 'chevron-up' : 'chevron-down'" />
-            </button>
             
-            <div 
-              v-if="showWorkflowDropdown" 
-              class="absolute z-10 w-full mt-1 bg-background-soft border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto"
-            >
-              <div v-if="availableWorkflows.length > 0" class="p-2">
-                <div 
-                  v-for="workflow in availableWorkflows" 
-                  :key="workflow"
-                  class="flex items-center px-3 py-2 hover:bg-background-mute cursor-pointer rounded"
-                  @click="addWorkflowToSelection(workflow)"
-                >
-                  <FontAwesomeIcon icon="file-code" class="mr-2 text-blue-600" />
-                  <span>{{ workflow }}</span>
+            <!-- Workflow Dropdown -->
+            <div class="relative">
+              <button 
+                type="button"
+                class="form-input w-full text-left flex items-center justify-between"
+                @click="showWorkflowDropdown = !showWorkflowDropdown"
+              >
+                <span class="flex items-center">
+                  <FontAwesomeIcon icon="plus-circle" class="mr-2" />Add Workflows
+                </span>
+                <FontAwesomeIcon :icon="showWorkflowDropdown ? 'chevron-up' : 'chevron-down'" />
+              </button>
+              
+              <div 
+                v-if="showWorkflowDropdown" 
+                class="absolute z-10 w-full mt-1 bg-background-soft border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto"
+              >
+                <div v-if="availableWorkflows.length > 0" class="p-2">
+                  <div 
+                    v-for="workflow in availableWorkflows" 
+                    :key="workflow"
+                    class="flex items-center px-3 py-2 hover:bg-background-mute cursor-pointer rounded"
+                    @click="addWorkflowToSelection(workflow)"
+                  >
+                    <FontAwesomeIcon icon="file-code" class="mr-2 text-blue-600" />
+                    <span>{{ workflow }}</span>
+                  </div>
+                </div>
+                <div v-else class="p-4 text-text-muted text-center">
+                  <FontAwesomeIcon icon="info-circle" class="mr-1" />All workflows are already selected
                 </div>
               </div>
-              <div v-else class="p-4 text-text-muted text-center">
-                <FontAwesomeIcon icon="info-circle" class="mr-1" />All workflows are already selected
+            </div>
+            
+            <!-- Missing Workflows -->
+            <div v-if="missingWorkflows.length > 0" class="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div class="text-yellow-600 mb-2 flex items-center">
+                <FontAwesomeIcon icon="exclamation-triangle" class="mr-1" />
+                <strong>Missing workflows:</strong> 
+                <span class="ml-1 text-sm">These workflows are referenced in this bundle but are not available in the system.</span>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <span 
+                  v-for="workflow in missingWorkflows" 
+                  :key="workflow" 
+                  class="inline-flex items-center px-2 py-1 rounded text-xs bg-yellow-100 text-yellow-800 group"
+                >
+                  <FontAwesomeIcon icon="file-code" class="mr-1" />{{ workflow }}
+                  <button 
+                    type="button" 
+                    class="ml-2 w-4 h-4 flex items-center justify-center rounded-full bg-yellow-400 hover:bg-red-500 text-yellow-800 hover:text-white text-xs transition-colors duration-200 flex-shrink-0"
+                    @click.stop="removeWorkflowFromBundle(workflow)"
+                    title="Remove missing workflow"
+                  >
+                    <FontAwesomeIcon icon="times" />
+                  </button>
+                </span>
               </div>
             </div>
-          </div>
-          
-          <!-- Missing Workflows -->
-          <div v-if="missingWorkflows.length > 0" class="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <div class="text-yellow-600 mb-2 flex items-center">
-              <FontAwesomeIcon icon="exclamation-triangle" class="mr-1" />
-              <strong>Missing workflows:</strong> 
-              <span class="ml-1 text-sm">These workflows are referenced in this bundle but are not available in the system.</span>
-            </div>
-            <div class="flex flex-wrap gap-2">
-              <span 
-                v-for="workflow in missingWorkflows" 
-                :key="workflow" 
-                class="inline-flex items-center px-2 py-1 rounded text-xs bg-yellow-100 text-yellow-800 group"
+            
+            <!-- Upload New Workflow -->
+            <div class="flex">
+              <input 
+                type="file" 
+                class="form-input flex-1 rounded-r-none" 
+                id="workflow-file"
+                @change="handleWorkflowUpload"
+                accept=".json"
+              />
+              <button 
+                class="btn btn-outline rounded-l-none border-l-0" 
+                type="button" 
+                @click="triggerWorkflowUpload"
               >
-                <FontAwesomeIcon icon="file-code" class="mr-1" />{{ workflow }}
-                <button 
-                  type="button" 
-                  class="ml-2 w-4 h-4 flex items-center justify-center rounded-full bg-yellow-400 hover:bg-red-500 text-yellow-800 hover:text-white text-xs transition-colors duration-200 flex-shrink-0"
-                  @click.stop="removeWorkflowFromBundle(workflow)"
-                  title="Remove missing workflow"
-                >
-                  <FontAwesomeIcon icon="times" />
-                </button>
-              </span>
+                <FontAwesomeIcon icon="upload" class="mr-1" />Upload New Workflow
+              </button>
             </div>
-          </div>
-          
-          <!-- Upload New Workflow -->
-          <div class="mt-3 flex">
-            <input 
-              type="file" 
-              class="form-input flex-1 rounded-r-none" 
-              id="workflow-file"
-              @change="handleWorkflowUpload"
-              accept=".json"
-            />
-            <button 
-              class="btn btn-outline rounded-l-none border-l-0" 
-              type="button" 
-              @click="triggerWorkflowUpload"
-            >
-              <FontAwesomeIcon icon="upload" class="mr-1" />Upload New Workflow
-            </button>
           </div>
         </div>
         
-        <!-- Hardware Profiles -->
-        <div>
-          <div class="flex justify-between items-center mb-4">
-            <label class="form-label flex items-center mb-0">
-              <FontAwesomeIcon icon="server" class="mr-2" />Hardware Profiles
-            </label>
-            <button 
-              type="button" 
-              class="btn btn-sm btn-primary"
-              @click="addHardwareProfile"
-            >
-              <FontAwesomeIcon icon="plus-circle" class="mr-1" />Add Profile
-            </button>
+        <!-- Hardware Profiles / Models Card -->
+        <div class="card">
+          <div 
+            class="flex justify-between items-center cursor-pointer p-1 -m-1 rounded hover:bg-background-soft transition-colors"
+            @click="showModelsSection = !showModelsSection"
+          >
+            <h4 class="text-lg font-medium text-text-light flex items-center">
+              <FontAwesomeIcon icon="server" class="mr-2" />Hardware Profiles & Models
+              <span v-if="Object.keys(currentBundle.hardware_profiles).length > 0" class="ml-2 text-sm text-green-600">
+                ({{ Object.keys(currentBundle.hardware_profiles).length }} profiles)
+              </span>
+            </h4>
+            <FontAwesomeIcon 
+              :icon="showModelsSection ? 'chevron-up' : 'chevron-down'" 
+              class="text-text-muted"
+            />
           </div>
           
-          <div class="space-y-4">
-            <div 
-              v-for="(profile, name) in currentBundle.hardware_profiles" 
-              :key="name" 
-              class="border border-border rounded-lg overflow-hidden"
-            >
-              <div class="bg-background-mute px-4 py-3 flex justify-between items-center">
-                <div class="flex items-center flex-1 mr-4">
-                  <FontAwesomeIcon icon="microchip" class="mr-2 text-text-light" />
-                  <div class="flex-1 flex items-center">
-                    <input 
-                      type="text" 
-                      class="bg-transparent border-none text-text-light font-medium focus:outline-none focus:bg-background focus:border focus:border-border focus:rounded px-2 py-1 flex-1"
-                      :value="name"
-                      @blur="updateProfileName(name, $event.target.value)"
-                      @keyup.enter="$event.target.blur()"
-                      @keyup.escape="$event.target.value = name; $event.target.blur()"
-                      placeholder="Profile name"
-                    />
-                    <span class="ml-2 text-sm text-text-muted">({{ profile.models?.length || 0 }} models)</span>
+          <div v-if="showModelsSection" class="mt-4">
+            <!-- Profile Tabs -->
+            <div class="border border-border rounded-lg overflow-hidden">
+              <!-- Tab Headers -->
+              <div class="bg-background-mute border-b border-border">
+                <div class="flex overflow-x-auto">
+                  <div
+                    v-for="(profile, name) in currentBundle.hardware_profiles"
+                    :key="name"
+                    class="flex-shrink-0 border-r border-border relative"
+                  >
+                    <button
+                      type="button"
+                      class="w-full px-4 py-3 text-sm font-medium transition-colors flex items-center justify-between min-w-0"
+                      :class="activeProfileTab === name ? 'bg-background text-text-light border-b-2 border-primary' : 'text-text-muted hover:text-text-light hover:bg-background-soft'"
+                      @click="activeProfileTab = name"
+                    >
+                      <div class="flex items-center min-w-0 mr-2">
+                        <FontAwesomeIcon icon="microchip" class="mr-2 flex-shrink-0" />
+                        <span class="truncate">{{ name }}</span>
+                        <span class="ml-1 text-xs opacity-75 flex-shrink-0">({{ formatFileSize(getProfileTotalSize(profile)) }})</span>
+                      </div
+                      
+                      <!-- Profile Actions Button -->
+                      <button
+                        type="button"
+                        class="ml-2 p-1 text-xs text-text-muted hover:text-text-light hover:bg-background-soft rounded flex-shrink-0 profile-actions-container"
+                        @click.stop="toggleProfileActions(name, $event)"
+                        title="Profile actions"
+                      >
+                        <FontAwesomeIcon icon="cogs" />
+                      </button>
+                    </button>
                   </div>
+                  
+                  <!-- Add Profile Tab -->
+                  <button
+                    type="button"
+                    class="flex-shrink-0 px-4 py-3 text-sm font-medium text-text-muted hover:text-text-light hover:bg-background-soft transition-colors flex items-center"
+                    @click="addHardwareProfile"
+                  >
+                    <FontAwesomeIcon icon="plus" class="mr-1" />
+                  </button>
                 </div>
-                <button 
-                  type="button" 
-                  class="btn btn-sm bg-red-600 hover:bg-red-700 text-white"
-                  @click="removeHardwareProfile(name)"
-                >
-                  <FontAwesomeIcon icon="trash-alt" class="mr-1" />Remove
-                </button>
               </div>
-              <div class="p-4 space-y-4">
+              
+              <!-- Tab Content -->
+              <div v-if="activeProfileTab && currentBundle.hardware_profiles[activeProfileTab]" class="p-4 space-y-4">
+                <!-- Profile Description -->
                 <div>
                   <label class="form-label flex items-center">
                     <FontAwesomeIcon icon="info" class="mr-2" />Description
                   </label>
-                  <input 
-                    type="text" 
-                    class="form-input w-full" 
-                    v-model="profile.description"
+                  <input
+                    type="text"
+                    class="form-input w-full"
+                    v-model="currentBundle.hardware_profiles[activeProfileTab].description"
                     placeholder="Profile description"
                   />
+                </div>
+                
+                <!-- Profile Stats -->
+                <div class="bg-background-soft border border-border rounded-lg p-3">
+                  <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div class="flex items-center">
+                      <FontAwesomeIcon icon="cubes" class="mr-2 text-primary" />
+                      <span class="text-text-muted">Models:</span>
+                      <span class="ml-1 font-medium text-text-light">
+                        {{ currentBundle.hardware_profiles[activeProfileTab].models?.length || 0 }}
+                      </span>
+                    </div>
+                    <div class="flex items-center">
+                      <FontAwesomeIcon icon="database" class="mr-2 text-primary" />
+                      <span class="text-text-muted">Total Size:</span>
+                      <span class="ml-1 font-medium text-text-light">
+                        {{ formatFileSize(getProfileTotalSize(currentBundle.hardware_profiles[activeProfileTab])) }}
+                      </span>
+                    </div>
+                  </div>
                 </div>
                 
                 <!-- Model Selection for this Profile -->
@@ -350,10 +429,10 @@
                     <label class="form-label flex items-center mb-0">
                       <FontAwesomeIcon icon="cubes" class="mr-2" />Models for this Profile
                     </label>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       class="btn btn-sm btn-outline"
-                      @click="showModelSelector(name)"
+                      @click="showModelSelector(activeProfileTab)"
                     >
                       <FontAwesomeIcon icon="plus-circle" class="mr-1" />Add Models
                     </button>
@@ -361,9 +440,9 @@
                   
                   <!-- Selected Models Display -->
                   <div class="bg-background-soft border border-border rounded-lg p-3 min-h-[60px] mb-2">
-                    <div v-if="profile.models && profile.models.length > 0" class="space-y-2">
-                      <div 
-                        v-for="(model, index) in profile.models" 
+                    <div v-if="currentBundle.hardware_profiles[activeProfileTab].models && currentBundle.hardware_profiles[activeProfileTab].models.length > 0" class="space-y-2">
+                      <div
+                        v-for="(model, index) in currentBundle.hardware_profiles[activeProfileTab].models"
                         :key="index"
                         class="flex items-center justify-between p-2 bg-background rounded border"
                       >
@@ -375,15 +454,18 @@
                             <span class="inline-flex items-center mr-2">
                               <FontAwesomeIcon icon="tag" class="mr-1" />{{ model.type }}
                             </span>
-                            <span v-if="model.tags && model.tags.length > 0" class="inline-flex items-center">
+                            <span v-if="model.tags && model.tags.length > 0" class="inline-flex items-center mr-2">
                               <FontAwesomeIcon icon="tags" class="mr-1" />{{ model.tags.join(', ') }}
+                            </span>
+                            <span v-if="model.size" class="inline-flex items-center">
+                              <FontAwesomeIcon icon="database" class="mr-1" />{{ formatFileSize(model.size) }}
                             </span>
                           </div>
                         </div>
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           class="ml-2 text-red-600 hover:text-red-800"
-                          @click="removeModelFromProfile(name, index)"
+                          @click="removeModelFromProfile(activeProfileTab, index)"
                           title="Remove model"
                         >
                           <FontAwesomeIcon icon="trash-alt" />
@@ -396,21 +478,75 @@
                   </div>
                 </div>
               </div>
+              
+              <!-- No Profiles Message -->
+              <div v-if="Object.keys(currentBundle.hardware_profiles).length === 0" class="p-8 text-center">
+                <FontAwesomeIcon icon="server" class="text-4xl text-text-muted mb-4" />
+                <h4 class="text-lg font-medium text-text-light mb-2">No Hardware Profiles</h4>
+                <p class="text-text-muted mb-4">Create your first hardware profile to start adding models.</p>
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  @click="addHardwareProfile"
+                >
+                  <FontAwesomeIcon icon="plus-circle" class="mr-1" />Create First Profile
+                </button>
+              </div>
             </div>
           </div>
         </div>
         
         <!-- Form Buttons -->
-        <div class="flex justify-end space-x-3 pt-4">
-          <button type="button" class="btn btn-secondary" @click="resetBundleForm">
-            <FontAwesomeIcon icon="undo" class="mr-1" />Reset Form
-          </button>
-          <button type="submit" class="btn btn-primary">
-            <FontAwesomeIcon :icon="currentBundle.id ? 'save' : 'plus'" class="mr-1" />
-            {{ currentBundle.id ? 'Update' : 'Create' }} Bundle
-          </button>
+        <div class="card">
+          <div class="flex justify-between items-center">
+            <button type="button" class="btn btn-secondary" @click="cancelBundleForm">
+              <FontAwesomeIcon icon="times" class="mr-1" />Cancel
+            </button>
+            <div class="flex space-x-3">
+              <button type="button" class="btn btn-outline" @click="resetBundleForm">
+                <FontAwesomeIcon icon="undo" class="mr-1" />Reset Form
+              </button>
+              <button type="submit" class="btn btn-primary">
+                <FontAwesomeIcon :icon="currentBundle.id ? 'save' : 'plus'" class="mr-1" />
+                {{ currentBundle.id ? 'Update' : 'Create' }} Bundle
+              </button>
+            </div>
+          </div>
         </div>
       </form>
+    </div>
+
+    <!-- Profile Actions Dropdown (positioned fixed outside all containers) -->
+    <div
+      v-if="profileActionsOpen"
+      class="fixed bg-background border border-border rounded shadow-lg z-[9999] min-w-[150px] profile-actions-container"
+      :style="{
+        top: dropdownPosition.top,
+        left: dropdownPosition.left
+      }"
+      @click.stop
+    >
+      <button
+        type="button"
+        class="w-full px-3 py-2 text-left text-sm text-text-light hover:bg-background-soft flex items-center"
+        @click="startRenameProfile(profileActionsOpen)"
+      >
+        <FontAwesomeIcon icon="edit" class="mr-2" />Rename
+      </button>
+      <button
+        type="button"
+        class="w-full px-3 py-2 text-left text-sm text-text-light hover:bg-background-soft flex items-center"
+        @click="cloneProfile(profileActionsOpen)"
+      >
+        <FontAwesomeIcon icon="copy" class="mr-2" />Clone
+      </button>
+      <button
+        type="button"
+        class="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center"
+        @click="removeHardwareProfile(profileActionsOpen)"
+      >
+        <FontAwesomeIcon icon="trash-alt" class="mr-2" />Delete
+      </button>
     </div>
 
     <!-- Model Selector Modal -->
@@ -527,7 +663,7 @@
                       <FontAwesomeIcon icon="tags" class="mr-1" />{{ model.tags.join(', ') }}
                     </span>
                     <span v-if="model.size" class="inline-flex items-center">
-                      <FontAwesomeIcon icon="weight" class="mr-1" />{{ formatFileSize(model.size) }}
+                      <FontAwesomeIcon icon="database" class="mr-1" />{{ formatFileSize(model.size) }}
                     </span>
                   </div>
                 </div>
@@ -563,11 +699,60 @@
         </div>
       </div>
     </div>
+
+    <!-- Rename Profile Modal -->
+    <div v-if="showRenameModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
+      <div class="bg-background rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div class="flex justify-between items-center p-4 border-b border-border">
+          <h3 class="text-lg font-semibold text-text-light">Rename Profile</h3>
+          <button 
+            type="button" 
+            class="text-text-muted hover:text-text-light"
+            @click="cancelRenameProfile"
+          >
+            <FontAwesomeIcon icon="times" class="text-xl" />
+          </button>
+        </div>
+        
+        <div class="p-4">
+          <label class="form-label flex items-center mb-2">
+            <FontAwesomeIcon icon="tag" class="mr-2" />Profile Name
+          </label>
+          <input
+            ref="renameProfileInput"
+            type="text"
+            class="form-input w-full"
+            v-model="newProfileName"
+            @keyup.enter="confirmRenameProfile"
+            @keyup.escape="cancelRenameProfile"
+            placeholder="Enter new profile name"
+          />
+        </div>
+        
+        <div class="flex justify-end space-x-3 p-4 border-t border-border bg-background-mute">
+          <button 
+            type="button" 
+            class="btn btn-secondary"
+            @click="cancelRenameProfile"
+          >
+            Cancel
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-primary"
+            @click="confirmRenameProfile"
+            :disabled="!newProfileName.trim()"
+          >
+            <FontAwesomeIcon icon="save" class="mr-1" />Rename
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import { useNotifications } from '../composables/useNotifications';
 import api from '../services/api';
 
@@ -583,6 +768,16 @@ const currentProfileName = ref('');
 const selectedModels = ref([]);
 const modelFilter = ref('');
 const showFilterSection = ref(false);
+const activeProfileTab = ref('');
+const profileActionsOpen = ref('');
+const renamingProfile = ref('');
+const dropdownPosition = ref({ top: '0px', left: '0px' });
+const showRenameModal = ref(false);
+const newProfileName = ref('');
+const showGeneralSection = ref(true);
+const showWorkflowsSection = ref(true);
+const showModelsSection = ref(true);
+const showBundleForm = ref(false);
 
 const currentBundle = ref({
   id: '',
@@ -767,6 +962,12 @@ const uploadWorkflow = async (file) => {
 // Methods
 const createNewBundle = () => {
   resetBundleForm();
+  showBundleForm.value = true;
+};
+
+const cancelBundleForm = () => {
+  showBundleForm.value = false;
+  resetBundleForm();
 };
 
 const removeWorkflowFromBundle = async (workflow) => {
@@ -882,29 +1083,124 @@ const removeModelFromProfile = (profileName, modelIndex) => {
   }
 };
 
-const updateProfileName = (oldName, newName) => {
-  // Trim and validate the new name
-  const trimmedName = newName.trim();
-  
-  // If name is empty or unchanged, do nothing
-  if (!trimmedName || trimmedName === oldName) {
-    return;
+// Calculate total size of a profile
+const getProfileTotalSize = (profile) => {
+  if (!profile.models || profile.models.length === 0) {
+    return 0;
   }
   
-  // Check if the new name already exists
-  if (currentBundle.value.hardware_profiles[trimmedName]) {
-    error(`Profile name "${trimmedName}" already exists`);
-    return;
+  return profile.models.reduce((total, model) => {
+    return total + (model.size || 0);
+  }, 0);
+};
+
+// Lifecycle
+onMounted(async () => {
+  await Promise.all([
+    loadBundles(),
+    loadWorkflows(),
+    loadModels()
+  ]);
+  
+  // Close dropdowns when clicking outside
+  document.addEventListener('click', (event) => {
+    if (!event.target.closest('.relative')) {
+      closeDropdowns();
+    }
+    // Close profile actions dropdown
+    closeProfileActions(event);
+  });
+});
+
+// Close dropdowns when clicking outside
+const closeDropdowns = () => {
+  showWorkflowDropdown.value = false;
+  profileActionsOpen.value = '';
+};
+
+// Toggle profile actions dropdown
+const toggleProfileActions = (profileName, event) => {
+  if (profileActionsOpen.value === profileName) {
+    profileActionsOpen.value = '';
+  } else {
+    profileActionsOpen.value = profileName;
+    
+    // Calculate position for the dropdown
+    const buttonRect = event.target.getBoundingClientRect();
+    dropdownPosition.value = {
+      top: (buttonRect.bottom + window.scrollY + 4) + 'px',
+      left: (buttonRect.right - 150) + 'px' // 150px is the min-width of dropdown
+    };
+  }
+};
+
+// Close profile actions when clicking outside
+const closeProfileActions = (event) => {
+  // Check if click is outside of any profile actions dropdown
+  if (!event.target.closest('.profile-actions-container')) {
+    profileActionsOpen.value = '';
+  }
+};
+
+// Start renaming a profile
+const startRenameProfile = (profileName) => {
+  renamingProfile.value = profileName;
+  newProfileName.value = profileName;
+  profileActionsOpen.value = '';
+  showRenameModal.value = true;
+  
+  // Focus the input after the modal opens
+  nextTick(() => {
+    const input = document.querySelector('input[ref="renameProfileInput"]');
+    if (input) {
+      input.focus();
+      input.select();
+    }
+  });
+};
+
+// Confirm renaming a profile
+const confirmRenameProfile = () => {
+  if (renamingProfile.value && newProfileName.value.trim()) {
+    const trimmedName = newProfileName.value.trim();
+    if (trimmedName !== renamingProfile.value) {
+      updateProfileName(renamingProfile.value, trimmedName);
+    }
+  }
+  cancelRenameProfile();
+};
+
+// Cancel renaming a profile
+const cancelRenameProfile = () => {
+  renamingProfile.value = '';
+  newProfileName.value = '';
+  showRenameModal.value = false;
+};
+
+const cloneProfile = (profileName) => {
+  const profile = currentBundle.value.hardware_profiles[profileName];
+  if (!profile) return;
+  
+  // Find a unique name for the cloned profile
+  let clonedName = `${profileName} Copy`;
+  let counter = 1;
+  
+  while (currentBundle.value.hardware_profiles[clonedName]) {
+    clonedName = `${profileName} Copy ${counter}`;
+    counter++;
   }
   
-  // Create new profile with the new name
-  const profileData = currentBundle.value.hardware_profiles[oldName];
-  currentBundle.value.hardware_profiles[trimmedName] = profileData;
+  // Clone the profile
+  currentBundle.value.hardware_profiles[clonedName] = {
+    description: profile.description,
+    models: [...(profile.models || [])]
+  };
   
-  // Remove the old profile
-  delete currentBundle.value.hardware_profiles[oldName];
+  // Switch to the new profile tab
+  activeProfileTab.value = clonedName;
+  profileActionsOpen.value = '';
   
-  success(`Profile renamed from "${oldName}" to "${trimmedName}"`);
+  success(`Profile "${profileName}" cloned as "${clonedName}"`);
 };
 
 const addHardwareProfile = () => {
@@ -921,10 +1217,95 @@ const addHardwareProfile = () => {
     description: '',
     models: []
   };
+  
+  // Switch to the new profile tab
+  activeProfileTab.value = profileName;
+  profileActionsOpen.value = '';
 };
 
-const removeHardwareProfile = (name) => {
-  delete currentBundle.value.hardware_profiles[name];
+const removeHardwareProfile = async (name) => {
+  try {
+    const confirmed = await confirm(`Are you sure you want to delete profile "${name}"?`, 'Confirm Delete');
+    if (confirmed) {
+      delete currentBundle.value.hardware_profiles[name];
+      
+      // Switch to another tab if the deleted one was active
+      if (activeProfileTab.value === name) {
+        const remainingProfiles = Object.keys(currentBundle.value.hardware_profiles);
+        activeProfileTab.value = remainingProfiles.length > 0 ? remainingProfiles[0] : '';
+      }
+      
+      profileActionsOpen.value = '';
+      success(`Profile "${name}" deleted successfully`);
+    }
+  } catch (err) {
+    error('Failed to delete profile: ' + err.message);
+  }
+};
+
+const updateProfileName = (oldName, newName) => {
+  // Trim and validate the new name
+  const trimmedName = newName.trim();
+  
+  // If name is empty or unchanged, do nothing
+  if (!trimmedName || trimmedName === oldName) {
+    renamingProfile.value = '';
+    return;
+  }
+  
+  // Check if the new name already exists
+  if (currentBundle.value.hardware_profiles[trimmedName]) {
+    error(`Profile name "${trimmedName}" already exists`);
+    return;
+  }
+  
+  // Create new profile with the new name
+  const profileData = currentBundle.value.hardware_profiles[oldName];
+  currentBundle.value.hardware_profiles[trimmedName] = {
+    description: profileData.description,
+    models: [...(profileData.models || [])]
+  };
+  
+  // Remove the old profile
+  delete currentBundle.value.hardware_profiles[oldName];
+  
+  // Switch to the new profile tab
+  activeProfileTab.value = trimmedName;
+  profileActionsOpen.value = '';
+  
+  success(`Profile renamed from "${oldName}" to "${trimmedName}"`);
+};
+
+const resetBundleForm = () => {
+  currentBundle.value = {
+    id: '',
+    name: '',
+    description: '',
+    version: '1.0.0',
+    author: '',
+    website: '',
+    workflows: [],
+    hardware_profiles: {}
+  };
+  activeProfileTab.value = '';
+  profileActionsOpen.value = '';
+  renamingProfile.value = '';
+  closeDropdowns();
+};
+
+// Methods for workflow selection
+const addWorkflowToSelection = (workflow) => {
+  if (!currentBundle.value.workflows.includes(workflow)) {
+    currentBundle.value.workflows.push(workflow);
+  }
+  showWorkflowDropdown.value = false;
+};
+
+const removeWorkflowFromSelection = (workflow) => {
+  const index = currentBundle.value.workflows.indexOf(workflow);
+  if (index !== -1) {
+    currentBundle.value.workflows.splice(index, 1);
+  }
 };
 
 const editBundle = async (bundleId) => {
@@ -942,6 +1323,14 @@ const editBundle = async (bundleId) => {
       workflows: bundle.workflows || [],
       hardware_profiles: bundle.hardware_profiles || {}
     };
+    
+    // Switch to the first profile tab if available
+    const profileNames = Object.keys(currentBundle.value.hardware_profiles);
+    if (profileNames.length > 0) {
+      activeProfileTab.value = profileNames[0];
+    }
+    
+    showBundleForm.value = true;
   } catch (err) {
     console.error('Error loading bundle for editing:', err);
     error('Failed to load bundle for editing');
@@ -965,59 +1354,37 @@ const handleDeleteBundle = async (bundleId) => {
   }
 };
 
-const resetBundleForm = () => {
-  currentBundle.value = {
-    id: '',
-    name: '',
-    description: '',
-    version: '1.0.0',
-    author: '',
-    website: '',
-    workflows: [],
-    hardware_profiles: {}
-  };
-  closeDropdowns();
-};
-
 const handleSaveBundle = async () => {
   await saveBundle();
 };
 
-// Methods for workflow selection
-const addWorkflowToSelection = (workflow) => {
-  if (!currentBundle.value.workflows.includes(workflow)) {
-    currentBundle.value.workflows.push(workflow);
+const downloadBundle = async (bundleId, bundleName) => {
+  try {
+    // First get the bundle details to access the version
+    const bundleResponse = await api.get(`/bundles/${bundleId}`);
+    const bundle = bundleResponse.data;
+    
+    const response = await api.get(`/bundles/export/${bundleId}`, {
+      responseType: 'blob'
+    });
+    
+    // Create blob URL and trigger download
+    const blob = new Blob([response.data], { type: 'application/zip' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `bundle_${bundleName.replace(/\s+/g, '_')}_v${bundle.version || '1.0.0'}.zip`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    
+    success(`Bundle "${bundleName}" downloaded successfully`);
+  } catch (err) {
+    console.error('Error downloading bundle:', err);
+    error('Failed to download bundle: ' + (err.response?.data?.detail || err.message));
   }
-  showWorkflowDropdown.value = false;
 };
-
-const removeWorkflowFromSelection = (workflow) => {
-  const index = currentBundle.value.workflows.indexOf(workflow);
-  if (index !== -1) {
-    currentBundle.value.workflows.splice(index, 1);
-  }
-};
-
-// Close dropdowns when clicking outside
-const closeDropdowns = () => {
-  showWorkflowDropdown.value = false;
-};
-
-// Lifecycle
-onMounted(async () => {
-  await Promise.all([
-    loadBundles(),
-    loadWorkflows(),
-    loadModels()
-  ]);
-  
-  // Close dropdowns when clicking outside
-  document.addEventListener('click', (event) => {
-    if (!event.target.closest('.relative')) {
-      closeDropdowns();
-    }
-  });
-});
 </script>
 
 <style scoped>
@@ -1025,5 +1392,16 @@ onMounted(async () => {
 .table-bordered td,
 .table-bordered th {
   vertical-align: middle !important;
+}
+
+/* Fix for profile tabs layout */
+.profile-tab {
+  min-width: 200px;
+  max-width: 300px;
+}
+
+/* Ensure dropdown appears above other content */
+.profile-actions-dropdown {
+  z-index: 1000;
 }
 </style>

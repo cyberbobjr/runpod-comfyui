@@ -516,6 +516,7 @@ def add_model_entry(entry_request: ModelEntryRequest, user=Depends(protected)):
     # Normalize path
     base_dir = data.get("config", {}).get("BASE_DIR", "")
     if entry_request.entry.dest:
+        from api_json_models import normalize_path      
         entry_request.entry.dest = normalize_path(entry_request.entry.dest, base_dir)
     
     # Check if model already exists
@@ -585,13 +586,13 @@ def update_model_entry(entry_request: ModelEntryRequest, user=Depends(protected)
     for i, entry in enumerate(data["groups"][entry_request.group]):
         entry_id = entry.get("dest") or entry.get("git")
         if entry_id == model_id:
-            data["groups"][entryRequest.group][i] = entryRequest.entry.dict(exclude_none=True)
+            data["groups"][entry_request.group][i] = entry_request.entry.dict(exclude_none=True)
             found = True
             break
     
     # If not found, add as new
     if not found:
-        data["groups"][entryRequest.group].append(entryRequest.entry.dict(exclude_none=True))
+        data["groups"][entry_request.group].append(entry_request.entry.dict(exclude_none=True))
     
     save_models_json(data)
     message = "Model entry updated" if found else "Model entry added"

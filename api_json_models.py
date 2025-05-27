@@ -9,88 +9,88 @@ import shutil
 from api import protected, get_env_file_path
 from model_utils import ModelManager
 
-# Configuration du logging
+# Logging configuration
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Création du router pour les routes API du fichier models.json
+# Router creation for models.json API routes
 jsonmodels_router = APIRouter(prefix="/api/jsonmodels")
 
 MODELS_JSON = "models.json"
-WORKFLOW_DIR = None  # Sera récupéré dynamiquement
+WORKFLOW_DIR = None  # Will be retrieved dynamically
 
 def get_models_json_path():
-    """Retourne le chemin complet du fichier models.json en essayant plusieurs emplacements possibles."""
+    """Returns the full path of the models.json file by trying several possible locations."""
     return ModelManager.get_models_json_path()
 
 def load_models_json():
-    """Charge le fichier models.json complet avec gestion des erreurs améliorée."""
+    """Loads the complete models.json file with improved error handling."""
     return ModelManager.load_models_json()
 
 def save_models_json(data):
-    """Sauvegarde le fichier models.json complet avec gestion des erreurs améliorée."""
+    """Saves the complete models.json file with improved error handling."""
     return ModelManager.save_models_json(data)
 
 def normalize_path(path, base_dir=None):
     """
-    Normalise un chemin pour:
-    1. Remplacer tous les séparateurs Windows en séparateurs Unix (/)
-    2. Le rendre relatif à ${BASE_DIR} si nécessaire tout en respectant la structure de répertoires
+    Normalizes a path to:
+    1. Replace all Windows separators with Unix separators (/)
+    2. Make it relative to ${BASE_DIR} if necessary while respecting directory structure
     """
     if not path:
         return path
     
-    # Convertir tous les backslashes en forward slashes
+    # Convert all backslashes to forward slashes
     path = path.replace('\\', '/')
     
-    # Si le chemin contient déjà ${BASE_DIR}, on ne le modifie pas
+    # If the path already contains ${BASE_DIR}, don't modify it
     if "${BASE_DIR}" in path:
         return path
     
-    # Si base_dir n'est pas fourni, utiliser le BASE_DIR centralisé
+    # If base_dir is not provided, use the centralized BASE_DIR
     if not base_dir:
         base_dir = ModelManager.get_base_dir()
     
-    # Normaliser base_dir (forward slashes et pas de trailing slash)
+    # Normalize base_dir (forward slashes and no trailing slash)
     base_dir = base_dir.replace('\\', '/').rstrip('/')
     
-    # Déterminer si le chemin est déjà relatif à base_dir
+    # Determine if the path is already relative to base_dir
     is_absolute = os.path.isabs(path)
     
     if is_absolute:
-        # Si le chemin est absolu, vérifier s'il est dans base_dir
+        # If the path is absolute, check if it's in base_dir
         if path.startswith(base_dir):
-            # Extraire la partie relative
+            # Extract the relative part
             relative_path = path[len(base_dir):].lstrip('/')
             return f"${{BASE_DIR}}/{relative_path}"
         else:
-            # Le chemin absolu n'est pas dans base_dir, on ne peut pas le rendre relatif
-            logger.warning(f"Le chemin '{path}' n'est pas dans '{base_dir}', impossible de le rendre relatif")
+            # The absolute path is not in base_dir, can't make it relative
+            logger.warning(f"Path '{path}' is not in '{base_dir}', cannot make it relative")
             return path
     else:
-        # Pour les chemins relatifs, vérifier s'ils commencent par un sous-répertoire de base_dir
+        # For relative paths, check if they start with a subdirectory of base_dir
         
-        # Extraire le dernier répertoire de base_dir comme marqueur potentiel
-        # Par exemple, si base_dir est '/path/to/models', le marqueur est 'models'
+        # Extract the last directory of base_dir as a potential marker
+        # For example, if base_dir is '/path/to/models', the marker is 'models'
         base_dir_parts = base_dir.split('/')
         base_dir_marker = base_dir_parts[-1] if base_dir_parts else None
         
         if base_dir_marker and path.startswith(f"{base_dir_marker}/"):
-            # Le chemin commence déjà par le nom du répertoire de base, on considère qu'il est relatif à parent(base_dir)
+            # The path already starts with the base directory name, consider it relative to parent(base_dir)
             return f"${{BASE_DIR}}/{path[len(base_dir_marker)+1:]}"
         elif any(part == base_dir_marker for part in path.split('/')):
-            # Si une partie du chemin est le marqueur, on extrait depuis cette partie
+            # If a part of the path is the marker, extract from that part
             parts = path.split('/')
             if base_dir_marker in parts:
                 idx = parts.index(base_dir_marker)
                 return f"${{BASE_DIR}}/{'/'.join(parts[idx+1:])}"
         
-        # Aucun pattern reconnu, on ajoute simplement ${BASE_DIR}/ en préfixe
+        # No pattern recognized, simply add ${BASE_DIR}/ as prefix
         return f"${{BASE_DIR}}/{path}"
 
 def model_exists_on_disk(entry, base_dir):
     """
-    Détermine si le modèle (fichier) existe sur le disque.
+    Determines if the model (file) exists on disk.
     """
     if not base_dir:
         base_dir = ModelManager.get_base_dir()
@@ -124,10 +124,18 @@ class ConfigUpdateRequest(BaseModel):
 
 @jsonmodels_router.get("/", response_model=Dict[str, Any])
 def get_models_data(user=Depends(protected)):
-    """Récupère l'intégralité du fichier models.json et ajoute le champ 'exists' pour chaque modèle."""
+    """
+    Route: GET /api/jsonmodels/
+    Role: Retrieves the complete models.json file with existence check for each model
+    Input arguments: None (authenticated user via dependency)
+    Output format: Dict containing:
+      - config: Dict with BASE_DIR configuration
+      - groups: Dict where keys are group names and values are lists of ModelEntry objects
+      - Each ModelEntry includes an 'exists' boolean field indicating if the model file exists on disk
+    """
     data = load_models_json()
     base_dir = ModelManager.get_base_dir()
-    # Ajout du champ 'exists' pour chaque modèle dans chaque groupe
+    # Add 'exists' field for each model in each group
     groups = data.get("groups", {})
     for group_name, entries in groups.items():
         for entry in entries:
@@ -136,90 +144,148 @@ def get_models_data(user=Depends(protected)):
 
 @jsonmodels_router.get("/config", response_model=Dict[str, str])
 def get_config(user=Depends(protected)):
-    """Récupère la configuration du fichier models.json."""
+    """
+    Route: GET /api/jsonmodels/config
+    Role: Retrieves the configuration section from models.json
+    Input arguments: None (authenticated user via dependency)
+    Output format: Dict containing configuration key-value pairs (typically BASE_DIR)
+    """
     data = load_models_json()
     return data.get("config", {})
 
 @jsonmodels_router.post("/config")
 def update_config(config: ConfigUpdateRequest, user=Depends(protected)):
-    """Met à jour la configuration du fichier models.json."""
+    """
+    Route: POST /api/jsonmodels/config
+    Role: Updates the configuration section in models.json
+    Input arguments: 
+      - config: ConfigUpdateRequest with base_dir string
+      - user: authenticated user via dependency
+    Output format: Dict with 'ok' boolean and 'message' string confirming update
+    """
     data = load_models_json()
     data["config"] = {"BASE_DIR": config.base_dir}
     save_models_json(data)
-    return {"ok": True, "message": "Configuration mise à jour"}
+    return {"ok": True, "message": "Configuration updated"}
 
 @jsonmodels_router.get("/groups", response_model=List[str])
 def get_groups(user=Depends(protected)):
-    """Récupère la liste des groupes de modèles."""
+    """
+    Route: GET /api/jsonmodels/groups
+    Role: Retrieves the list of all model group names
+    Input arguments: None (authenticated user via dependency)
+    Output format: List of strings representing group names
+    """
     data = load_models_json()
     return list(data.get("groups", {}).keys())
 
 @jsonmodels_router.post("/groups")
 def create_group(group_request: ModelGroupRequest, user=Depends(protected)):
-    """Crée un nouveau groupe de modèles."""
+    """
+    Route: POST /api/jsonmodels/groups
+    Role: Creates a new empty model group
+    Input arguments:
+      - group_request: ModelGroupRequest with group name string
+      - user: authenticated user via dependency
+    Output format: Dict with 'ok' boolean and 'message' string confirming creation
+    Raises HTTPException 400 if group already exists
+    """
     data = load_models_json()
     if "groups" not in data:
         data["groups"] = {}
     
     if group_request.group in data["groups"]:
-        raise HTTPException(status_code=400, detail=f"Le groupe '{group_request.group}' existe déjà")
+        raise HTTPException(status_code=400, detail=f"Group '{group_request.group}' already exists")
     
     data["groups"][group_request.group] = []
     save_models_json(data)
-    return {"ok": True, "message": f"Groupe '{group_request.group}' créé"}
+    return {"ok": True, "message": f"Group '{group_request.group}' created"}
 
 @jsonmodels_router.put("/groups")
 def update_group_name(update_request: UpdateModelGroupRequest, user=Depends(protected)):
-    """Renomme un groupe de modèles."""
+    """
+    Route: PUT /api/jsonmodels/groups
+    Role: Renames an existing model group
+    Input arguments:
+      - update_request: UpdateModelGroupRequest with old_group and new_group strings
+      - user: authenticated user via dependency
+    Output format: Dict with 'ok' boolean and 'message' string confirming rename
+    Raises HTTPException 404 if old group doesn't exist, 400 if new group already exists
+    """
     data = load_models_json()
     
     if "groups" not in data:
-        raise HTTPException(status_code=404, detail="Aucun groupe trouvé")
+        raise HTTPException(status_code=404, detail="No groups found")
     
     if update_request.old_group not in data["groups"]:
-        raise HTTPException(status_code=404, detail=f"Le groupe '{update_request.old_group}' n'existe pas")
+        raise HTTPException(status_code=404, detail=f"Group '{update_request.old_group}' does not exist")
     
     if update_request.new_group in data["groups"]:
-        raise HTTPException(status_code=400, detail=f"Le groupe '{update_request.new_group}' existe déjà")
+        raise HTTPException(status_code=400, detail=f"Group '{update_request.new_group}' already exists")
     
-    # Copier le contenu et supprimer l'ancien groupe
+    # Copy content and delete old group
     data["groups"][update_request.new_group] = data["groups"][update_request.old_group]
     del data["groups"][update_request.old_group]
     
     save_models_json(data)
-    return {"ok": True, "message": f"Groupe renommé de '{update_request.old_group}' à '{update_request.new_group}'"}
+    return {"ok": True, "message": f"Group renamed from '{update_request.old_group}' to '{update_request.new_group}'"}
 
 @jsonmodels_router.delete("/groups")
 def delete_group(group_request: ModelGroupRequest, user=Depends(protected)):
-    """Supprime un groupe de modèles."""
+    """
+    Route: DELETE /api/jsonmodels/groups
+    Role: Deletes an existing model group and all its models
+    Input arguments:
+      - group_request: ModelGroupRequest with group name string
+      - user: authenticated user via dependency
+    Output format: Dict with 'ok' boolean and 'message' string confirming deletion
+    Raises HTTPException 404 if group doesn't exist
+    """
     data = load_models_json()
     
     if "groups" not in data:
-        raise HTTPException(status_code=404, detail="Aucun groupe trouvé")
+        raise HTTPException(status_code=404, detail="No groups found")
     
     if group_request.group not in data["groups"]:
-        raise HTTPException(status_code=404, detail=f"Le groupe '{group_request.group}' n'existe pas")
+        raise HTTPException(status_code=404, detail=f"Group '{group_request.group}' does not exist")
     
     del data["groups"][group_request.group]
     save_models_json(data)
-    return {"ok": True, "message": f"Groupe '{group_request.group}' supprimé"}
+    return {"ok": True, "message": f"Group '{group_request.group}' deleted"}
 
 @jsonmodels_router.get("/group/{group_name}", response_model=List[ModelEntry])
 def get_group_models(group_name: str, user=Depends(protected)):
-    """Récupère tous les modèles d'un groupe spécifique."""
+    """
+    Route: GET /api/jsonmodels/group/{group_name}
+    Role: Retrieves all models from a specific group
+    Input arguments:
+      - group_name: string path parameter specifying the group name
+      - user: authenticated user via dependency
+    Output format: List of ModelEntry objects containing model definitions
+    Raises HTTPException 404 if group doesn't exist
+    """
     data = load_models_json()
     
     if "groups" not in data:
-        raise HTTPException(status_code=404, detail="Aucun groupe trouvé")
+        raise HTTPException(status_code=404, detail="No groups found")
     
     if group_name not in data["groups"]:
-        raise HTTPException(status_code=404, detail=f"Le groupe '{group_name}' n'existe pas")
+        raise HTTPException(status_code=404, detail=f"Group '{group_name}' does not exist")
     
     return data["groups"][group_name]
 
 @jsonmodels_router.post("/entry")
 def add_model_entry(entry_request: ModelEntryRequest, user=Depends(protected)):
-    """Ajoute une nouvelle entrée de modèle dans un groupe."""
+    """
+    Route: POST /api/jsonmodels/entry
+    Role: Adds a new model entry to a specified group
+    Input arguments:
+      - entry_request: ModelEntryRequest with group name and ModelEntry object
+      - user: authenticated user via dependency
+    Output format: Dict with 'ok' boolean and 'message' string confirming addition
+    Raises HTTPException 400 if entry lacks URL/git, 409 if model already exists in group
+    Note: Automatically normalizes destination paths and creates group if it doesn't exist
+    """
     data = load_models_json()
     
     if "groups" not in data:
@@ -228,56 +294,65 @@ def add_model_entry(entry_request: ModelEntryRequest, user=Depends(protected)):
     if entry_request.group not in data["groups"]:
         data["groups"][entry_request.group] = []
     
-    # Vérification de la présence d'une URL ou git
+    # Check for presence of URL or git
     if not entry_request.entry.url and not entry_request.entry.git:
-        raise HTTPException(status_code=400, detail="L'entrée doit contenir soit une URL soit un dépôt git")
+        raise HTTPException(status_code=400, detail="Entry must contain either a URL or a git repository")
     
-    # Récupérer le BASE_DIR pour la normalisation des chemins
+    # Get BASE_DIR for path normalization
     base_dir = data.get("config", {}).get("BASE_DIR", "")
     
-    # Normaliser le chemin de destination si présent
+    # Normalize destination path if present
     if entry_request.entry.dest:
         entry_request.entry.dest = normalize_path(entry_request.entry.dest, base_dir)
     
-    # Vérification si le modèle existe déjà dans le groupe par sa destination
+    # Check if model already exists in group by destination
     if entry_request.entry.dest:
         for existing_entry in data["groups"][entry_request.group]:
             if existing_entry.get("dest") == entry_request.entry.dest:
-                raise HTTPException(status_code=409, detail=f"Un modèle avec cette destination existe déjà dans le groupe '{entry_request.group}'")
+                raise HTTPException(status_code=409, detail=f"A model with this destination already exists in group '{entry_request.group}'")
     
-    # Ajout du modèle au groupe
+    # Add model to group
     data["groups"][entry_request.group].append(entry_request.entry.dict(exclude_none=True))
     save_models_json(data)
     
-    return {"ok": True, "message": "Entrée de modèle ajoutée avec succès"}
+    return {"ok": True, "message": "Model entry added successfully"}
 
 @jsonmodels_router.put("/entry")
 def update_model_entry(entry_request: ModelEntryRequest, user=Depends(protected)):
-    """Met à jour une entrée de modèle existante."""
+    """
+    Route: PUT /api/jsonmodels/entry
+    Role: Updates an existing model entry or creates it if not found
+    Input arguments:
+      - entry_request: ModelEntryRequest with group name and ModelEntry object
+      - user: authenticated user via dependency
+    Output format: Dict with 'ok' boolean and 'message' string confirming update/creation
+    Raises HTTPException 400 if entry lacks dest/git for identification
+    Note: Uses dest or git as identifier, automatically creates group if missing
+    """
     data = load_models_json()
     
-    # S'assurer que la structure de groupes existe
+    # Ensure groups structure exists
     if "groups" not in data:
         data["groups"] = {}
     
-    # Récupérer le BASE_DIR pour la normalisation des chemins
+    # Get BASE_DIR for path normalization
     base_dir = data.get("config", {}).get("BASE_DIR", "")
     
-    # Normaliser le chemin de destination si présent
+    # Normalize destination path if present
     if entry_request.entry.dest:
         entry_request.entry.dest = normalize_path(entry_request.entry.dest, base_dir)
     
-    # Créer automatiquement le groupe s'il n'existe pas
+    # Automatically create group if it doesn't exist
     if entry_request.group not in data["groups"]:
-        logger.info(f"Création automatique du groupe manquant: {entry_request.group}")
+        logger.info(f"Auto-creating missing group: {entry_request.group}")
         data["groups"][entry_request.group] = []
     
-    # Identifiant pour la recherche
+    # Identifier for search
     model_id = entry_request.entry.dest or entry_request.entry.git
     if not model_id:
-        raise HTTPException(status_code=400, detail="L'entrée doit contenir soit une destination soit un dépôt git pour l'identification")
+        raise HTTPException(status_code=400, detail="Entry must contain either a destination or git repository for identification")
     
-    # Recherche de l'entrée à mettre à jour
+    # Search for entry to update
     found = False
     for i, entry in enumerate(data["groups"][entry_request.group]):
         entry_id = entry.get("dest") or entry.get("git")
@@ -286,29 +361,38 @@ def update_model_entry(entry_request: ModelEntryRequest, user=Depends(protected)
             found = True
             break
     
-    # Si le modèle n'existe pas, l'ajouter au groupe
+    # If model doesn't exist, add it to the group
     if not found:
-        logger.info(f"Modèle non trouvé, ajout automatique au groupe {entry_request.group}")
+        logger.info(f"Model not found, auto-adding to group {entry_request.group}")
         data["groups"][entry_request.group].append(entry_request.entry.dict(exclude_none=True))
     
     save_models_json(data)
-    message = "Entrée de modèle mise à jour avec succès" if found else "Entrée de modèle ajoutée avec succès"
+    message = "Model entry updated successfully" if found else "Model entry added successfully"
     return {"ok": True, "message": message}
 
 @jsonmodels_router.delete("/entry")
 def delete_model_entry(entry_request: ModelEntryRequest, user=Depends(protected)):
-    """Supprime une entrée de modèle existante."""
+    """
+    Route: DELETE /api/jsonmodels/entry
+    Role: Deletes an existing model entry from a specified group
+    Input arguments:
+      - entry_request: ModelEntryRequest with group name and ModelEntry object (only dest or git needed for identification)
+      - user: authenticated user via dependency
+    Output format: Dict with 'ok' boolean and 'message' string confirming deletion
+    Raises HTTPException 404 if group or entry doesn't exist, 400 if entry lacks dest/git for identification
+    Note: Uses dest or git as identifier to find the entry to delete
+    """
     data = load_models_json()
     
     if "groups" not in data or entry_request.group not in data["groups"]:
-        raise HTTPException(status_code=404, detail=f"Le groupe '{entry_request.group}' n'existe pas")
+        raise HTTPException(status_code=404, detail=f"Group '{entry_request.group}' does not exist")
     
-    # Identifiant pour la recherche
+    # Identifier for search
     model_id = entry_request.entry.dest or entry_request.entry.git
     if not model_id:
-        raise HTTPException(status_code=400, detail="L'entrée doit contenir soit une destination soit un dépôt git pour l'identification")
+        raise HTTPException(status_code=400, detail="Entry must contain either a destination or git repository for identification")
     
-    # Recherche de l'entrée à supprimer
+    # Search for entry to delete
     original_length = len(data["groups"][entry_request.group])
     data["groups"][entry_request.group] = [
         entry for entry in data["groups"][entry_request.group] 
@@ -316,7 +400,7 @@ def delete_model_entry(entry_request: ModelEntryRequest, user=Depends(protected)
     ]
     
     if len(data["groups"][entry_request.group]) == original_length:
-        raise HTTPException(status_code=404, detail=f"Entrée non trouvée dans le groupe '{entry_request.group}'")
+        raise HTTPException(status_code=404, detail=f"Entry not found in group '{entry_request.group}'")
     
     save_models_json(data)
-    return {"ok": True, "message": "Entrée de modèle supprimée avec succès"}
+    return {"ok": True, "message": "Model entry deleted successfully"}

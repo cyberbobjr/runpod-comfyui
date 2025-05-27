@@ -49,13 +49,13 @@ def list_workflows(user=Depends(protected)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error listing workflows: {str(e)}")
 
-@workflows_router.post("/")
+@workflows_router.post("/upload")
 async def upload_workflow(
     workflow_file: UploadFile = File(...),
     user=Depends(protected)
 ):
     """
-    POST /api/workflows/
+    POST /api/workflows/upload
     
     Uploads a workflow JSON file to the workflows directory.
     
@@ -85,6 +85,14 @@ async def upload_workflow(
         raise HTTPException(status_code=500, detail=f"Upload error: {str(e)}")
     
     return {"ok": True, "message": f"Workflow '{workflow_file.filename}' uploaded successfully"}
+
+@workflows_router.post("/")
+async def upload_workflow_alt(
+    workflow_file: UploadFile = File(...),
+    user=Depends(protected)
+):
+    """Alternative endpoint for workflow upload at root path"""
+    return await upload_workflow(workflow_file, user)
 
 @workflows_router.get("/{filename}")
 def get_workflow(filename: str, download: bool = False, user=Depends(protected)):
