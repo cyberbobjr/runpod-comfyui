@@ -1,0 +1,97 @@
+/* color palette inspirée de Bootswatch Superhero */
+:root {
+  --vt-c-white: #ffffff;
+  --vt-c-white-soft: #f5f5f5;
+  --vt-c-white-mute: #eeeeee;
+
+  --vt-c-black: #0f2537;
+  --vt-c-black-soft: #142d42;
+  --vt-c-black-mute: #1c3a50;
+
+  --vt-c-primary: #df691a;
+  --vt-c-secondary: #5bc0de;
+  --vt-c-accent: #f0ad4e;
+
+  --vt-c-divider-light-1: rgba(255, 255, 255, 0.2);
+  --vt-c-divider-light-2: rgba(255, 255, 255, 0.1);
+  --vt-c-divider-dark-1: rgba(60, 60, 60, 0.4);
+  --vt-c-divider-dark-2: rgba(60, 60, 60, 0.25);
+
+  --vt-c-text-light-1: #ffffff;
+  --vt-c-text-light-2: rgba(255, 255, 255, 0.7);
+  --vt-c-text-dark-1: #212529;
+  --vt-c-text-dark-2: rgba(33, 37, 41, 0.7);
+}
+
+/* couleurs sémantiques du projet */
+:root {
+  --color-background: var(--vt-c-black);
+  --color-background-soft: var(--vt-c-black-soft);
+  --color-background-mute: var(--vt-c-black-mute);
+
+  --color-border: var(--vt-c-divider-light-2);
+  --color-border-hover: var(--vt-c-divider-light-1);
+
+  --color-heading: var(--vt-c-text-light-1);
+  --color-text: var(--vt-c-text-light-2);
+  --color-text-light: var(--vt-c-text-light-1);
+  --color-text-muted: var(--vt-c-text-light-2);
+
+  --color-primary: var(--vt-c-primary);
+  --color-primary-hover: #c55a15;
+  --color-secondary: var(--vt-c-secondary);
+
+  --color-input: var(--vt-c-black-soft);
+  --color-btn-default: #4a5568;
+  --color-btn-default-hover: #2d3748;
+
+  --section-gap: 160px;
+}
+
+/* light theme (rarement utilisé dans Superhero mais gardé pour compatibilité) */
+/* @media (prefers-color-scheme: light) {
+  :root {
+    --color-background: #ffffff;
+    --color-background-soft: var(--vt-c-white-soft);
+    --color-background-mute: var(--vt-c-white-mute);
+
+    --color-border: var(--vt-c-divider-dark-2);
+    --color-border-hover: var(--vt-c-divider-dark-1);
+
+    --color-heading: var(--vt-c-text-dark-1);
+    --color-text: var(--vt-c-text-dark-2);
+  }
+} */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  font-weight: normal;
+}
+
+body {
+  min-height: 100vh;
+  color: var(--color-text);
+  background: var(--color-background);
+  transition: color 0.5s, background-color 0.5s;
+  line-height: 1.6;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    'Fira Sans',
+    'Droid Sans',
+    'Helvetica Neue',
+    sans-serif;
+  font-size: 15px;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

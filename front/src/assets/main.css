@@ -1,0 +1,64 @@
+@import './base.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles */
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-opacity-50;
+  }
+  
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-primary-hover focus:ring-primary;
+  }
+  
+  .btn-default {
+    @apply bg-btn-default text-white hover:bg-btn-default-hover focus:ring-btn-default;
+  }
+  
+  .btn-danger {
+    @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+  }
+  
+  .form-input {
+    @apply bg-input text-text-light border-border rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent;
+  }
+  
+  .form-select {
+    @apply bg-input text-text-light border-border rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent appearance-none cursor-pointer;
+  }
+  
+  .form-label {
+    @apply block text-text-light font-medium mb-1;
+  }
+  
+  .card {
+    @apply bg-background-soft rounded-lg border border-border p-6 shadow-md;
+  }
+}
+
+@layer utilities {
+  .z-tooltip {
+    z-index: 9999;
+  }
+  
+  .z-modal {
+    z-index: 10000;
+  }
+  
+  .z-dropdown {
+    z-index: 1000;
+  }
+}
+
+#app {
+  /* Remove the constraining styles that were causing scroll issues */
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}

@@ -4,10 +4,13 @@ from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from starlette.responses import Response
-from api import api_router, decode_jwt, auth_router
-from file_manager_api import file_router
-from jsonmodels import jsonmodels_router
+from api import auth_router, api_router
+from api_file_manager import file_router
+from api_models import models_router # Importation de notre router unifié
+from api_bundle import bundle_router
+from api_json_models import jsonmodels_router
+from api_workflows import workflows_router
+from auth import decode_jwt
 
 app = FastAPI()
 
@@ -38,8 +41,18 @@ async def auth_middleware(request: Request, call_next):
         # Autoriser la route de login sans JWT
         if request.url.path == "/api/auth/login":
             return await call_next(request)
+        
+        # Vérifier d'abord le header Authorization
         auth = request.headers.get("authorization")
-        if not auth or not auth.lower().startswith("bearer "):
+        token = None
+        
+        if auth and auth.lower().startswith("bearer "):
+            token = auth.split(" ", 1)[1]
+        # Si pas de header, vérifier le paramètre URL pour les téléchargements
+        elif request.url.path == "/api/file/download":
+            token = request.query_params.get("token")
+        
+        if not token:
             # Ajoute les headers CORS à la réponse 401
             return JSONResponse(
                 status_code=401,
@@ -51,7 +64,7 @@ async def auth_middleware(request: Request, call_next):
                     "Access-Control-Allow-Methods": "*"
                 }
             )
-        token = auth.split(" ", 1)[1]
+        
         user = decode_jwt(token)
         if not user:
             return JSONResponse(
@@ -67,10 +80,14 @@ async def auth_middleware(request: Request, call_next):
     return await call_next(request)
 
 # Enregistrer les routers
-app.include_router(api_router)
-app.include_router(file_router)
 app.include_router(auth_router)
+app.include_router(file_router)
+app.include_router(models_router) # Nouveau router unifié
+app.include_router(api_router)
 app.include_router(jsonmodels_router)
+app.include_router(bundle_router)
+app.include_router(workflows_router)
+
 logger.info("Tous les routers ont été enregistrés avec succès")
 
 # Afficher les informations de démarrage
@@ -80,7 +97,7 @@ async def startup_event():
     logger.info(f"Répertoire de travail: {os.getcwd()}")
     logger.info(f"COMFYUI_MODEL_DIR: {os.environ.get('COMFYUI_MODEL_DIR', 'Non défini')}")
     try:
-        from jsonmodels import get_models_json_path
+        from api_models import get_models_json_path
         logger.info(f"Chemin du fichier models.json: {get_models_json_path()}")
     except ImportError:
         logger.error("Impossible d'importer get_models_json_path")
@@ -97,14 +114,15 @@ async def serve_index():
 # Cette route doit être placée après les routes spécifiques mais avant le catch-all statique
 @app.get("/{full_path:path}")
 async def serve_spa(full_path: str):
-    # Ne pas intercepter les routes API (corrigé pour être strict)
+    # Ne pas intercepter les routes API
     if full_path.startswith("api/"):
-        # Laisser FastAPI gérer la 404 pour les routes API inconnues
         return JSONResponse(status_code=404, content={"detail": "Not Found"})
     logger.info(f"Serving SPA for path: {full_path}")
     return FileResponse(os.path.join("frontend", "dist", "index.html"))
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="127.0.0.1", port=8082, reload=True)
+    host = os.environ.get("HOST", "0.0.0.0")
+    port = int(os.environ.get("PORT", 8082))
+    uvicorn.run(app, host=host, port=port)
 
