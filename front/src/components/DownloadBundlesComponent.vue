@@ -1,5 +1,5 @@
 <script setup>
-import { faBoxOpen, faCubes, faDownload, faInfo, faSearch, faServer, faSitemap, faUpload, faTrashAlt, faCheckCircle, faTimesCircle, faFileUpload, faSync, faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
+import { faBoxOpen, faCubes, faDownload, faInfo, faSearch, faServer, faSitemap, faUpload, faTrashAlt, faCheckCircle, faTimesCircle, faFileUpload, faSync, faExclamationCircle, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { computed, onMounted, ref } from 'vue';
 import { useNotifications } from '../composables/useNotifications';
@@ -12,6 +12,7 @@ const searchQuery = ref('');
 const loading = ref(false);
 const uploadedBundles = ref([]);
 const installedBundles = ref([]);
+const modelsData = ref({});
 const showBundleDetailsModal = ref(false);
 const selectedBundle = ref(null);
 const openAccordionPanels = ref(new Set());
@@ -33,6 +34,64 @@ const loadInstalledBundles = async () => {
     installedBundles.value = response.data || [];
   } catch (err) {
     error('Failed to load installed bundles: ' + (err.response?.data?.message || err.message));
+  }
+};
+
+// Load models data to check which models exist on disk
+const loadModelsData = async () => {
+  try {
+    const response = await api.get('/models/');
+    modelsData.value = response.data || {};
+  } catch (err) {
+    error('Failed to load models data: ' + (err.response?.data?.message || err.message));
+  }
+};
+
+// Check if a specific model exists on disk
+const isModelInstalledOnDisk = (model) => {
+  const groups = modelsData.value.groups || {};
+  for (const groupName in groups) {
+    const entries = groups[groupName];
+    for (const entry of entries) {
+      if ((entry.dest === model.dest && model.dest) || 
+          (entry.url === model.url && model.url)) {
+        return entry.exists || false;
+      }
+    }
+  }
+  return false;
+};
+
+// Get bundle installation status based on models on disk
+const getBundleInstallationStatus = (bundle) => {
+  if (!bundle.hardware_profiles) {
+    return { status: 'no-models', text: 'No Models', count: '0/0' };
+  }
+
+  let totalModels = 0;
+  let installedModels = 0;
+
+  Object.values(bundle.hardware_profiles).forEach(profile => {
+    if (profile.models) {
+      profile.models.forEach(model => {
+        totalModels++;
+        if (isModelInstalledOnDisk(model)) {
+          installedModels++;
+        }
+      });
+    }
+  });
+
+  if (totalModels === 0) {
+    return { status: 'no-models', text: 'No Models', count: '0/0' };
+  }
+
+  if (installedModels === 0) {
+    return { status: 'not-installed', text: 'Not Installed', count: `0/${totalModels}` };
+  } else if (installedModels === totalModels) {
+    return { status: 'fully-installed', text: 'Fully Installed', count: `${installedModels}/${totalModels}` };
+  } else {
+    return { status: 'partially-installed', text: 'Partial', count: `${installedModels}/${totalModels}` };
   }
 };
 
@@ -226,7 +285,8 @@ const filteredBundles = computed(() => {
 onMounted(async () => {
   await Promise.all([
     loadUploadedBundles(),
-    loadInstalledBundles()
+    loadInstalledBundles(),
+    loadModelsData()
   ]);
 });
 </script>
@@ -323,7 +383,7 @@ onMounted(async () => {
                     <FontAwesomeIcon :icon="faServer" class="mr-1" />Profiles
                   </th>
                   <th class="px-4 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">
-                    <FontAwesomeIcon :icon="faCheckCircle" class="mr-1" />Status
+                    <FontAwesomeIcon :icon="faCheckCircle" class="mr-1" />Installation Status
                   </th>
                   <th class="px-4 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">
                     Actions
@@ -358,22 +418,48 @@ onMounted(async () => {
                     </div>
                   </td>
                   <td class="px-4 py-3">
-                    <span 
-                      :class=" [
-                        'px-2 py-1 inline-flex text-xs rounded items-center',
-                        getUploadedBundleStatus(bundle).status === 'fully-installed' ? 'bg-green-800 text-white' :
-                        getUploadedBundleStatus(bundle).status === 'partially-installed' ? 'bg-yellow-700 text-white' :
-                        'bg-gray-700 text-white'
-                      ]"
-                    >
-                      <FontAwesomeIcon 
-                        :icon="getUploadedBundleStatus(bundle).status === 'fully-installed' ? faCheckCircle :
-                               getUploadedBundleStatus(bundle).status === 'partially-installed' ? faExclamationCircle :
-                               faTimesCircle" 
-                        class="mr-1" 
-                      />
-                      {{ getUploadedBundleStatus(bundle).text }}
-                    </span>
+                    <div class="flex items-center space-x-2">
+                      <span 
+                        :class=" [
+                          'px-2 py-1 inline-flex text-xs rounded items-center',
+                          getBundleInstallationStatus(bundle).status === 'fully-installed' ? 'bg-green-800 text-white' :
+                          getBundleInstallationStatus(bundle).status === 'partially-installed' ? 'bg-yellow-700 text-white' :
+                          getBundleInstallationStatus(bundle).status === 'not-installed' ? 'bg-gray-700 text-white' :
+                          'bg-gray-600 text-white'
+                        ]"
+                      >
+                        <FontAwesomeIcon 
+                          :icon="getBundleInstallationStatus(bundle).status === 'fully-installed' ? faCheckCircle :
+                                 getBundleInstallationStatus(bundle).status === 'partially-installed' ? faExclamationCircle :
+                                 faTimesCircle" 
+                          class="mr-1" 
+                        />
+                        {{ getBundleInstallationStatus(bundle).text }}
+                      </span>
+                      <span class="text-xs text-text-muted">
+                        {{ getBundleInstallationStatus(bundle).count }} models
+                      </span>
+                    </div>
+                    
+                    <!-- Bundle installation status (from installed bundles API) -->
+                    <div class="mt-1">
+                      <span 
+                        :class=" [
+                          'px-2 py-1 inline-flex text-xs rounded items-center',
+                          getUploadedBundleStatus(bundle).status === 'fully-installed' ? 'bg-blue-800 text-white' :
+                          getUploadedBundleStatus(bundle).status === 'partially-installed' ? 'bg-blue-600 text-white' :
+                          'bg-gray-600 text-white'
+                        ]"
+                      >
+                        <FontAwesomeIcon 
+                          :icon="getUploadedBundleStatus(bundle).status === 'fully-installed' ? faCheckCircle :
+                                 getUploadedBundleStatus(bundle).status === 'partially-installed' ? faExclamationCircle :
+                                 faTimesCircle" 
+                          class="mr-1" 
+                        />
+                        Bundle: {{ getUploadedBundleStatus(bundle).text }}
+                      </span>
+                    </div>
                   </td>
                   <td class="px-4 py-3">
                     <div class="flex space-x-2">
@@ -536,9 +622,8 @@ onMounted(async () => {
                     <span class="ml-2 text-sm text-text-muted">({{ profile.models?.length || 0 }} models)</span>
                   </div>
                   <FontAwesomeIcon 
-                    :icon="faDownload" 
-                    :class="['transition-transform duration-200', openAccordionPanels.has(profileName) ? 'rotate-180' : '']"
-                    class="text-text-muted"
+                    :icon="openAccordionPanels.has(profileName) ? faChevronUp : faChevronDown" 
+                    class="text-text-muted transition-transform duration-200"
                   />
                 </button>
                 
@@ -559,8 +644,27 @@ onMounted(async () => {
                         class="flex items-center justify-between p-3 bg-background rounded border text-sm"
                       >
                         <div class="flex-1 min-w-0">
-                          <div class="font-medium text-text-light truncate">
-                            {{ getModelDisplayName(model) }}
+                          <div class="flex items-center">
+                            <div class="font-medium text-text-light truncate mr-3">
+                              {{ getModelDisplayName(model) }}
+                            </div>
+                            <!-- Model installation indicator -->
+                            <span 
+                              v-if="isModelInstalledOnDisk(model)"
+                              class="inline-flex items-center px-2 py-1 rounded text-xs bg-green-800 text-white"
+                              title="Model is installed on disk"
+                            >
+                              <FontAwesomeIcon :icon="faCheckCircle" class="mr-1" />
+                              Installed
+                            </span>
+                            <span 
+                              v-else
+                              class="inline-flex items-center px-2 py-1 rounded text-xs bg-gray-600 text-white"
+                              title="Model is not installed on disk"
+                            >
+                              <FontAwesomeIcon :icon="faTimesCircle" class="mr-1" />
+                              Not Installed
+                            </span>
                           </div>
                           <div class="text-xs text-text-muted mt-1">
                             <span class="inline-flex items-center mr-3">

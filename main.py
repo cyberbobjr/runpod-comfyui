@@ -123,6 +123,6 @@ async def serve_spa(full_path: str):
 if __name__ == "__main__":
     import uvicorn
     host = os.environ.get("HOST", "0.0.0.0")
-    port = int(os.environ.get("PORT", 8082))
+    port = int(os.environ.get("PORT", 8081))
     uvicorn.run(app, host=host, port=port)
 
