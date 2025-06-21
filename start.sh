@@ -18,7 +18,11 @@ fi
 # nohup uvicorn main:app --reload --host 0.0.0.0 --port 8081 >> "$LOGFILE" 2>&1 &
 # nohup uvicorn main:app --reload --host 0.0.0.0 --port 8081
 
-# Enregistrer les logs dans syslog via logger
-python3 main.py 2>&1 | while IFS= read -r line; do
+# Enregistrer les logs dans syslog via logger en arrière-plan
+nohup bash -c 'python3 -u main.py 2>&1 | while IFS= read -r line; do
     logger -t "comfyui-server" "$line"
-done
+done' &
+
+echo "ComfyUI server started in background with PID $!"
+echo "Logs are being sent to syslog with tag 'comfyui-server'"
+echo "Use 'journalctl -t comfyui-server -f' to follow logs"
