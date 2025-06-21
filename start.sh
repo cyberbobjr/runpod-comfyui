@@ -17,4 +17,8 @@ fi
 
 # nohup uvicorn main:app --reload --host 0.0.0.0 --port 8081 >> "$LOGFILE" 2>&1 &
 # nohup uvicorn main:app --reload --host 0.0.0.0 --port 8081
-python3 main.py
+
+# Enregistrer les logs dans syslog via logger
+python3 main.py 2>&1 | while IFS= read -r line; do
+    logger -t "comfyui-server" "$line"
+done
