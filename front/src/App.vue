@@ -13,6 +13,7 @@ import {
 import NotificationContainer from './components/NotificationContainer.vue'
 import DialogContainer from './components/DialogContainer.vue'
 import InstallProgressIndicator from './components/InstallProgressIndicator.vue'
+import FooterComponent from './components/common/FooterComponent.vue'
 import { useNotifications } from './composables/useNotifications'
 
 const route = useRoute()
@@ -128,6 +129,9 @@ onMounted(() => {
     <div class="view-container flex-1 overflow-auto bg-background w-full">
       <RouterView />
     </div>
+    
+    <!-- Footer - only show when logged in -->
+    <FooterComponent v-if="showHeader" :show-build="false" :show-build-date="false" />
     
     <!-- Notification and Dialog containers -->
     <NotificationContainer />

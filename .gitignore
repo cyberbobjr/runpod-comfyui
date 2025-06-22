@@ -175,3 +175,6 @@ frontend/node_modules/
 users.json
 nohup.out
 workflows/
+config.json
+comfyui-server.log
+comfyui-server.pid

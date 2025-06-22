@@ -1,13 +1,10 @@
 import os
-import json
 import logging
-import shutil
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Depends, Body, File, UploadFile, Form, Request
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Depends, Body, Request
 from pydantic import BaseModel, Field
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any
 
-from api import protected, get_env_file_path  # Import authentication utilities
+from api import protected  # Import authentication utilities
 from model_utils import DownloadManager, ModelManager
 
 # Logging configuration
@@ -75,34 +72,7 @@ class BundleInstallRequest(BaseModel):
     bundle: str
     profile: str
 
-# Supprimer les fonctions dupliquées - utiliser directement ModelManager
-def get_models_json_path():
-    """Return the full path to models.json."""
-    return ModelManager.get_models_json_path()
 
-def load_models_json():
-    """Load the complete models.json file."""
-    return ModelManager.load_models_json()
-
-def save_models_json(data):
-    """Save the complete models.json file."""
-    return ModelManager.save_models_json(data)
-
-def get_models_base_dir():
-    """Return the root directory for models."""
-    return ModelManager.get_models_dir()
-
-def get_workflows_dir():
-    """Return the workflows directory."""
-    return ModelManager.get_workflows_dir()
-
-def get_installed_bundles_path():
-    """Return the path to the installed bundles tracking file."""
-    return ModelManager.get_installed_bundles_file()
-
-def model_exists_on_disk(entry, base_dir):
-    """Check if a model exists on disk."""
-    return ModelManager.model_exists_on_disk(entry, base_dir)
 
 def get_model_id(entry):
     """Generate a unique identifier for a model."""
@@ -161,17 +131,16 @@ def get_models_data(user=Depends(protected)):
     - 401: Not authenticated
     - 500: Error reading models.json file
     
-    Usage: Main endpoint to get current state of all models and their download status.
-    """
-    data = load_models_json()
-    base_dir = data.get("config", {}).get("BASE_DIR", "")
+    Usage: Main endpoint to get current state of all models and their download status.    """
+    data = ModelManager.load_models_json()
+    base_dir = ModelManager.get_base_dir()
     # Add 'exists' and 'status' properties to each model
     groups = data.get("groups", {})
     # Get ongoing downloads
     downloads = DownloadManager.get_all_progress()
-    for group_name, entries in groups.items():
+    for _, entries in groups.items():
         for entry in entries:
-            entry["exists"] = model_exists_on_disk(entry, base_dir)
+            entry["exists"] = ModelManager.model_exists_on_disk(entry, base_dir)
             model_id = entry.get("dest") or entry.get("git")
             if model_id in downloads:
                 entry["status"] = downloads[model_id].get("status", "downloading")
@@ -233,58 +202,6 @@ def get_tokens(user=Depends(protected)):
     hf_token, civitai_token = read_env_file()
     return {"hf_token": hf_token, "civitai_token": civitai_token}
 
-@models_router.get("/config", response_model=Dict[str, str])
-def get_config(user=Depends(protected)):
-    """
-    GET /api/models/config
-    
-    Retrieves the configuration section from models.json.
-    
-    Arguments:
-    - user: Authentication token (automatic via Depends)
-    
-    Returns:
-    - Status: 200 OK
-    - Body: Configuration dictionary containing:
-      - BASE_DIR (str): Base directory path for models
-      - Other configuration keys as defined in models.json
-    
-    Possible errors:
-    - 401: Not authenticated
-    - 500: Error reading models.json file
-    
-    Usage: Get current configuration settings, primarily the base directory path.
-    """
-    data = load_models_json()
-    return data.get("config", {})
-
-@models_router.post("/config")
-def update_config(config: ConfigUpdateRequest, user=Depends(protected)):
-    """
-    POST /api/models/config
-    
-    Updates the configuration in models.json, primarily the BASE_DIR setting.
-    
-    Arguments:
-    - config (ConfigUpdateRequest): JSON object in request body with:
-      - base_dir (str): New base directory path for models
-    - user: Authentication token (automatic via Depends)
-    
-    Returns:
-    - Status: 200 OK
-    - Body: {"ok": true, "message": "Configuration updated"}
-    
-    Possible errors:
-    - 401: Not authenticated
-    - 400: Invalid request format or missing base_dir
-    - 500: Error writing to models.json file
-    
-    Usage: Change the base directory where models are stored.
-    """
-    data = load_models_json()
-    data["config"] = {"BASE_DIR": config.base_dir}
-    save_models_json(data)
-    return {"ok": True, "message": "Configuration updated"}
 
 @models_router.get("/groups", response_model=List[str])
 def get_groups(user=Depends(protected)):
@@ -303,10 +220,9 @@ def get_groups(user=Depends(protected)):
     Possible errors:
     - 401: Not authenticated
     - 500: Error reading models.json file
-    
-    Usage: Get all available model group names for organizing models.
+      Usage: Get all available model group names for organizing models.
     """
-    data = load_models_json()
+    data = ModelManager.load_models_json()
     return list(data.get("groups", {}).keys())
 
 @models_router.post("/groups")
@@ -329,17 +245,15 @@ def create_group(group_request: ModelGroupRequest, user=Depends(protected)):
     - 401: Not authenticated
     - 400: Group name already exists or invalid format
     - 500: Error writing to models.json file
-    
-    Usage: Create a new group to organize models by category.
+      Usage: Create a new group to organize models by category.
     """
-    data = load_models_json()
+    data = ModelManager.load_models_json()
     if group_request.group in data.get("groups", {}):
         raise HTTPException(status_code=400, detail=f"Group '{group_request.group}' already exists")
     
-    if "groups" not in data:
-        data["groups"] = {}
+    if "groups" not in data:        data["groups"] = {}
     data["groups"][group_request.group] = []
-    save_models_json(data)
+    ModelManager.save_models_json(data)
     return {"ok": True, "message": f"Group '{group_request.group}' created"}
 
 @models_router.put("/groups")
@@ -367,7 +281,7 @@ def update_group_name(update_request: UpdateModelGroupRequest, user=Depends(prot
     
     Usage: Rename a model group while preserving all models and bundle references.
     """
-    data = load_models_json()
+    data = ModelManager.load_models_json()
     
     if update_request.old_group not in data.get("groups", {}):
         raise HTTPException(status_code=404, detail=f"Group '{update_request.old_group}' does not exist")
@@ -387,7 +301,7 @@ def update_group_name(update_request: UpdateModelGroupRequest, user=Depends(prot
                 index = bundle["models"].index(update_request.old_group)
                 bundle["models"][index] = update_request.new_group
     
-    save_models_json(data)
+    ModelManager.save_models_json(data)
     return {"ok": True, "message": f"Group renamed from '{update_request.old_group}' to '{update_request.new_group}'"}
 
 @models_router.delete("/groups")
@@ -414,7 +328,7 @@ def delete_group(group_request: ModelGroupRequest, user=Depends(protected)):
     
     Usage: Remove an empty or unused model group.
     """
-    data = load_models_json()
+    data = ModelManager.load_models_json()
     
     if group_request.group not in data.get("groups", {}):
         raise HTTPException(status_code=404, detail=f"Group '{group_request.group}' does not exist")
@@ -433,7 +347,7 @@ def delete_group(group_request: ModelGroupRequest, user=Depends(protected)):
         )
     
     del data["groups"][group_request.group]
-    save_models_json(data)
+    ModelManager.save_models_json(data)
     return {"ok": True, "message": f"Group '{group_request.group}' deleted"}
 
 @models_router.get("/group/{group_name}", response_model=List[ModelEntry])
@@ -468,7 +382,7 @@ def get_group_models(group_name: str, user=Depends(protected)):
     
     Usage: Get all models in a specific group for display or processing.
     """
-    data = load_models_json()
+    data = ModelManager.load_models_json()
     
     if group_name not in data.get("groups", {}):
         raise HTTPException(status_code=404, detail=f"Group '{group_name}' does not exist")
@@ -501,7 +415,7 @@ def add_model_entry(entry_request: ModelEntryRequest, user=Depends(protected)):
     
     Usage: Add a new model to a group with download URL and destination path.
     """
-    data = load_models_json()
+    data = ModelManager.load_models_json()
     
     if "groups" not in data:
         data["groups"] = {}
@@ -527,7 +441,7 @@ def add_model_entry(entry_request: ModelEntryRequest, user=Depends(protected)):
     
     # Add model to group
     data["groups"][entry_request.group].append(entry_request.entry.dict(exclude_none=True))
-    save_models_json(data)
+    ModelManager.save_models_json(data)
     
     return {"ok": True, "message": "Model entry added successfully"}
 
@@ -555,7 +469,7 @@ def update_model_entry(entry_request: ModelEntryRequest, user=Depends(protected)
     
     Usage: Update an existing model's properties or add a new one if not found.
     """
-    data = load_models_json()
+    data = ModelManager.load_models_json()
     
     # Ensure groups structure exists
     if "groups" not in data:
@@ -594,7 +508,7 @@ def update_model_entry(entry_request: ModelEntryRequest, user=Depends(protected)
     if not found:
         data["groups"][entry_request.group].append(entry_request.entry.dict(exclude_none=True))
     
-    save_models_json(data)
+    ModelManager.save_models_json(data)
     message = "Model entry updated" if found else "Model entry added"
     return {"ok": True, "message": message}
 
@@ -623,7 +537,7 @@ def delete_model_entry(entry_request: ModelEntryRequest, user=Depends(protected)
     
     Usage: Remove a model entry from the configuration.
     """
-    data = load_models_json()
+    data = ModelManager.load_models_json()
     
     if entry_request.group not in data.get("groups", {}):
         raise HTTPException(status_code=404, detail=f"Group '{entry_request.group}' does not exist")
@@ -643,7 +557,7 @@ def delete_model_entry(entry_request: ModelEntryRequest, user=Depends(protected)
     if len(data["groups"][entry_request.group]) == original_length:
         raise HTTPException(status_code=404, detail=f"Model not found in group '{entry_request.group}'")
     
-    save_models_json(data)
+    ModelManager.save_models_json(data)
     return {"ok": True, "message": "Model entry deleted successfully"}
 
 @models_router.get("/downloads")
@@ -669,6 +583,8 @@ def get_all_downloads(user=Depends(protected)):
     
     Usage: Monitor progress of all active downloads in real-time.
     """
+    # Clean up finished downloads before returning the current status
+    DownloadManager.cleanup_finished_downloads()
     return DownloadManager.get_all_progress()
 
 @models_router.post("/download")
@@ -896,7 +812,7 @@ async def delete_models(
         entries = data
     else:
         return {"ok": False, "msg": "Invalid input format"}
-
+    base_dir = ModelManager.get_base_dir()
     # Track which dest have already been deleted
     deleted_dests = set()
     results = []
@@ -907,7 +823,7 @@ async def delete_models(
             continue
 
         # Use ModelManager to resolve the path properly
-        path = ModelManager.resolve_path(dest)
+        path = ModelManager.resolve_path(dest,base_dir)
         if not path:
             results.append({"ok": False, "msg": "Invalid destination path"})
             continue

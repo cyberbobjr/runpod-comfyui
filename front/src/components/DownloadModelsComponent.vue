@@ -96,28 +96,15 @@
 
         <div v-if="Object.keys(filteredGroupedModels).length === 0" class="text-center text-text-light-muted py-8">
           {{ filterText || selectedTagFilters.length > 0 ? 'No models match the current filters.' : 'No models found.' }}
-        </div>
-        <div v-else class="space-y-4">
-          <div
+        </div>        <div v-else class="space-y-4">
+          <AccordionComponent
             v-for="(groupModels, groupName) in filteredGroupedModels"
             :key="groupName"
-            class="border border-border rounded-lg"
+            :title="groupName"
+            :defaultOpen="expandedGroups.includes(groupName)"
+            @toggle="(isOpen) => handleGroupToggle(groupName, isOpen)"
           >
-            <button 
-              @click="toggleGroup(groupName)"
-              class="w-full flex items-center justify-between p-3 text-left hover:bg-background-mute transition-colors border-b border-border"
-            >
-              <span class="font-medium text-text-light">{{ groupName }}</span>
-              <svg 
-                :class="['w-5 h-5 transition-transform', expandedGroups.includes(groupName) ? 'rotate-180' : '']"
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            <div v-if="expandedGroups.includes(groupName)" class="table-responsive">
+            <div class="table-responsive">
               <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                   <thead class="bg-background-mute">
@@ -242,7 +229,7 @@
                 </table>
               </div>
             </div>
-          </div>
+          </AccordionComponent>
         </div>
       </div>
     </div>
@@ -254,6 +241,7 @@ import { ref, computed, onMounted, watchEffect } from "vue";
 import api from "../services/api";
 import { useNotifications } from "../composables/useNotifications";
 import { useInstallProgress } from "../composables/useInstallProgress";
+import AccordionComponent from "./common/AccordionComponent.vue";
 
 // --- State ---
 const models = ref([]);
@@ -266,13 +254,16 @@ const filterText = ref('');
 const selectedTagFilters = ref([]);
 
 // --- Downloads state (simplifié) ---
-const downloads = ref({});
+// const downloads = ref({}); // Supprimé: utilise maintenant les données centralisées
 
 // --- Notifications system ---
 const { showNotification, showDialog } = useNotifications();
 
 // --- Install progress system ---
-const { startModelDownload, restoreActiveDownloads } = useInstallProgress();
+const { startModelDownload, rawDownloads, refreshDownloads, startGlobalDownloadPolling } = useInstallProgress();
+
+// --- Utiliser les données centralisées au lieu de downloads local ---
+const downloads = rawDownloads;
 
 // --- Fetch models ---
 const fetchModels = async () => {
@@ -294,15 +285,7 @@ const fetchModels = async () => {
   }
 };
 
-// --- Fetch downloads ---
-const fetchDownloads = async () => {
-  try {
-    const { data } = await api.get("/models/downloads");
-    downloads.value = data || {};
-  } catch (e) {
-    downloads.value = {};
-  }
-};
+// --- Fetch downloads supprimé - utilise maintenant refreshDownloads() ---
 
 // --- Rafraîchir la liste des modèles à la fin d'un téléchargement ---
 let previousDownloads = {};
@@ -352,6 +335,15 @@ const toggleGroup = (groupName) => {
     expandedGroups.value.splice(index, 1);
   } else {
     expandedGroups.value.push(groupName);
+  }
+};
+
+const handleGroupToggle = (groupName, isOpen) => {
+  const index = expandedGroups.value.indexOf(groupName);
+  if (isOpen && index === -1) {
+    expandedGroups.value.push(groupName);
+  } else if (!isOpen && index > -1) {
+    expandedGroups.value.splice(index, 1);
   }
 };
 
@@ -562,18 +554,24 @@ async function downloadModels(modelsToDownload) {
   try {
     const modelsArray = Array.isArray(modelsToDownload) ? modelsToDownload : [modelsToDownload];
     
-    // Démarrer l'indicateur de progression pour chaque modèle
-    for (const model of modelsArray) {
-      const modelName = lastPath(model.dest) || model.git || 'Unknown model';
-      const modelId = modelKey(model);
-      
-      // Démarrer l'indicateur de progression pour chaque modèle
-      await startModelDownload(modelId, modelName);
+    // Vérifier qu'aucun des modèles n'est déjà en cours de téléchargement
+    const alreadyDownloading = modelsArray.filter(model => isDownloading(model));
+    if (alreadyDownloading.length > 0) {
+      showNotification(
+        `Some models are already downloading: ${alreadyDownloading.map(m => lastPath(m.dest) || m.git).join(', ')}`,
+        'warning'
+      );
+      return;
     }
     
+    // Démarrer le polling global AVANT le POST pour être sûr qu'il soit actif
+    startGlobalDownloadPolling();
+    
+    // Envoyer la requête POST pour démarrer le téléchargement
     const res = await api.post("/models/download", modelsToDownload);
     const results = Array.isArray(res.data) ? res.data : [res.data];
     let errors = results.filter(r => !r.ok);
+    
     if (errors.length) {
       errors.forEach(r => showNotification(r.msg || "Download failed", 'error'));
     } else {
@@ -583,7 +581,14 @@ async function downloadModels(modelsToDownload) {
           : "Download started",
         'success'
       );
+      
+      // Attendre un peu puis rafraîchir pour détecter les nouveaux téléchargements
+      setTimeout(async () => {
+        await refreshDownloads();
+        console.log('Downloads refreshed after POST, current downloads:', Object.keys(rawDownloads.value));
+      }, 1000);
     }
+    
     await fetchModels();
   } catch (error) {
     showNotification("Download operation failed", 'error');
@@ -591,6 +596,12 @@ async function downloadModels(modelsToDownload) {
 }
 
 const confirmDownload = async (model) => {
+  // Vérifier si le modèle est déjà en cours de téléchargement
+  if (isDownloading(model)) {
+    showNotification(`Model "${lastPath(model.dest) || model.git}" is already downloading`, 'warning');
+    return;
+  }
+
   const result = await showDialog({
     title: "Download model",
     message: `Download model "${lastPath(model.dest) || model.git}"?`,
@@ -628,23 +639,19 @@ const stopDownload = async (model) => {
   }
 };
 
-// --- Polling simplifié (juste pour le statut exists) ---
-let pollInterval = null;
-const pollDownloads = () => {
-  clearInterval(pollInterval);
-  pollInterval = setInterval(() => {
-    fetchDownloads();
-  }, 5000);
-};
+// --- Polling simplifié (utilise maintenant le polling centralisé) ---
+// Le polling est maintenant géré par useInstallProgress.js
+// Nous n'avons plus besoin de polling séparé ici
 
 onMounted(async () => {
   await fetchModels();
-  await fetchDownloads();
+  await refreshDownloads();
   
-  // Restaurer les indicateurs de progression pour les téléchargements en cours
-  await restoreActiveDownloads();
+  // Démarrer le polling global des téléchargements
+  startGlobalDownloadPolling();
   
-  pollDownloads();
+  // Note: Le polling des downloads est maintenant géré par useInstallProgress
+  // restoreActiveDownloads() est appelé par InstallProgressIndicator
 });
 </script>
 

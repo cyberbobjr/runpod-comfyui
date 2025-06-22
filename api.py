@@ -57,15 +57,11 @@ def change_user(req: ChangeUserRequest, user=Depends(protected)):
         json.dump(users, f)
     return {"ok": True}
 
-def get_models_base_dir():
-    """Returns the models root directory according to COMFYUI_MODEL_DIR/models or config.BASE_DIR rule."""
-    return ModelManager.get_models_dir()
-
 @api_router.get("/")
 def list_models(user=Depends(protected)):
     """Lists all models from JSON and their status on disk."""
     groups = load_models()
-    base_dir = get_models_base_dir()
+    base_dir = ModelManager.get_models_base_dir()
     result = []
     for group, entries in groups.items():
         for entry in entries:
@@ -176,7 +172,7 @@ def download_worker(entry, model_id, event, stop_event):
 
 def download_git_entry(entry, model_id, stop_event=None):
     import subprocess
-    base_dir = get_models_base_dir()
+    base_dir = ModelManager.get_models_base_dir()
     dest_dir = entry["dest"].replace("${BASE_DIR}", base_dir)
     if os.path.exists(dest_dir):
         PROGRESS[model_id]["progress"] = 100
@@ -195,7 +191,7 @@ def download_git_entry(entry, model_id, stop_event=None):
 
 def download_url_entry(entry, model_id, hf_token=None, civitai_token=None, stop_event=None):
     import requests
-    base_dir = get_models_base_dir()
+    base_dir = ModelManager.get_models_base_dir()
     url = entry["url"]
     dest = entry["dest"].replace("${BASE_DIR}", base_dir)
     os.makedirs(os.path.dirname(dest), exist_ok=True)

@@ -1,28 +1,69 @@
 #!/bin/bash
-# Pour lancer en tâche de fond (background) et écrire les logs dans un fichier :
-# Limite la taille du fichier de log à 10 Mo, conserve 3 archives (logrotate simple via logrotate si dispo)
+
+# Configuration
 LOGFILE="comfyui-server.log"
 MAXSIZE=10485760 # 10 Mo
+SYSLOG_TAG="comfyui-server"
+PIDFILE="comfyui-server.pid"
 
-# Set COMFYUI_MODEL_DIR only if it doesn't exist
-if [ -z "${COMFYUI_MODEL_DIR}" ]; then
-    export COMFYUI_MODEL_DIR="/mnt/d/runpod-volume"
-fi
+# Function to log to syslog with fallback to file
+log_message() {
+    local message="$1"
+    local priority="$2"
+    
+    # Try to use logger first
+    if command -v logger >/dev/null 2>&1; then
+        echo "$message" | logger -t "$SYSLOG_TAG" ${priority:+-p "$priority"}
+    else
+        # Fallback to direct syslog if available
+        if [ -w /dev/log ]; then
+            echo "<6>$SYSLOG_TAG: $message" > /dev/log
+        else
+            # Final fallback to file logging
+            echo "$(date '+%Y-%m-%d %H:%M:%S') [$SYSLOG_TAG] $message" >> "$LOGFILE"
+        fi
+    fi
+}
 
+# Rotate log files if needed
 if [ -f "$LOGFILE" ] && [ $(stat -c%s "$LOGFILE") -ge $MAXSIZE ]; then
-    mv "$LOGFILE" "$LOGFILE.1"
-    [ -f "$LOGFILE.1" ] && mv "$LOGFILE.1" "$LOGFILE.2"
     [ -f "$LOGFILE.2" ] && mv "$LOGFILE.2" "$LOGFILE.3"
+    [ -f "$LOGFILE.1" ] && mv "$LOGFILE.1" "$LOGFILE.2"
+    mv "$LOGFILE" "$LOGFILE.1"
 fi
 
-# nohup uvicorn main:app --reload --host 0.0.0.0 --port 8081 >> "$LOGFILE" 2>&1 &
-# nohup uvicorn main:app --reload --host 0.0.0.0 --port 8081
+# Check if server is already running
+if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+    echo "ComfyUI server is already running with PID $(cat "$PIDFILE")"
+    exit 1
+fi
 
-# Enregistrer les logs dans syslog via logger en arrière-plan
-nohup bash -c 'python3 -u main.py 2>&1 | while IFS= read -r line; do
-    logger -t "comfyui-server" "$line"
-done' &
+# Start the server with improved logging
+{
+    python3 -u main.py 2>&1 | while IFS= read -r line; do
+        # Send to syslog with timestamp
+        log_message "$line" "info"
+        # Also keep a local log file as backup
+        echo "$(date '+%Y-%m-%d %H:%M:%S') $line" >> "$LOGFILE"
+    done
+} &
 
-echo "ComfyUI server started in background with PID $!"
-echo "Logs are being sent to syslog with tag 'comfyui-server'"
-echo "Use 'journalctl -t comfyui-server -f' to follow logs"
+SERVER_PID=$!
+echo $SERVER_PID > "$PIDFILE"
+
+log_message "ComfyUI server started with PID $SERVER_PID" "info"
+echo "ComfyUI server started in background with PID $SERVER_PID"
+echo "PID file: $PIDFILE"
+echo "Log file: $LOGFILE"
+
+# Check logging method being used
+if command -v logger >/dev/null 2>&1; then
+    echo "Logs are being sent to syslog using 'logger' command with tag '$SYSLOG_TAG'"
+    echo "Use 'journalctl -t $SYSLOG_TAG -f' to follow syslog logs"
+elif [ -w /dev/log ]; then
+    echo "Logs are being sent to syslog directly via /dev/log with tag '$SYSLOG_TAG'"
+    echo "Use 'tail -f /var/log/syslog | grep $SYSLOG_TAG' to follow logs"
+else
+    echo "Syslog not available, logs are written to file: $LOGFILE"
+    echo "Use 'tail -f $LOGFILE' to follow logs"
+fi
