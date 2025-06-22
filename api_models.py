@@ -1,13 +1,10 @@
 import os
-import json
 import logging
-import shutil
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Depends, Body, File, UploadFile, Form, Request
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Depends, Body, Request
 from pydantic import BaseModel, Field
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any
 
-from api import protected, get_env_file_path  # Import authentication utilities
+from api import protected  # Import authentication utilities
 from model_utils import DownloadManager, ModelManager
 
 # Logging configuration
@@ -233,58 +230,6 @@ def get_tokens(user=Depends(protected)):
     hf_token, civitai_token = read_env_file()
     return {"hf_token": hf_token, "civitai_token": civitai_token}
 
-@models_router.get("/config", response_model=Dict[str, str])
-def get_config(user=Depends(protected)):
-    """
-    GET /api/models/config
-    
-    Retrieves the configuration section from models.json.
-    
-    Arguments:
-    - user: Authentication token (automatic via Depends)
-    
-    Returns:
-    - Status: 200 OK
-    - Body: Configuration dictionary containing:
-      - BASE_DIR (str): Base directory path for models
-      - Other configuration keys as defined in models.json
-    
-    Possible errors:
-    - 401: Not authenticated
-    - 500: Error reading models.json file
-    
-    Usage: Get current configuration settings, primarily the base directory path.
-    """
-    data = load_models_json()
-    return data.get("config", {})
-
-@models_router.post("/config")
-def update_config(config: ConfigUpdateRequest, user=Depends(protected)):
-    """
-    POST /api/models/config
-    
-    Updates the configuration in models.json, primarily the BASE_DIR setting.
-    
-    Arguments:
-    - config (ConfigUpdateRequest): JSON object in request body with:
-      - base_dir (str): New base directory path for models
-    - user: Authentication token (automatic via Depends)
-    
-    Returns:
-    - Status: 200 OK
-    - Body: {"ok": true, "message": "Configuration updated"}
-    
-    Possible errors:
-    - 401: Not authenticated
-    - 400: Invalid request format or missing base_dir
-    - 500: Error writing to models.json file
-    
-    Usage: Change the base directory where models are stored.
-    """
-    data = load_models_json()
-    data["config"] = {"BASE_DIR": config.base_dir}
-    save_models_json(data)
-    return {"ok": True, "message": "Configuration updated"}
 
 @models_router.get("/groups", response_model=List[str])
 def get_groups(user=Depends(protected)):

@@ -230,27 +230,26 @@ class DownloadManager:
 
 class ModelManager:
     """
-    Classe utilitaire pour gérer les modèles et les workflows.
-    Contient des méthodes pour charger, installer et vérifier les modèles.
+    Utility class for managing models and workflows.
+    Contains methods for loading, installing and checking models.
     """
     
-    # Cache pour éviter les rechargements répétés
+    # Cache to avoid repeated reloads
     _cache = {
         "models_json_data": None,
         "models_json_path": None,
         "base_dir": None,
         "last_load_time": 0,
-        "cache_ttl": 30  # Cache valide pendant 30 secondes
+        "cache_ttl": 30  # Cache valid for 30 seconds
     }
     
     @staticmethod
     def _is_cache_valid() -> bool:
-        """Vérifie si le cache est encore valide."""
-        return (time.time() - ModelManager._cache["last_load_time"]) < ModelManager._cache["cache_ttl"]
-    
+        """Checks if the cache is still valid."""
+        return (time.time() - ModelManager._cache["last_load_time"]) < ModelManager._cache["cache_ttl"]    
     @staticmethod
     def _clear_cache():
-        """Vide le cache."""
+        """Clears the cache."""
         ModelManager._cache["models_json_data"] = None
         ModelManager._cache["models_json_path"] = None
         ModelManager._cache["base_dir"] = None
@@ -259,25 +258,37 @@ class ModelManager:
     @staticmethod
     def get_base_dir() -> str:
         """
-        Retourne le répertoire de base (BASE_DIR) selon la priorité :
-        1. Variable d'environnement BASE_DIR
-        2. Valeur dans models.json config.BASE_DIR
-        3. Variable d'environnement COMFYUI_MODEL_DIR
-        4. Répertoire courant
+        Returns the base directory (BASE_DIR) according to priority:
+        1. BASE_DIR environment variable
+        2. config.json file (created by user)
+        3. models.json config.BASE_DIR value
+        4. COMFYUI_MODEL_DIR environment variable
+        5. Current directory
         """
-        # Vérifier le cache d'abord
+        # Check cache first
         if ModelManager._is_cache_valid() and ModelManager._cache["base_dir"]:
             return ModelManager._cache["base_dir"]
         
         base_dir = None
         
-        # Priorité 1: Variable d'environnement BASE_DIR
+        # Priority 1: BASE_DIR environment variable
         env_base_dir = os.environ.get("BASE_DIR")
         if env_base_dir:
-            logger.debug(f"Utilisation de BASE_DIR depuis variable d'environnement: {env_base_dir}")
+            logger.debug(f"Using BASE_DIR from environment variable: {env_base_dir}")
             base_dir = env_base_dir
         
-        # Priorité 2: Valeur dans models.json (sans utiliser le cache pour éviter la récursion)
+        # Priority 2: Custom config.json file (resistant to git pull)
+        if not base_dir:
+            try:
+                user_config = ModelManager.load_user_config()
+                config_base_dir = user_config.get("BASE_DIR", "")
+                if config_base_dir:
+                    logger.debug(f"Using BASE_DIR from config.json: {config_base_dir}")
+                    base_dir = config_base_dir
+            except Exception:
+                logger.debug("Unable to read BASE_DIR from config.json")
+        
+        # Priority 3: models.json value (without using cache to avoid recursion)
         if not base_dir:
             try:
                 models_path = ModelManager._find_models_json_path()
@@ -286,76 +297,73 @@ class ModelManager:
                         data = json.load(f)
                     config_base_dir = data.get("config", {}).get("BASE_DIR", "")
                     if config_base_dir:
-                        logger.debug(f"Utilisation de BASE_DIR depuis models.json: {config_base_dir}")
+                        logger.debug(f"Using BASE_DIR from models.json: {config_base_dir}")
                         base_dir = config_base_dir
             except Exception:
-                logger.debug("Impossible de lire BASE_DIR depuis models.json")
+                logger.debug("Unable to read BASE_DIR from models.json")
         
-        # Priorité 3: Variable d'environnement COMFYUI_MODEL_DIR
+        # Priority 4: COMFYUI_MODEL_DIR environment variable
         if not base_dir:
             comfy_dir = os.environ.get("COMFYUI_MODEL_DIR")
             if comfy_dir:
-                logger.debug(f"Utilisation de COMFYUI_MODEL_DIR: {comfy_dir}")
+                logger.debug(f"Using COMFYUI_MODEL_DIR: {comfy_dir}")
                 base_dir = comfy_dir
         
-        # Priorité 4: Répertoire courant
+        # Priority 5: Current directory
         if not base_dir:
             base_dir = os.getcwd()
-            logger.debug(f"Utilisation du répertoire courant: {base_dir}")
-        
-        # Mettre en cache
+            logger.debug(f"Using current directory: {base_dir}")
+          # Cache the result
         ModelManager._cache["base_dir"] = base_dir
         return base_dir
     
     @staticmethod
     def _find_models_json_path() -> str:
-        """Méthode interne pour trouver le chemin de models.json sans utiliser le cache."""
-        # Stratégie 1: Variable d'environnement BASE_DIR
+        """Internal method to find the models.json path without using cache."""
+        # Strategy 1: BASE_DIR environment variable
         env_base_dir = os.environ.get("BASE_DIR")
         if env_base_dir:
             path = os.path.join(env_base_dir, MODELS_JSON)
             if os.path.exists(path):
                 return path
         
-        # Stratégie 2: Répertoire courant de l'application
-        current_dir = os.path.abspath(os.getcwd())
-        path = os.path.join(current_dir, MODELS_JSON)
-        if os.path.exists(path):
-            return path
-        
-        # Stratégie 3: Répertoire du script actuel
-        script_dir = os.path.abspath(os.path.dirname(__file__))
-        path = os.path.join(script_dir, MODELS_JSON)
-        if os.path.exists(path):
-            return path
-        
-        # Stratégie 4: Variable d'environnement COMFYUI_MODEL_DIR
+        # Strategy 2: COMFYUI_MODEL_DIR environment variable
         comfy_dir = os.environ.get("COMFYUI_MODEL_DIR")
         if comfy_dir:
             path = os.path.join(comfy_dir, MODELS_JSON)
             if os.path.exists(path):
                 return path
+
+        # Strategy 3: Current application directory
+        current_dir = os.path.abspath(os.getcwd())
+        path = os.path.join(current_dir, MODELS_JSON)
+        if os.path.exists(path):
+            return path
         
-        # Retourner le chemin par défaut
+        # Strategy 4: Current script directory
+        script_dir = os.path.abspath(os.path.dirname(__file__))
+        path = os.path.join(script_dir, MODELS_JSON)
+        if os.path.exists(path):
+            return path        # Return default path
         return os.path.join(current_dir, MODELS_JSON)
     
     @staticmethod
     def get_models_dir() -> str:
-        """Retourne le répertoire des modèles : ${BASE_DIR}/models"""
+        """Returns the models directory: ${BASE_DIR}/models"""
         base_dir = ModelManager.get_base_dir()
         models_dir = os.path.join(base_dir, "models")
         return models_dir
     
     @staticmethod
     def get_workflows_dir() -> str:
-        """Retourne le répertoire des workflows : ${BASE_DIR}/user/default/workflows"""
+        """Returns the workflows directory: ${BASE_DIR}/user/default/workflows"""
         base_dir = ModelManager.get_base_dir()
         workflows_dir = os.path.join(base_dir, "user", "default", "workflows")
         return workflows_dir
     
     @staticmethod
     def get_env_file_path() -> str:
-        """Retourne le chemin du fichier .env : ${BASE_DIR}/.env"""
+        """Returns the .env file path: ${BASE_DIR}/.env"""
         base_dir = ModelManager.get_base_dir()
         return os.path.join(base_dir, ".env")
     
@@ -775,6 +783,65 @@ class ModelManager:
             except Exception as e:
                 error_msg = f"Error installing model {model_id}: {str(e)}"
                 install_results["errors"].append(error_msg)
-                logger.error(error_msg)
-        
+                logger.error(error_msg)        
         return install_results
+    
+    @staticmethod
+    def get_user_config_path() -> str:
+        """
+        Returns the path to the user's custom config.json file.
+        This file is not in the git repository and won't be overwritten during updates.
+        """
+        # The config.json file is placed in the current application directory
+        current_dir = os.path.abspath(os.getcwd())
+        return os.path.join(current_dir, "config.json")
+    
+    @staticmethod
+    def load_user_config() -> Dict[str, Any]:
+        """
+        Loads the user's custom config.json file.
+        Returns an empty dictionary if the file doesn't exist.
+        """
+        config_path = ModelManager.get_user_config_path()
+        if not os.path.exists(config_path):
+            logger.debug("User config.json file not found")
+            return {}
+        
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            logger.debug(f"User configuration loaded from: {config_path}")
+            return data
+        except (json.JSONDecodeError, IOError) as e:
+            logger.error(f"Error loading {config_path}: {e}")
+            return {}
+    
+    @staticmethod
+    def save_user_config(config: Dict[str, Any]) -> None:
+        """
+        Saves the user configuration to config.json.
+        Invalidates cache after saving.
+        """
+        config_path = ModelManager.get_user_config_path()
+        logger.debug(f"Saving user configuration to: {config_path}")
+        
+        try:
+            with open(config_path, "w", encoding="utf-8") as f:
+                json.dump(config, f, indent=2, ensure_ascii=False)
+            
+            # Invalidate cache since configuration has changed
+            ModelManager._clear_cache()
+            logger.info(f"User configuration saved to {config_path}")
+        except Exception as e:
+            logger.error(f"Error saving {config_path}: {e}")
+            raise HTTPException(status_code=500, detail=f"Error saving configuration: {str(e)}")
+    
+    @staticmethod
+    def update_user_base_dir(base_dir: str) -> None:
+        """
+        Updates the BASE_DIR in user configuration.
+        """
+        config = ModelManager.load_user_config()
+        config["BASE_DIR"] = base_dir
+        ModelManager.save_user_config(config)
+        logger.info(f"User BASE_DIR updated: {base_dir}")

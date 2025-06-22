@@ -4,7 +4,7 @@ import router from '../router';
 // Déterminer la baseURL en fonction de l'environnement
 const isDevelopment = import.meta.env.MODE === 'development';
 const baseURL = isDevelopment 
-  ? 'http://localhost:8082/api' 
+  ? 'http://localhost:8081/api' 
   : window.location.origin + '/api'; // Utilise l'URL courante en production
 
 // Constante pour la clé du token

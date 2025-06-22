@@ -146,27 +146,55 @@ def get_models_data(user=Depends(protected)):
 def get_config(user=Depends(protected)):
     """
     Route: GET /api/jsonmodels/config
-    Role: Retrieves the configuration section from models.json
+    Role: Retrieves the current configuration including user-specific BASE_DIR
     Input arguments: None (authenticated user via dependency)
-    Output format: Dict containing configuration key-value pairs (typically BASE_DIR)
+    Output format: Dict containing:
+      - BASE_DIR: Current base directory path (from user config.json or models.json fallback)
+      - source: Indicates where BASE_DIR comes from ("user_config", "models_json", "environment", or "default")
     """
-    data = load_models_json()
-    return data.get("config", {})
+    # Obtenir le BASE_DIR actuel via la logique de priorité de ModelManager
+    current_base_dir = ModelManager.get_base_dir()
+    
+    # Déterminer la source du BASE_DIR pour information
+    source = "default"
+    if os.environ.get("BASE_DIR"):
+        source = "environment"
+    elif os.path.exists(ModelManager.get_user_config_path()):
+        user_config = ModelManager.load_user_config()
+        if user_config.get("BASE_DIR"):
+            source = "user_config"
+    else:
+        data = load_models_json()
+        if data.get("config", {}).get("BASE_DIR"):
+            source = "models_json"
+    
+    return {
+        "BASE_DIR": current_base_dir,
+        "source": source
+    }
 
 @jsonmodels_router.post("/config")
 def update_config(config: ConfigUpdateRequest, user=Depends(protected)):
     """
     Route: POST /api/jsonmodels/config
-    Role: Updates the configuration section in models.json
+    Role: Updates the BASE_DIR in user-specific config.json (resistant to git pull)
     Input arguments: 
       - config: ConfigUpdateRequest with base_dir string
       - user: authenticated user via dependency
-    Output format: Dict with 'ok' boolean and 'message' string confirming update
+    Output format: Dict with 'ok' boolean and 'message' string confirming update    Note: This creates/updates config.json which won't be overwritten by git pull
     """
-    data = load_models_json()
-    data["config"] = {"BASE_DIR": config.base_dir}
-    save_models_json(data)
-    return {"ok": True, "message": "Configuration updated"}
+    try:
+        # Save to custom config.json file
+        ModelManager.update_user_base_dir(config.base_dir)
+        
+        logger.info(f"User configuration updated: BASE_DIR = {config.base_dir}")
+        return {
+            "ok": True, 
+            "message": f"Configuration updated. BASE_DIR set to '{config.base_dir}' in config.json"
+        }
+    except Exception as e:
+        logger.error(f"Error updating configuration: {e}")
+        raise HTTPException(status_code=500, detail=f"Error updating configuration: {str(e)}")
 
 @jsonmodels_router.get("/groups", response_model=List[str])
 def get_groups(user=Depends(protected)):

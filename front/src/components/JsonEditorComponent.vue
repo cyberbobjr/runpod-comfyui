@@ -35,244 +35,165 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </button>
-      </div>
-
-      <!-- Base Directory Config -->
-      <div class="card">
-        <h2 class="text-xl font-semibold text-text-light mb-4">Base Configuration</h2>
-        
-        <form @submit.prevent="saveBaseDir">
-          <div class="mb-4">
-            <label for="base-dir" class="form-label">BASE_DIR</label>
-            <input
-              id="base-dir"
-              v-model="baseDirForm.base_dir"
-              type="text"
-              class="form-input w-full"
-            />
-          </div>
-          <button
-            type="submit"
-            class="btn btn-primary w-full"
-            :disabled="savingBaseDir"
-          >
-            <span v-if="savingBaseDir" class="flex items-center justify-center">
+      </div>      <!-- Group Management -->
+      <AccordionComponent 
+        title="Model Groups" 
+        icon="layer-group"
+        :default-open="true"
+        class="mt-6"
+      >
+        <div class="flex justify-end space-x-4 mb-4">
+          <button type="button" class="btn btn-default" @click="fetchData" :disabled="loading">
+            <span v-if="loading" class="flex items-center justify-center">
               <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Saving...
+              Refreshing...
             </span>
-            <span v-else>Save</span>
+            <span v-else>Refresh</span>
           </button>
-        </form>
-
-        <p class="text-text-light-muted text-sm mt-4">
-          This directory is used as a base for model paths (${BASE_DIR}).
-        </p>
-      </div>
-
-      <!-- Group Management -->
-      <div class="card mt-6">
-        <div 
-          class="flex justify-between items-center cursor-pointer"
-          @click="toggleSection('groups')"
-        >
-          <h2 class="text-xl font-semibold text-text-light">Model Groups</h2>
-          <svg 
-            class="w-5 h-5 transform transition-transform" 
-            :class="{ 'rotate-180': expandedSections.includes('groups') }"
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24"
-          >
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-          </svg>
+          <button type="button" class="btn btn-primary" @click="openAddGroupModal">
+            Add Group
+          </button>
         </div>
         
-        <div v-if="expandedSections.includes('groups')" class="mt-4">
-          <div class="flex justify-end space-x-4 mb-4">
-            <button type="button" class="btn btn-default" @click="fetchData" :disabled="loading">
-              <span v-if="loading" class="flex items-center justify-center">
-                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Refreshing...
-              </span>
-              <span v-else>Refresh</span>
-            </button>
-            <button type="button" class="btn btn-primary" @click="openAddGroupModal">
-              Add Group
-            </button>
-          </div>
-          
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-border">
-              <thead class="bg-background-mute">
-                <tr>
-                  <th class="px-4 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">Name</th>
-                  <th class="px-4 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody class="bg-background-soft divide-y divide-border">
-                <tr v-for="group in groupList" :key="group.name" class="hover:bg-background-mute">
-                  <td class="px-4 py-3 text-text-light">{{ group.name }}</td>
-                  <td class="px-4 py-3">
-                    <div class="flex space-x-2">
-                      <button
-                        type="button"
-                        class="px-3 py-1 bg-btn-default text-white rounded hover:bg-btn-default-hover text-sm"
-                        @click="openEditGroupModal(group.name)"
-                      >
-                        Rename
-                      </button>
-                      <button
-                        type="button"
-                        class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
-                        @click="deleteGroup(group.name)"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-border">
+            <thead class="bg-background-mute">
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">Name</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="bg-background-soft divide-y divide-border">
+              <tr v-for="group in groupList" :key="group.name" class="hover:bg-background-mute">
+                <td class="px-4 py-3 text-text-light">{{ group.name }}</td>
+                <td class="px-4 py-3">
+                  <div class="flex space-x-2">
+                    <button
+                      type="button"
+                      class="px-3 py-1 bg-btn-default text-white rounded hover:bg-btn-default-hover text-sm"
+                      @click="openEditGroupModal(group.name)"
+                    >
+                      Rename
+                    </button>
+                    <button
+                      type="button"
+                      class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+                      @click="deleteGroup(group.name)"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-      </div>
-
-      <!-- Models by Group -->
-      <div class="card mt-6">
-        <div 
-          class="flex justify-between items-center cursor-pointer"
-          @click="toggleSection('models')"
-        >
-          <h2 class="text-xl font-semibold text-text-light">Models by Group</h2>
-          <svg 
-            class="w-5 h-5 transform transition-transform" 
-            :class="{ 'rotate-180': expandedSections.includes('models') }"
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24"
+      </AccordionComponent>      <!-- Models by Group -->
+      <AccordionComponent 
+        title="Models by Group" 
+        icon="cubes"
+        :default-open="true"
+        class="mt-6"
+      >
+        <div class="flex justify-end mb-4">
+          <button 
+            type="button" 
+            class="btn btn-primary"
+            @click="openAddModelModal()"
           >
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-          </svg>
+            Add Model
+          </button>
         </div>
         
-        <div v-if="expandedSections.includes('models')" class="mt-4">
-          <div class="flex justify-end mb-4">
-            <button 
-              type="button" 
-              class="btn btn-primary"
-              @click="openAddModelModal()"
-            >
-              Add Model
-            </button>
-          </div>
-          
-          <div v-if="groupList.length" class="space-y-4">
-            <div v-for="group in groupList" :key="group.name" class="border border-border rounded-md overflow-hidden">
-              <div 
-                class="flex justify-between items-center px-4 py-3 bg-background-mute cursor-pointer"
-                @click="toggleGroup(group.name)"
-              >
-                <h3 class="text-lg font-medium text-text-light">
-                  {{ group.name }} ({{ group.models.length }})
-                </h3>
-                <svg 
-                  class="w-5 h-5 transform transition-transform" 
-                  :class="{ 'rotate-180': expandedGroups.includes(group.name) }"
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-              </div>
-              
-              <div v-if="expandedGroups.includes(group.name)" class="p-4">
-                <div class="overflow-x-auto">
-                  <table class="min-w-full divide-y divide-border">
-                    <thead class="bg-background-mute">
-                      <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">Name</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">Type</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">URL</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">Tags</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">Size</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody class="bg-background-soft divide-y divide-border">
-                      <tr v-for="model in group.models" :key="model.dest || model.git" class="hover:bg-background-mute">
-                        <td class="px-4 py-3">
-                          <span :class="{ 'text-red-500 font-bold': isNSFW(model) }">
-                            {{ getModelName(model) }}
-                          </span>
-                        </td>
-                        <td class="px-4 py-3 text-text-light">{{ model.type }}</td>
-                        <td class="px-4 py-3">
-                          <a 
-                            v-if="model.src" 
-                            :href="model.src" 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            class="text-blue-400 hover:text-blue-300"
-                            :title="model.src"
-                          >
-                            <FontAwesomeIcon icon="external-link-alt" class="w-4 h-4" />
-                          </a>
-                          <span v-else class="text-text-light-muted">-</span>
-                        </td>
-                        <td class="px-4 py-3">
-                          <div class="flex flex-wrap gap-1">
-                            <span 
-                              v-for="tag in getTags(model)" 
-                              :key="tag"
-                              class="inline-flex items-center px-2 py-1 rounded text-xs bg-blue-700 text-white"
-                            >
-                              {{ tag }}
-                            </span>
-                          </div>
-                        </td>
-                        <td class="px-4 py-3 text-text-light">
-                          {{ model.size ? (model.size / 1024 / 1024).toFixed(2) + " MB" : "-" }}
-                        </td>
-                        <td class="px-4 py-3">
-                          <div class="flex space-x-2">
-                            <button
-                              type="button"
-                              class="px-3 py-1 bg-btn-default text-white rounded hover:bg-btn-default-hover text-sm"
-                              @click="openEditModelModal(model)"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
-                              @click="deleteModel(model)"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+        <div v-if="groupList.length" class="space-y-4">
+          <AccordionComponent 
+            v-for="group in groupList" 
+            :key="group.name"
+            :title="`${group.name} (${group.models.length})`" 
+            icon="folder"
+            :default-open="false"
+          >
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-border">
+                <thead class="bg-background-mute">
+                  <tr>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">Name</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">Type</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">URL</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">Tags</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">Size</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-background-soft divide-y divide-border">
+                  <tr v-for="model in group.models" :key="model.dest || model.git" class="hover:bg-background-mute">
+                    <td class="px-4 py-3">
+                      <span :class="{ 'text-red-500 font-bold': isNSFW(model) }">
+                        {{ getModelName(model) }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-3 text-text-light">{{ model.type }}</td>
+                    <td class="px-4 py-3">
+                      <a 
+                        v-if="model.src" 
+                        :href="model.src" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        class="text-blue-400 hover:text-blue-300"
+                        :title="model.src"
+                      >
+                        <FontAwesomeIcon icon="external-link-alt" class="w-4 h-4" />
+                      </a>
+                      <span v-else class="text-text-light-muted">-</span>
+                    </td>
+                    <td class="px-4 py-3">
+                      <div class="flex flex-wrap gap-1">
+                        <span 
+                          v-for="tag in getTags(model)" 
+                          :key="tag"
+                          class="inline-flex items-center px-2 py-1 rounded text-xs bg-blue-700 text-white"
+                        >
+                          {{ tag }}
+                        </span>
+                      </div>
+                    </td>
+                    <td class="px-4 py-3 text-text-light">
+                      {{ model.size ? (model.size / 1024 / 1024).toFixed(2) + " MB" : "-" }}
+                    </td>
+                    <td class="px-4 py-3">
+                      <div class="flex space-x-2">
+                        <button
+                          type="button"
+                          class="px-3 py-1 bg-btn-default text-white rounded hover:bg-btn-default-hover text-sm"
+                          @click="openEditModelModal(model)"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+                          @click="deleteModel(model)"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-          </div>
-          <div v-else class="flex flex-col items-center justify-center py-12 text-text-light-muted">
-            <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-            </svg>
-            <p class="text-lg">No model groups.</p>
-          </div>
+          </AccordionComponent>
         </div>
-      </div>
+        <div v-else class="flex flex-col items-center justify-center py-12 text-text-light-muted">
+          <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+          </svg>
+          <p class="text-lg">No model groups.</p>
+        </div>
+      </AccordionComponent>
     </template>
 
     <!-- Modal: Add/Edit Group -->
@@ -445,6 +366,7 @@
 import { ref, reactive, computed, onMounted } from "vue";
 import { useNotifications } from "../composables/useNotifications";
 import api from "../services/api.js";
+import AccordionComponent from "./common/AccordionComponent.vue";
 
 // --- State ---
 const { success, error: showError } = useNotifications();
@@ -455,8 +377,6 @@ const messageType = ref("success");
 const newTag = ref("");
 
 const data = ref({ config: {}, groups: {} });
-const baseDirForm = reactive({ base_dir: "" });
-const savingBaseDir = ref(false);
 
 // Groupes
 const groupList = computed(() =>
@@ -494,31 +414,27 @@ const modelForm = reactive({
 const savingGroup = ref(false);
 const savingModel = ref(false);
 
-// Expanded Sections for main accordions
-const expandedSections = ref(['groups', 'models']);
+// Expanded Groups for individual model group accordions (not needed anymore since AccordionComponent handles its own state)
+// const expandedGroups = ref([]);
 
-// Expanded Groups for Collapse (existing)
-const expandedGroups = ref([]);
+// No longer needed since AccordionComponent handles its own toggle state
+// const toggleSection = (section) => {
+//   const index = expandedSections.value.indexOf(section);
+//   if (index > -1) {
+//     expandedSections.value.splice(index, 1);
+//   } else {
+//     expandedSections.value.push(section);
+//   }
+// };
 
-// Toggle main section expand
-const toggleSection = (section) => {
-  const index = expandedSections.value.indexOf(section);
-  if (index > -1) {
-    expandedSections.value.splice(index, 1);
-  } else {
-    expandedSections.value.push(section);
-  }
-};
-
-// Toggle group expand
-const toggleGroup = (name) => {
-  const index = expandedGroups.value.indexOf(name);
-  if (index > -1) {
-    expandedGroups.value.splice(index, 1);
-  } else {
-    expandedGroups.value.push(name);
-  }
-};
+// const toggleGroup = (name) => {
+//   const index = expandedGroups.value.indexOf(name);
+//   if (index > -1) {
+//     expandedGroups.value.splice(index, 1);
+//   } else {
+//     expandedGroups.value.push(name);
+//   }
+// };
 
 // Helper functions
 const getModelName = (model) => {
@@ -555,42 +471,16 @@ const removeTag = (index) => {
 async function fetchData() {
   loading.value = true;
   error.value = "";
-  try {
-    const res = await api.get("/jsonmodels/");
+  try {    const res = await api.get("/jsonmodels/");
     const json = res.data || {};
     data.value = json;
-    baseDirForm.base_dir = json.config?.BASE_DIR || "";
     
-    // Synchronize expandedGroups with existing groups
-    const validNames = Object.keys(json.groups || {});
-    expandedGroups.value = expandedGroups.value.filter((name) =>
-      validNames.includes(name)
-    );
-    
-    // Optional: open all groups by default if none are open
-    if (expandedGroups.value.length === 0 && validNames.length > 0) {
-      expandedGroups.value = [validNames[0]];
-    }
+    // No longer need to manage expandedGroups since AccordionComponent handles its own state
   } catch (e) {
     error.value =
       e?.response?.data?.detail || e.message || "Loading error";
   } finally {
     loading.value = false;
-  }
-}
-
-async function saveBaseDir() {
-  savingBaseDir.value = true;
-  try {
-    await api.post("/jsonmodels/config", { base_dir: baseDirForm.base_dir });
-    message.value = "Base directory saved";
-    messageType.value = "success";
-    await fetchData();
-  } catch (e) {
-    message.value = e?.response?.data?.detail || e.message;
-    messageType.value = "error";
-  } finally {
-    savingBaseDir.value = false;
   }
 }
 

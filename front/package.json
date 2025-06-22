@@ -1,6 +1,7 @@
 {
-  "name": "front",
-  "version": "0.0.0",
+  "name": "comfyui-model-manager-frontend",
+  "version": "2.0.0",
+  "description": "Frontend for ComfyUI Model Manager",
   "private": true,
   "type": "module",
   "scripts": {

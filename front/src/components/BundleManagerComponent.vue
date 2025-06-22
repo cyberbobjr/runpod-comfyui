@@ -347,23 +347,24 @@
             <div class="border border-border rounded-lg overflow-hidden">
               <!-- Tab Headers -->
               <div class="bg-background-mute border-b border-border">
-                <div class="flex overflow-x-auto">
-                  <div
+                <div class="flex overflow-x-auto">                  <div
                     v-for="(profile, name) in currentBundle.hardware_profiles"
                     :key="name"
                     class="flex-shrink-0 border-r border-border relative"
                   >
-                    <button
-                      type="button"
-                      class="w-full px-4 py-3 text-sm font-medium transition-colors flex items-center justify-between min-w-0"
-                      :class="activeProfileTab === name ? 'bg-background text-text-light border-b-2 border-primary' : 'text-text-muted hover:text-text-light hover:bg-background-soft'"
-                      @click="activeProfileTab = name"
-                    >
-                      <div class="flex items-center min-w-0 mr-2">
-                        <FontAwesomeIcon icon="microchip" class="mr-2 flex-shrink-0" />
-                        <span class="truncate">{{ name }}</span>
-                        <span class="ml-1 text-xs opacity-75 flex-shrink-0">({{ formatFileSize(getProfileTotalSize(profile)) }})</span>
-                      </div
+                    <div class="flex items-center">
+                      <button
+                        type="button"
+                        class="flex-1 px-4 py-3 text-sm font-medium transition-colors flex items-center min-w-0"
+                        :class="activeProfileTab === name ? 'bg-background text-text-light border-b-2 border-primary' : 'text-text-muted hover:text-text-light hover:bg-background-soft'"
+                        @click="activeProfileTab = name"
+                      >
+                        <div class="flex items-center min-w-0 mr-2">
+                          <FontAwesomeIcon icon="microchip" class="mr-2 flex-shrink-0" />
+                          <span class="truncate">{{ name }}</span>
+                          <span class="ml-1 text-xs opacity-75 flex-shrink-0">({{ formatFileSize(getProfileTotalSize(profile)) }})</span>
+                        </div>
+                      </button>
                       
                       <!-- Profile Actions Button -->
                       <button
@@ -374,7 +375,7 @@
                       >
                         <FontAwesomeIcon icon="cogs" />
                       </button>
-                    </button>
+                    </div>
                   </div>
                   
                   <!-- Add Profile Tab -->

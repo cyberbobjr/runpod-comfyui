@@ -54,11 +54,11 @@ def get_registered_models() -> Dict[str, Any]:
         base_dir = ModelManager.get_base_dir()
         
         # Récupérer la configuration BASE_DIR du fichier models.json s'il existe
-        config_base_dir = None
-        if "config" in models_data and "BASE_DIR" in models_data["config"]:
-            config_base_dir = models_data["config"]["BASE_DIR"]
-            if DEBUG:
-                print(f"[DEBUG] models.json CONFIG BASE_DIR: {config_base_dir}")
+        # config_base_dir = None
+        # if "config" in models_data and "BASE_DIR" in models_data["config"]:
+        #     config_base_dir = models_data["config"]["BASE_DIR"]
+        #     if DEBUG:
+        #         print(f"[DEBUG] models.json CONFIG BASE_DIR: {config_base_dir}")
         
         # Parcourir la structure du fichier models.json qui est organisé en groupes
         if "groups" in models_data:

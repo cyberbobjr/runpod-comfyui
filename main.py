@@ -11,8 +11,13 @@ from api_bundle import bundle_router
 from api_json_models import jsonmodels_router
 from api_workflows import workflows_router
 from auth import decode_jwt
+from version import get_version_info, print_version_info, get_version
 
-app = FastAPI()
+app = FastAPI(
+    title="ComfyUI Model Manager",
+    description="API for managing ComfyUI models, workflows and configurations",
+    version=get_version()
+)
 
 # Configuration du logging
 logging.basicConfig(
@@ -33,13 +38,13 @@ app.add_middleware(
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
     if request.method == "OPTIONS":
-        return await call_next(request)
-    # Ignorer l'authentification pour le frontend et les assets statiques
+        return await call_next(request)    # Ignorer l'authentification pour le frontend et les assets statiques
     if request.url.path == "/" or request.url.path.startswith("/assets") or not request.url.path.startswith("/api"):
         return await call_next(request)
+    
     if request.url.path.startswith("/api"):
-        # Autoriser la route de login sans JWT
-        if request.url.path == "/api/auth/login":
+        # Autoriser la route de login et version sans JWT
+        if request.url.path in ["/api/auth/login", "/api/version"]:
             return await call_next(request)
         
         # Vérifier d'abord le header Authorization
@@ -88,11 +93,23 @@ app.include_router(jsonmodels_router)
 app.include_router(bundle_router)
 app.include_router(workflows_router)
 
+# Version endpoint - accessible sans authentification
+@app.get("/api/version")
+async def get_version_endpoint():
+    """
+    Get application version information.
+    This endpoint is publicly accessible and doesn't require authentication.
+    """
+    return get_version_info()
+
 logger.info("Tous les routers ont été enregistrés avec succès")
 
 # Afficher les informations de démarrage
 @app.on_event("startup")
 async def startup_event():
+    # Print version information first
+    print_version_info()
+    
     logger.info("=== Application démarrée ===")
     logger.info(f"Répertoire de travail: {os.getcwd()}")
     logger.info(f"COMFYUI_MODEL_DIR: {os.environ.get('COMFYUI_MODEL_DIR', 'Non défini')}")
