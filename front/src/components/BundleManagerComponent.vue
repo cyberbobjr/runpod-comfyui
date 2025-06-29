@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-6 p-4 bg-background">
     <!-- Bundle List Card -->
-    <div class="card">
+    <div v-if="!showBundleForm" class="card">
       <h2 class="text-xl font-semibold text-text-light mb-4">Bundle Manager</h2>
       
       <div class="mb-6">
@@ -114,18 +114,45 @@
     </div>
 
     <!-- Create/Edit Bundle Form -->
-    <div v-if="showBundleForm" class="space-y-6">
+    <div v-else class="space-y-6">
+      <!-- Bundle Editor Header -->
+      <CommonCard>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <button 
+              type="button" 
+              class="btn btn-xs btn-secondary mr-4"
+              @click="returnToBundleList"
+              title="Return to bundle list"
+            >
+              <FontAwesomeIcon icon="arrow-left" class="mr-1" />Back
+            </button>
+            <h2 class="text-xl font-semibold text-text-light">
+              <FontAwesomeIcon icon="box-open" class="mr-2" />
+              <span v-if="currentBundle.id">Edit Bundle: {{ currentBundle.name }}</span>
+              <span v-else>Create New Bundle</span>
+            </h2>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span v-if="currentBundle.id" class="text-sm text-blue-600 flex items-center">
+              <FontAwesomeIcon icon="edit" class="mr-1" />Editing
+            </span>
+            <span v-else class="text-sm text-green-600 flex items-center">
+              <FontAwesomeIcon icon="plus" class="mr-1" />Creating
+            </span>
+          </div>
+        </div>
+      </CommonCard>
+
       <form @submit.prevent="handleSaveBundle" class="space-y-6">
         <!-- General Information Card -->
-        <div class="card">
+        <CommonCard>
           <div 
             class="flex justify-between items-center cursor-pointer p-1 -m-1 rounded hover:bg-background-soft transition-colors"
             @click="showGeneralSection = !showGeneralSection"
           >
             <h4 class="text-lg font-medium text-text-light flex items-center">
               <FontAwesomeIcon icon="info-circle" class="mr-2" />General Information
-              <span v-if="currentBundle.id" class="ml-2 text-sm text-blue-600">(Editing: {{ currentBundle.name }})</span>
-              <span v-else class="ml-2 text-sm text-green-600">(New Bundle)</span>
             </h4>
             <FontAwesomeIcon 
               :icon="showGeneralSection ? 'chevron-up' : 'chevron-down'" 
@@ -199,10 +226,10 @@
               ></textarea>
             </div>
           </div>
-        </div>
+        </CommonCard>
 
         <!-- Workflows Card -->
-        <div class="card">
+        <CommonCard>
           <div 
             class="flex justify-between items-center cursor-pointer p-1 -m-1 rounded hover:bg-background-soft transition-colors"
             @click="showWorkflowsSection = !showWorkflowsSection"
@@ -322,10 +349,10 @@
               </button>
             </div>
           </div>
-        </div>
+        </CommonCard>
         
         <!-- Hardware Profiles / Models Card -->
-        <div class="card">
+        <CommonCard>
           <div 
             class="flex justify-between items-center cursor-pointer p-1 -m-1 rounded hover:bg-background-soft transition-colors"
             @click="showModelsSection = !showModelsSection"
@@ -495,13 +522,13 @@
               </div>
             </div>
           </div>
-        </div>
+        </CommonCard>
         
         <!-- Form Buttons -->
-        <div class="card">
+        <CommonCard>
           <div class="flex justify-between items-center">
-            <button type="button" class="btn btn-secondary" @click="cancelBundleForm">
-              <FontAwesomeIcon icon="times" class="mr-1" />Cancel
+            <button type="button" class="btn btn-secondary" @click="returnToBundleList">
+              <FontAwesomeIcon icon="arrow-left" class="mr-1" />Back
             </button>
             <div class="flex space-x-3">
               <button type="button" class="btn btn-outline" @click="resetBundleForm">
@@ -513,7 +540,7 @@
               </button>
             </div>
           </div>
-        </div>
+        </CommonCard>
       </form>
     </div>
 
@@ -756,6 +783,8 @@
 import { ref, computed, onMounted, nextTick } from 'vue';
 import { useNotifications } from '../composables/useNotifications';
 import api from '../services/api';
+import CommonCard from "./common/CommonCard.vue";
+import AccordionComponent from "./common/AccordionComponent.vue";
 
 const { success, error, confirm } = useNotifications();
 
@@ -967,6 +996,11 @@ const createNewBundle = () => {
 };
 
 const cancelBundleForm = () => {
+  showBundleForm.value = false;
+  resetBundleForm();
+};
+
+const returnToBundleList = () => {
   showBundleForm.value = false;
   resetBundleForm();
 };

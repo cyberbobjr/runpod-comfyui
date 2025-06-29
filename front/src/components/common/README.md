@@ -1,12 +1,3 @@
----
-applyTo: '**/*vue'
----
-# Instructions for Code generation
-The library used for styling is Tailwind CSS.
-
-# styling
-the style is global and defined in "/front/src/assets/main.css" don't create new style files or classes if the style exists in the global style file.
-
 # Common Components Documentation
 
 This document provides a comprehensive overview of all reusable components available in `/front/src/components/common/`. These components should be used instead of creating custom components from scratch.

@@ -9,4 +9,4 @@ if [ -f "$LOGFILE" ] && [ $(stat -c%s "$LOGFILE") -ge $MAXSIZE ]; then
 fi
 
 # nohup python -m uvicorn main:app --reload --host 0.0.0.0 --port 8081 >> "$LOGFILE" 2>&1 &
-python -m uvicorn main:app --reload --host 0.0.0.0 --port 8081
+python -m uvicorn main:app --reload --host 0.0.0.0 --port 8082

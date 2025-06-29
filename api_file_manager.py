@@ -1,17 +1,20 @@
 import os
 import shutil
 import json
-import glob
-import time
 from fastapi import APIRouter, HTTPException, Depends, Body, UploadFile, File, Form
+import logging
 from fastapi.responses import FileResponse
-from typing import List, Optional, Dict, Any
+from typing import  Optional, Dict, Any
 from datetime import datetime
 from api import protected  # Utilise la même protection JWT
 from model_utils import ModelManager
 
 # Variable globale pour activer/désactiver le débogage
 DEBUG = True
+
+# Logging configuration
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 file_router = APIRouter(prefix="/api/file")
 
@@ -148,7 +151,8 @@ def list_dirs(path: Optional[str] = "", user=Depends(protected)):
 def list_all_dirs(user=Depends(protected)):
     """Return the complete directory structure in a hierarchical format"""
     def scan_dir(current_path=""):
-        abs_path = safe_join(BASE_DIR, current_path)
+        abs_path = safe_join(get_base_dir(), current_path)
+        logger.debug(f"list_all_dirs: {abs_path}")
         if not os.path.isdir(abs_path):
             return []
             

@@ -19,6 +19,7 @@ import {
   faInfoCircle,
   faTimes,
   faArrowUp,
+  faArrowLeft,
   faSync,
   faUpload,
   faFolderPlus,
@@ -59,7 +60,8 @@ import {
   faTags,
   faDatabase,
   faTimesCircle,
-  faPlus
+  faPlus,
+  faLayerGroup
 } from '@fortawesome/free-solid-svg-icons'
 
 // Add icons to the library
@@ -76,6 +78,7 @@ library.add(
   faInfoCircle,
   faTimes,
   faArrowUp,
+  faArrowLeft,
   faSync,
   faUpload,
   faFolderPlus,
@@ -116,7 +119,8 @@ library.add(
   faTags,
   faDatabase,
   faTimesCircle,
-  faPlus
+  faPlus,
+  faLayerGroup
 )
 
 import './assets/main.css'

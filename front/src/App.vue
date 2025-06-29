@@ -40,7 +40,7 @@ const handleLogout = () => {
 
 // Get current active tab based on route
 const activeTab = computed(() => {
-  return route.name || 'download-bundles'
+  return route.name || 'install'
 })
 
 // Watch for active tab changes to navigate
@@ -51,13 +51,8 @@ const handleTabChange = (name) => {
 // Tabs definition
 const tabs = [
   { 
-    name: 'download-bundles', 
-    label: 'Install bundles', 
-    icon: faDownload,
-  },
-  { 
-    name: 'download-models', 
-    label: 'Install models', 
+    name: 'install', 
+    label: 'Install', 
     icon: faDownload,
   },
   { 

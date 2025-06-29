@@ -101,6 +101,7 @@
             v-for="(groupModels, groupName) in filteredGroupedModels"
             :key="groupName"
             :title="groupName"
+            :size="'xs'"
             :defaultOpen="expandedGroups.includes(groupName)"
             @toggle="(isOpen) => handleGroupToggle(groupName, isOpen)"
           >
@@ -248,6 +249,7 @@ const models = ref([]);
 const groupedModels = ref({});
 const selected = ref({});
 const loading = ref(false);
+const config = ref({});
 
 // --- Filter state ---
 const filterText = ref('');
@@ -260,7 +262,7 @@ const selectedTagFilters = ref([]);
 const { showNotification, showDialog } = useNotifications();
 
 // --- Install progress system ---
-const { startModelDownload, rawDownloads, refreshDownloads, startGlobalDownloadPolling } = useInstallProgress();
+const { rawDownloads, refreshDownloads, startGlobalDownloadPolling } = useInstallProgress();
 
 // --- Utiliser les données centralisées au lieu de downloads local ---
 const downloads = rawDownloads;
@@ -272,6 +274,12 @@ const fetchModels = async () => {
     const { data } = await api.get("/models/");
     const groups = {};
     let allModels = [];
+    
+    // Extraire la configuration depuis la réponse
+    if (data.config) {
+      config.value = data.config;
+    }
+    
     for (const [group, entries] of Object.entries(data.groups || {})) {
       groups[group] = entries;
       allModels = allModels.concat(entries.map((m) => ({ ...m, group })));
@@ -284,6 +292,8 @@ const fetchModels = async () => {
     loading.value = false;
   }
 };
+
+// --- Config is now loaded directly from /models/ API in fetchModels ---
 
 // --- Fetch downloads supprimé - utilise maintenant refreshDownloads() ---
 
@@ -410,7 +420,25 @@ const filteredGroupedModels = computed(() => {
     }
     groups[group].push(model);
   });
-  return groups;
+  
+  // Trier les groupes selon l'ordre défini dans la configuration
+  const sortedGroups = {};
+  const groupOrder = config.value.group_order || [];
+  
+  // D'abord, ajouter les groupes dans l'ordre défini
+  groupOrder.forEach(groupName => {
+    if (groups[groupName]) {
+      sortedGroups[groupName] = groups[groupName];
+    }
+  });
+  
+  // Ensuite, ajouter les groupes qui ne sont pas dans group_order (par ordre alphabétique)
+  const remainingGroups = Object.keys(groups).filter(groupName => !groupOrder.includes(groupName)).sort();
+  remainingGroups.forEach(groupName => {
+    sortedGroups[groupName] = groups[groupName];
+  });
+  
+  return sortedGroups;
 });
 
 // --- Filter actions ---
@@ -629,22 +657,13 @@ const confirmDelete = async (model) => {
   }
 };
 
-const stopDownload = async (model) => {
-  try {
-    await api.post("/models/stop_download", model.entry || model);
-    showNotification("Download stopped", 'info');
-    await fetchModels();
-  } catch (error) {
-    showNotification("Failed to stop download", 'error');
-  }
-};
 
 // --- Polling simplifié (utilise maintenant le polling centralisé) ---
 // Le polling est maintenant géré par useInstallProgress.js
 // Nous n'avons plus besoin de polling séparé ici
 
 onMounted(async () => {
-  await fetchModels();
+  await fetchModels(); // La configuration est maintenant extraite directement de /models/
   await refreshDownloads();
   
   // Démarrer le polling global des téléchargements

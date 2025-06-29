@@ -5,21 +5,24 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: { name: 'download-bundles' }
+      redirect: { name: 'install', query: { tab: 'bundles' } }
     },
     {
-      // Tab routes
+      // New unified install page with tabs
+      path: '/install',
+      name: 'install',
+      component: () => import('../views/InstallPage.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      // Redirect old bundle route to new install page
       path: '/download-bundles',
-      name: 'download-bundles',
-      component: () => import('../components/DownloadBundlesComponent.vue'),
-      meta: { requiresAuth: true }
+      redirect: { name: 'install', query: { tab: 'bundles' } }
     },
     {
+      // Redirect old models route to new install page
       path: '/download-models',
-      name: 'download-models',
-      component: () => import('../components/DownloadModelsComponent.vue'),
-      props: { feature: 'Download Models' },
-      meta: { requiresAuth: true }
+      redirect: { name: 'install', query: { tab: 'models' } }
     },
     {
       path: '/manage-bundles',
@@ -68,7 +71,7 @@ router.beforeEach((to, from, next) => {
   } 
   // Si la route est pour les invités et que l'utilisateur est connecté (ex: page de login)
   else if (to.matched.some(record => record.meta.guest) && isAuthenticated) {
-    next('/download-bundles'); // Rediriger vers la page d'accueil
+    next({ name: 'install', query: { tab: 'bundles' } }); // Rediriger vers la page d'accueil
   } 
   else {
     next(); // Continuer normalement

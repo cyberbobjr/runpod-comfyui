@@ -121,6 +121,36 @@
 </template>
 
 <script>
+/**
+ * ### FooterComponent
+ * **Description:** Application footer component showing version information and build details.
+ * Displays app branding, version info, and provides a detailed version modal with comprehensive system information.
+ * 
+ * **Props:**
+ * - `showBuild` (Boolean, default: false): Whether to show the build number in the footer
+ * - `showBuildDate` (Boolean, default: false): Whether to show the build date in the footer
+ * 
+ * **Features:**
+ * - App name and branding display
+ * - Version information with optional build details
+ * - Detailed version modal with component breakdown
+ * - Loading states for version data
+ * - Responsive layout with proper spacing
+ * - Dark theme integration
+ * - FontAwesome icons for visual enhancement
+ * 
+ * **Methods:**
+ * - `fetchVersionData()`: Loads version information from API
+ * - `formatBuildDate()`: Formats build date for display
+ * 
+ * **Usage Example:**
+ * ```vue
+ * <FooterComponent 
+ *   :show-build="true" 
+ *   :show-build-date="true" 
+ * />
+ * ```
+ */
 import { fetchVersionInfo } from '../../utils/version.js';
 
 export default {
@@ -153,7 +183,10 @@ export default {
   },
   methods: {
     /**
-     * Load version information from the API
+     * ### loadVersionInfo
+     * **Description:** Load version information from the API with fallback to default values.
+     * **Parameters:** None
+     * **Returns:** Promise<void>
      */
     async loadVersionInfo() {
       this.loading = true;
@@ -173,24 +206,33 @@ export default {
     },
 
     /**
-     * Format the build date for display
-     * @param {string} dateString - ISO date string
-     * @param {boolean} detailed - Whether to show detailed format
-     * @returns {string} Formatted date string
+     * ### formatBuildDate
+     * **Description:** Format the build date for display with optional detailed format.
+     * **Parameters:**
+     * - `dateString` (string): ISO date string to format
+     * - `detailed` (boolean): Whether to show detailed format with time
+     * **Returns:** string - Formatted date string
      */
     formatBuildDate(dateString, detailed = false) {
+      if (!dateString) return 'Unknown';
+      
       try {
         const date = new Date(dateString);
         if (detailed) {
-          return date.toLocaleDateString('en-US', {
+          return date.toLocaleString('en-US', {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
+            timeZoneName: 'short'
           });
         } else {
-          return date.toLocaleDateString('en-US');
+          return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          });
         }
       } catch (error) {
         return dateString;

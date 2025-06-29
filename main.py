@@ -1,5 +1,6 @@
 import os
 import logging
+import shutil
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -110,12 +111,27 @@ logger.info("Tous les routers ont été enregistrés avec succès")
 async def startup_event():
     # Print version information first
     print_version_info()
-   
+    
     logger.info("=== Application démarrée ===")
     logger.info(f"Répertoire de travail: {os.getcwd()}")
     logger.info(f"BASE_DIR: {ModelManager.get_base_dir()}")
     try:
-        logger.info(f"Chemin du fichier models.json: {ModelManager.get_models_json_path()}")
+        models_json_path = ModelManager.get_models_json_path()
+        logger.info(f"Chemin du fichier models.json: {models_json_path}")
+        
+        # Vérifier si le fichier models.json existe à l'emplacement cible
+        if not os.path.exists(models_json_path):
+            # Copier le fichier models.json depuis la racine du projet
+            source_models_json = os.path.join(os.getcwd(), "models.json")
+            if os.path.exists(source_models_json):
+                # Créer le répertoire parent si nécessaire
+                os.makedirs(os.path.dirname(models_json_path), exist_ok=True)
+                shutil.copy2(source_models_json, models_json_path)
+                logger.info(f"Fichier models.json initialisé: copié de {source_models_json} vers {models_json_path}")
+            else:
+                logger.warning(f"Fichier models.json source non trouvé à la racine: {source_models_json}")
+        else:
+            logger.info("Fichier models.json existe déjà")
     except ImportError:
         logger.error("Impossible d'importer get_models_json_path")
 
