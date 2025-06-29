@@ -24,6 +24,42 @@
 </template>
 
 <script setup>
+/**
+ * ### TooltipComponent
+ * **Description:** A tooltip component that shows additional information on hover.
+ * Provides intelligent positioning, smooth transitions, and configurable delay for enhanced UX.
+ * 
+ * **Props:**
+ * - `text` (String, required): The tooltip text to display
+ * - `position` (String, default: 'top'): Position of the tooltip ('top', 'bottom', 'left', 'right')
+ * - `delay` (Number, default: 500): Delay in milliseconds before showing the tooltip
+ * 
+ * **Slots:**
+ * - `default`: The element that triggers the tooltip (hover target)
+ * 
+ * **Features:**
+ * - Teleported to body for proper z-index layering (z-[9999])
+ * - Smart positioning based on viewport bounds
+ * - Smooth fade transition with backdrop blur
+ * - Configurable show/hide delay
+ * - Arrow pointing to trigger element
+ * - Automatic collision detection and repositioning
+ * - Dark theme styling with border
+ * 
+ * **Usage Example:**
+ * ```vue
+ * <TooltipComponent 
+ *   text="This action will delete the selected items permanently" 
+ *   position="top" 
+ *   :delay="300"
+ * >
+ *   <button class="btn btn-danger">
+ *     <FontAwesomeIcon :icon="faTrash" />
+ *     Delete
+ *   </button>
+ * </TooltipComponent>
+ * ```
+ */
 import { ref, computed, nextTick } from 'vue'
 
 const props = defineProps({
@@ -42,6 +78,7 @@ const props = defineProps({
   }
 })
 
+// Reactive state for tooltip visibility and positioning
 const visible = ref(false)
 const triggerRef = ref(null)
 const tooltipStyle = ref({})
@@ -62,6 +99,12 @@ const arrowClasses = computed(() => {
   }
 })
 
+/**
+ * ### calculatePosition
+ * **Description:** Calculates the optimal position for the tooltip based on trigger element and position prop.
+ * **Parameters:** None
+ * **Returns:** None (updates tooltipStyle ref)
+ */
 function calculatePosition() {
   if (!triggerRef.value) return
 
@@ -106,6 +149,12 @@ function calculatePosition() {
   }
 }
 
+/**
+ * ### showTooltip
+ * **Description:** Shows the tooltip after the configured delay period.
+ * **Parameters:** None
+ * **Returns:** None
+ */
 function showTooltip() {
   timeoutId = setTimeout(async () => {
     visible.value = true
@@ -114,6 +163,12 @@ function showTooltip() {
   }, props.delay)
 }
 
+/**
+ * ### hideTooltip
+ * **Description:** Hides the tooltip immediately and clears any pending show timeout.
+ * **Parameters:** None
+ * **Returns:** None
+ */
 function hideTooltip() {
   if (timeoutId) {
     clearTimeout(timeoutId)

@@ -1,11 +1,8 @@
 import os
-import json
 import logging
-from fastapi import APIRouter, HTTPException, Depends, Body, File, UploadFile
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
-from typing import Dict, List, Optional, Any, Union
-from fastapi.responses import JSONResponse, FileResponse
-import shutil
+from typing import Dict, List, Optional, Any
 from api import protected, get_env_file_path
 from model_utils import ModelManager
 
@@ -100,6 +97,7 @@ class ModelEntry(BaseModel):
     url: Optional[str] = None
     dest: Optional[str] = None
     git: Optional[str] = None
+    comments: Optional[str] = None
     type: Optional[str] = None
     tags: Optional[List[str]] = []
     src: Optional[str] = None
@@ -121,6 +119,12 @@ class UpdateModelGroupRequest(BaseModel):
 
 class ConfigUpdateRequest(BaseModel):
     base_dir: str
+
+class GroupOrderRequest(BaseModel):
+    order: List[str] = Field(..., description="List of group names in the desired order")
+
+class GroupOrderResponse(BaseModel):
+    order: List[str] = Field(..., description="Current order of groups")
 
 @jsonmodels_router.get("/", response_model=Dict[str, Any])
 def get_models_data(user=Depends(protected)):
@@ -327,7 +331,7 @@ def add_model_entry(entry_request: ModelEntryRequest, user=Depends(protected)):
         raise HTTPException(status_code=400, detail="Entry must contain either a URL or a git repository")
     
     # Get BASE_DIR for path normalization
-    base_dir = data.get("config", {}).get("BASE_DIR", "")
+    base_dir = ModelManager.get_base_dir()
     
     # Normalize destination path if present
     if entry_request.entry.dest:
@@ -364,7 +368,7 @@ def update_model_entry(entry_request: ModelEntryRequest, user=Depends(protected)
         data["groups"] = {}
     
     # Get BASE_DIR for path normalization
-    base_dir = data.get("config", {}).get("BASE_DIR", "")
+    base_dir = ModelManager.get_base_dir()
     
     # Normalize destination path if present
     if entry_request.entry.dest:
@@ -432,3 +436,65 @@ def delete_model_entry(entry_request: ModelEntryRequest, user=Depends(protected)
     
     save_models_json(data)
     return {"ok": True, "message": "Model entry deleted successfully"}
+
+@jsonmodels_router.get("/group-order", response_model=GroupOrderResponse)
+def get_group_order(user=Depends(protected)):
+    """
+    Route: GET /api/jsonmodels/group-order
+    Role: Retrieves the current order of model groups
+    Input arguments:
+      - user: authenticated user via dependency
+    Output format: GroupOrderResponse with list of group names in current order
+    Returns default alphabetical order if no custom order is set
+    """
+    data = load_models_json()
+    
+    # Check if group order is stored in the config
+    group_order = data.get("config", {}).get("group_order", [])
+    
+    # If no custom order is set, return alphabetical order of existing groups
+    if not group_order and "groups" in data:
+        group_order = sorted(data["groups"].keys())
+    
+    return GroupOrderResponse(order=group_order)
+
+@jsonmodels_router.put("/group-order")
+def update_group_order(order_request: GroupOrderRequest, user=Depends(protected)):
+    """
+    Route: PUT /api/jsonmodels/group-order
+    Role: Updates the order of model groups
+    Input arguments:
+      - order_request: GroupOrderRequest with list of group names in desired order
+      - user: authenticated user via dependency
+    Output format: Dict with 'ok' boolean and 'message' string confirming update
+    Raises HTTPException 400 if provided groups don't match existing groups
+    Note: All existing groups must be included in the new order
+    """
+    data = load_models_json()
+    
+    if "groups" not in data:
+        raise HTTPException(status_code=404, detail="No groups found")
+    
+    existing_groups = set(data["groups"].keys())
+    provided_groups = set(order_request.order)
+    
+    # Check if all existing groups are included in the new order
+    if existing_groups != provided_groups:
+        missing_groups = existing_groups - provided_groups
+        extra_groups = provided_groups - existing_groups
+        error_msg = "Group order mismatch."
+        if missing_groups:
+            error_msg += f" Missing groups: {', '.join(missing_groups)}."
+        if extra_groups:
+            error_msg += f" Unknown groups: {', '.join(extra_groups)}."
+        raise HTTPException(status_code=400, detail=error_msg)
+    
+    # Initialize config if it doesn't exist
+    if "config" not in data:
+        data["config"] = {}
+    
+    # Store the group order in config
+    data["config"]["group_order"] = order_request.order
+    
+    save_models_json(data)
+    return {"ok": True, "message": "Group order updated successfully"}

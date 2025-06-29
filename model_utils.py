@@ -115,7 +115,8 @@ class DownloadManager:
         if not model_id:
             raise ValueError("Model entry must have 'dest' or 'git'.")
 
-        # Prevent duplicate downloads        if model_id in cls.DOWNLOAD_EVENTS:
+        # Prevent duplicate downloads
+        if model_id in cls.DOWNLOAD_EVENTS:
             event = cls.DOWNLOAD_EVENTS[model_id]
             event.wait()
             return cls.PROGRESS.get(model_id, {"progress": 0, "status": "idle"})
@@ -148,7 +149,7 @@ class DownloadManager:
                     if resolved_entry.get("dest"):
                         resolved_entry["dest"] = ModelManager.resolve_path(resolved_entry["dest"], base_dir)
                         logger.info(f"Worker: resolved dest path to {resolved_entry['dest']}")
-                    cls._download_url(resolved_entry, base_dir, model_id, hf_token, civitai_token, stop_event)
+                    cls._download_url(resolved_entry, model_id, hf_token, civitai_token, stop_event)
                     
                 if not stop_event.is_set():
                     cls.PROGRESS[model_id]["progress"] = 100
@@ -199,7 +200,7 @@ class DownloadManager:
             time.sleep(0.5)
 
     @classmethod
-    def _download_url(cls, entry, base_dir, model_id, hf_token, civitai_token, stop_event):
+    def _download_url(cls, entry, model_id, hf_token, civitai_token, stop_event):
         url = entry["url"]
         # The dest should already be resolved in the worker function
         dest = entry["dest"]
@@ -337,8 +338,8 @@ class ModelManager:
     def get_base_dir() -> str:
         """
         Returns the base directory (BASE_DIR) according to priority:
-        1. BASE_DIR environment variable
-        2. config.json file (created by user)
+        1. config.json file (created by user)
+        2. BASE_DIR environment variable
         3. models.json config.BASE_DIR value
         4. COMFYUI_MODEL_DIR environment variable
         5. Current directory
@@ -394,32 +395,9 @@ class ModelManager:
     @staticmethod
     def _find_models_json_path() -> str:
         """Internal method to find the models.json path without using cache."""
-        # Strategy 1: BASE_DIR environment variable
-        env_base_dir = os.environ.get("BASE_DIR")
-        if env_base_dir:
-            path = os.path.join(env_base_dir, MODELS_JSON)
-            if os.path.exists(path):
-                return path
-        
-        # Strategy 2: COMFYUI_MODEL_DIR environment variable
-        comfy_dir = os.environ.get("COMFYUI_MODEL_DIR")
-        if comfy_dir:
-            path = os.path.join(comfy_dir, MODELS_JSON)
-            if os.path.exists(path):
-                return path
 
-        # Strategy 3: Current application directory
-        current_dir = os.path.abspath(os.getcwd())
-        path = os.path.join(current_dir, MODELS_JSON)
-        if os.path.exists(path):
-            return path
-        
-        # Strategy 4: Current script directory
-        script_dir = os.path.abspath(os.path.dirname(__file__))
-        path = os.path.join(script_dir, MODELS_JSON)
-        if os.path.exists(path):
-            return path        # Return default path
-        return os.path.join(current_dir, MODELS_JSON)
+        base_dir = ModelManager.get_base_dir()
+        return os.path.join(base_dir, MODELS_JSON)
     
     @staticmethod
     def get_models_dir() -> str:
@@ -505,8 +483,7 @@ class ModelManager:
         try:
             with open(models_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
-            
-            # Mettre en cache
+              # Mettre en cache
             ModelManager._cache["models_json_data"] = data
             ModelManager._cache["last_load_time"] = time.time()
             
@@ -520,6 +497,29 @@ class ModelManager:
             raise HTTPException(status_code=500, detail=f"Erreur lors de la lecture du fichier: {str(e)}")
     
     @staticmethod
+    def _clean_exists_keys(data: Dict) -> Dict:
+        """
+        Remove 'exists' keys from model entries as they should be computed dynamically.
+        
+        **Description:** Recursively removes 'exists' keys from model data structure.
+        **Parameters:**
+        - `data` (Dict): The model data dictionary to clean
+        **Returns:** Dict with 'exists' keys removed
+        """
+        import copy
+        cleaned_data = copy.deepcopy(data)
+        
+        # Remove exists keys from groups
+        if "groups" in cleaned_data:
+            for group_name, models in cleaned_data["groups"].items():
+                if isinstance(models, list):
+                    for model in models:
+                        if isinstance(model, dict) and "exists" in model:
+                            del model["exists"]
+        
+        return cleaned_data
+    
+    @staticmethod
     def save_models_json(data: Dict) -> None:
         """Sauvegarde le fichier models.json et invalide le cache"""
         models_path = ModelManager.get_models_json_path()
@@ -529,8 +529,11 @@ class ModelManager:
             # Assurer que le répertoire existe
             os.makedirs(os.path.dirname(models_path) or ".", exist_ok=True)
             
+            # Nettoyer les clés 'exists' avant sauvegarde
+            cleaned_data = ModelManager._clean_exists_keys(data)
+            
             with open(models_path, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2)
+                json.dump(cleaned_data, f, indent=2)
             
             # Invalider le cache après sauvegarde
             ModelManager._clear_cache()

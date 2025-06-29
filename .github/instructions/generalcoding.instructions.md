@@ -3,7 +3,7 @@ applyTo: '**'
 ---
 # Instructions for Code Documentation
 [README.md](../../README.md) contain the information about the Project
-Comments, documentation, Methods name, class names, and variable names should be in English.
+**Comments, documentation, Methods name, class names, and variable names, texts on screen should be in English.**
 
 
 ## Code documentation standards
