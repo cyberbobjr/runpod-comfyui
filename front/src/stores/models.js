@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-
+import api from '../services/api' // Assuming you have an api.js file for API requests
 /**
  * Store Pinia for managing AI models
  * Handles all operations related to AI models in the ComfyUI application
@@ -12,8 +12,177 @@ export const useModelsStore = defineStore('models', {
     error: null,
     selectedModels: [],
     downloadProgress: {},
-    installedModels: new Set()
+    installedModels: new Set(),
+    _downloadPollingInterval: null
   }),
+
+  // === GETTERS ===
+  getters: {
+    /**
+     * Check if a model is currently downloading (progress < 100 and status is 'downloading')
+     * @returns {Function} Function that takes modelId and returns boolean
+     */
+    isModelDownloading: (state) => (modelId) => {
+      const prog = state.downloadProgress[modelId];
+      return prog && prog.status === 'downloading' && prog.progress < 100;
+    },
+    /**
+     * Get models grouped by type
+     * @returns {Object} Models grouped by their type (clip, vae, unet, etc.)
+     */
+    modelsByType: (state) => {
+      const grouped = {}
+      state.models.forEach(model => {
+        if (!grouped[model.type]) {
+          grouped[model.type] = []
+        }
+        grouped[model.type].push(model)
+      })
+      return grouped
+    },
+
+    /**
+     * Get models grouped by tags
+     * @returns {Object} Models grouped by their tags
+     */
+    modelsByTags: (state) => {
+      const grouped = {}
+      state.models.forEach(model => {
+        if (model.tags && model.tags.length > 0) {
+          model.tags.forEach(tag => {
+            if (!grouped[tag]) {
+              grouped[tag] = []
+            }
+            grouped[tag].push(model)
+          })
+        }
+      })
+      return grouped
+    },
+
+    /**
+     * Get available model types
+     * @returns {Array} List of unique model types
+     */
+    availableModelTypes: (state) => {
+      return [...new Set(state.models.map(model => model.type))]
+    },
+
+    /**
+     * Get available model tags
+     * @returns {Array} List of unique model tags
+     */
+    availableModelTags: (state) => {
+      const tags = new Set()
+      state.models.forEach(model => {
+        if (model.tags) {
+          model.tags.forEach(tag => tags.add(tag))
+        }
+      })
+      return [...tags]
+    },
+
+    /**
+     * Get models by group name
+     * @returns {Function} Function that takes groupName and returns models
+     */
+    modelsByGroup: (state) => (groupName) => {
+      return state.models.filter(model => model.group === groupName)
+    },
+
+    /**
+     * Check if a model is selected
+     * @returns {Function} Function that takes modelId and returns boolean
+     */
+    isModelSelected: (state) => (modelId) => {
+      return state.selectedModels.some(model => model.id === modelId)
+    },
+
+    /**
+     * Check if a model is installed
+     * @returns {Function} Function that takes modelId and returns boolean
+     */
+    isModelInstalled: (state) => (modelId) => {
+      return state.installedModels.has(modelId)
+    },
+
+    /**
+     * Get download progress for a model
+     * @returns {Function} Function that takes modelId and returns progress object
+     */
+    getDownloadProgress: (state) => (modelId) => {
+      return state.downloadProgress[modelId] || null
+    },
+
+    /**
+     * Get selected models count
+     * @returns {Number} Number of selected models
+     */
+    selectedModelsCount: (state) => {
+      return state.selectedModels.length
+    },
+
+    /**
+     * Get total models count
+     * @returns {Number} Total number of models
+     */
+    totalModelsCount: (state) => {
+      return state.models.length
+    }
+  },
+
+  // === ACTIONS ===
+  actions: {
+    /**
+     * Start polling the backend for download progress and update the store
+     * @param {Number} intervalMs - Polling interval in ms (default: 2000)
+     */
+    startDownloadPolling(intervalMs = 2000) {
+      if (this._downloadPollingInterval) return;
+      this._downloadPollingInterval = setInterval(this.refreshDownloadProgress, intervalMs);
+      // Initial fetch
+      this.refreshDownloadProgress();
+    },
+
+    /**
+     * Stop polling the backend for download progress
+     */
+    stopDownloadPolling() {
+      if (this._downloadPollingInterval) {
+        clearInterval(this._downloadPollingInterval);
+        this._downloadPollingInterval = null;
+      }
+    },
+
+    /**
+     * Refresh download progress from backend and update downloadProgress state
+     */
+    async refreshDownloadProgress() {
+      try {
+        const response = await api.get('/downloads/');
+        const downloads = response.data || {};
+        // Update downloadProgress with backend state
+        this.downloadProgress = { ...downloads };
+        // Optionally, clean up finished downloads (progress 100 or status done)
+        Object.keys(this.downloadProgress).forEach((modelId) => {
+          const prog = this.downloadProgress[modelId];
+          if (prog.progress >= 100 || prog.status === 'done' || prog.status === 'completed') {
+            // Optionally, remove finished downloads after a delay
+            setTimeout(() => {
+              if (this.downloadProgress[modelId] && this.downloadProgress[modelId].progress >= 100) {
+                delete this.downloadProgress[modelId];
+              }
+            }, 5000);
+          }
+        });
+      } catch (error) {
+        // Optionally, do not clear downloadProgress on error
+        // this.downloadProgress = {};
+        this.setError(error.message);
+      }
+    },
+    // ...existing code...
+  },
 
   // === GETTERS ===
   getters: {
@@ -133,11 +302,8 @@ export const useModelsStore = defineStore('models', {
       this.error = null
 
       try {
-        const response = await fetch('/api/models')
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        const data = await response.json()
+        const response = await api.get('/jsonmodels/')
+        const data = await response.data
 
         // Parse models from the groups structure
         const allModels = []
@@ -168,48 +334,76 @@ export const useModelsStore = defineStore('models', {
      * @param {Object} model - The model to download
      * @returns {Promise} Promise that resolves when download is complete
      */
-    async downloadModel(model) {
+    /**
+     * Fetch all ongoing downloads from the backend
+     * @returns {Promise} Promise resolving to all downloads status
+     */
+    async fetchAllDownloads() {
       try {
-        // Initialize download progress
-        this.downloadProgress[model.id] = {
-          progress: 0,
-          status: 'starting',
-          error: null
-        }
-
-        const response = await fetch('/api/models/download', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ model })
-        })
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-
-        const result = await response.json()
-
-        // Update download progress
-        this.downloadProgress[model.id] = {
-          progress: 100,
-          status: 'completed',
-          error: null
-        }
-
-        // Add to installed models
-        this.installedModels.add(model.id)
-
-        return result
+        const response = await api.get('/downloads/')
+        return response.data
       } catch (error) {
-        // Update download progress with error
-        this.downloadProgress[model.id] = {
-          progress: 0,
-          status: 'error',
-          error: error.message
-        }
-        console.error('Error downloading model:', error)
+        this.setError(error.message)
+        throw error
+      }
+    },
+
+    /**
+     * Start downloading one or more models
+     * @param {Object|Array} entries - Model entry or list of entries
+     * @returns {Promise} Download status result(s)
+     */
+    async startDownload(entries) {
+      try {
+        const response = await api.post('/downloads/start', entries)
+        return response.data
+      } catch (error) {
+        this.setError(error.message)
+        throw error
+      }
+    },
+
+    /**
+     * Stop an ongoing download
+     * @param {Object} entry - Model entry to stop
+     * @returns {Promise} Operation status
+     */
+    async stopDownload(entry) {
+      try {
+        const response = await api.post('/downloads/stop', entry)
+        return response.data
+      } catch (error) {
+        this.setError(error.message)
+        throw error
+      }
+    },
+
+    /**
+     * Get download progress for a model
+     * @param {Object} entry - Model entry to check progress
+     * @returns {Promise} Progress info
+     */
+    async getDownloadProgress(entry) {
+      try {
+        const response = await api.post('/downloads/progress', entry)
+        return response.data
+      } catch (error) {
+        this.setError(error.message)
+        throw error
+      }
+    },
+
+    /**
+     * Delete one or more models
+     * @param {Object|Array} entries - Model entry or list of entries
+     * @returns {Promise} Deletion status result(s)
+     */
+    async deleteModels(entries) {
+      try {
+        const response = await api.delete('/downloads/', { data: entries })
+        return response.data
+      } catch (error) {
+        this.setError(error.message)
         throw error
       }
     },
@@ -234,14 +428,7 @@ export const useModelsStore = defineStore('models', {
      */
     async cancelDownload(modelId) {
       try {
-        const response = await fetch(`/api/models/download/${modelId}/cancel`, {
-          method: 'POST'
-        })
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-
+        await api.post(`/models/download/${modelId}/cancel`)
         // Remove download progress
         delete this.downloadProgress[modelId]
       } catch (error) {
@@ -347,21 +534,12 @@ export const useModelsStore = defineStore('models', {
      */
     async deleteModel(model) {
       try {
-        const response = await fetch(`/api/models/${model.id}`, {
-          method: 'DELETE'
-        })
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-
+        const response = await api.delete(`/models/${model.id}`)
         // Remove from installed models
         this.installedModels.delete(model.id)
-
         // Remove from selected models if selected
         this.deselectModels([model])
-
-        return await response.json()
+        return response.data
       } catch (error) {
         console.error('Error deleting model:', error)
         throw error

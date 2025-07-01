@@ -49,4 +49,3 @@ class ModelsDataResponse(BaseModel):
     """Response with complete models data."""
     config: Dict[str, Any] = Field(default_factory=dict, description="Configuration settings")
     groups: Dict[str, List[Dict[str, Any]]] = Field(default_factory=dict, description="Model groups")
-    bundles: Optional[Dict[str, Any]] = Field(None, description="Bundle definitions")

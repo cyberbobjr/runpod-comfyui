@@ -21,6 +21,7 @@ from ..models.file_models import (
     ModelsInfoResponse, FileOperationResponse
 )
 from ..utils.logger import get_logger
+from back.services.model_service import ModelService
 
 # Initialize logger
 logger = get_logger(__name__)
@@ -461,3 +462,22 @@ def create_directory(request: CreateDirectoryRequest, user=Depends(protected)):
     except Exception as e:
         logger.error(f"Error creating directory: {e}")
         raise HTTPException(status_code=500, detail=f"Error creating directory: {str(e)}")
+
+
+@router.get("/total_size")
+def total_size(user=Depends(protected)):
+    """
+    GET /api/file/total_size
+    
+    Returns the total size (in bytes) of the base_dir directory.
+    
+    Arguments:
+    - user: Authentication token (automatic via Depends)
+    
+    Returns:
+    - Status: 200 OK
+    - Body: Dict containing base directory path and total size
+    
+    Usage: Calculates and returns the total disk space used by the ComfyUI installation.
+    """
+    return ModelService.get_total_size()

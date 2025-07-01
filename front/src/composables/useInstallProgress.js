@@ -70,7 +70,7 @@ export function useInstallProgress() {
 
     try {
       // Vérifier l'état des téléchargements en cours
-      const downloadsResponse = await api.get('/downloads');
+      const downloadsResponse = await api.get('/downloads/');
       const downloads = downloadsResponse.data || {};
 
       // Vérifier si le bundle est installé

@@ -38,9 +38,12 @@ if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
     exit 1
 fi
 
-# Start the server with improved logging
+
+# Start the server with improved logging and multiple workers (default: 4)
+WORKERS="${WORKERS:-4}"
+PORT="${PORT:-8081}"
 {
-    python3 -u main.py 2>&1 | while IFS= read -r line; do
+    uvicorn main:app --host 0.0.0.0 --port "$PORT" --workers "$WORKERS" 2>&1 | while IFS= read -r line; do
         # Send to syslog with timestamp
         log_message "$line" "info"
         # Also keep a local log file as backup

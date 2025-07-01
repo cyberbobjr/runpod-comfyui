@@ -130,6 +130,14 @@ async def serve_spa(full_path: str):
     return FileResponse(os.path.join("front", "dist", "index.html"))
 
 if __name__ == "__main__":
+    print("""
+WARNING: Running the server with `python main.py` does NOT support multiple workers.
+For production and to avoid blocking issues during downloads, use the following command instead:
+
+    uvicorn main:app --host 0.0.0.0 --port 8081 --workers 4
+
+You can adjust the number of workers as needed.
+""")
     import uvicorn
     host = os.environ.get("HOST", "0.0.0.0")
     port = int(os.environ.get("PORT", 8081))

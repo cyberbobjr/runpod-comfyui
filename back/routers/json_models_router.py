@@ -9,7 +9,7 @@ This module contains all API routes for JSON model management including:
 """
 
 from fastapi import APIRouter, HTTPException, Depends
-from typing import Dict, List, Any
+from typing import List
 
 from ..services.auth_middleware import protected
 from ..services.json_models_service import JsonModelsService
@@ -57,8 +57,7 @@ def get_models_data(user=Depends(protected)):
         data = json_models_service.get_models_data_with_existence()
         return ModelsDataResponse(
             config=data.get("config", {}),
-            groups=data.get("groups", {}),
-            bundles=data.get("bundles")
+            groups=data.get("groups", {})
         )
     except Exception as e:
         logger.error(f"Error getting models data: {e}")
