@@ -145,10 +145,10 @@ EOF
 
 # Mettre à jour version.py
 echo -e "${BLUE}Updating version.py...${NC}"
-sed -i.bak "s/__version__ = \".*\"/__version__ = \"${NEW_VERSION}\"/" version.py
-sed -i.bak "s/__build__ = \".*\"/__build__ = \"${BUILD_TIMESTAMP}\"/" version.py
-sed -i.bak "s/__description__ = \".*\"/__description__ = \"${DESCRIPTION}\"/" version.py
-rm version.py.bak
+sed -i.bak "s/__version__ = \".*\"/__version__ = \"${NEW_VERSION}\"/" back/version.py
+sed -i.bak "s/__build__ = \".*\"/__build__ = \"${BUILD_TIMESTAMP}\"/" back/version.py
+sed -i.bak "s/__description__ = \".*\"/__description__ = \"${DESCRIPTION}\"/" back/version.py
+rm back/version.py.bak
 
 # Mettre à jour version.js frontend
 echo -e "${BLUE}Updating frontend version.js...${NC}"
@@ -189,6 +189,17 @@ if [ -f "CHANGELOG.md" ]; then
 fi
 
 # Commit Git si c'est un repository Git
+
+# Build frontend before tagging
+if [ -d "front" ] && [ -f "front/package.json" ]; then
+    echo -e "${BLUE}Building frontend...${NC}"
+    (cd front && npm run build)
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Frontend build failed. Aborting version bump.${NC}"
+        exit 1
+    fi
+fi
+
 if [ -d ".git" ]; then
     echo -e "${BLUE}Creating Git commit...${NC}"
     git add version.json version.py front/src/utils/version.js CHANGELOG.md
