@@ -1,5 +1,13 @@
 # Changelog
 
+## [v2.2.0] - 2025-07-01
+
+### Minor Release
+- Minor release with new features
+- Build: 20250701-1551
+
+
+
 All notable changes to this project will be documented in this file.
 
 ## [v2.0.0] - Configuration and Settings Management Refactoring

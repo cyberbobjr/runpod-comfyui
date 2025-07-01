@@ -1,10 +1,10 @@
 {
-  "version": "2.0.0",
-  "build": "20250622-1430",
-  "buildDate": "2025-06-22T14:30:00Z",
+  "version": "2.2.0",
+  "build": "20250701-1551",
+  "buildDate": "2025-07-01T15:51:22Z",
   "components": {
-    "api": "2.0.0",
-    "ui": "2.0.0"
+    "api": "2.2.0",
+    "ui": "2.2.0"
   },
-  "description": "Configuration and Settings Management Refactoring"
+  "description": "Minor release with new features"
 }

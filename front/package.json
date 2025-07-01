@@ -1,13 +1,14 @@
 {
   "name": "comfyui-model-manager-frontend",
-  "version": "2.0.0",
+  "version": "2.2.0",
   "description": "Frontend for ComfyUI Model Manager",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "commit": "cz"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.5.1",
@@ -16,16 +17,23 @@
     "@fortawesome/free-solid-svg-icons": "^6.5.1",
     "@fortawesome/vue-fontawesome": "^3.0.6",
     "axios": "^1.6.7",
-    "pinia": "^3.0.1",
+    "pinia": "^3.0.3",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.3",
     "autoprefixer": "^10.4.16",
+    "commitizen": "^4.3.1",
+    "cz-conventional-changelog": "^3.3.0",
     "postcss": "^8.4.31",
     "tailwindcss": "^3.3.5",
     "vite": "^6.2.4",
     "vite-plugin-vue-devtools": "^7.7.2"
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
   }
 }
