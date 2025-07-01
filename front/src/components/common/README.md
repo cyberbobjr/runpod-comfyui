@@ -113,40 +113,33 @@ A modal dialog component with header, content, and footer sections.
 
 ---
 
-## DropdownComponent
+## ButtonDropdownComponent
 
-A reusable dropdown component with customizable sizes, positioning, and variants.
+A split button component: left side is a normal button, right side is a dropdown toggle with chevron.
+Dropdown content is provided via slot and can be fully customized.
 
 ### Props
-- `buttonText` (String, required): Text to display on the dropdown button
-- `buttonIcon` (Object, optional): FontAwesome icon to display on the button
-- `size` (String, default: 'm'): Size of the dropdown ('xs', 'm', 'l')
-  - `xs`: text-xs px-2 py-1
-  - `m`: text-sm px-3 py-2
-  - `l`: text-base px-4 py-3
-- `variant` (String, default: 'primary'): Button variant ('primary', 'secondary', 'danger', etc.)
-- `disabled` (Boolean, default: false): Whether the dropdown is disabled
+- `buttonText` (String, required): The text to display on the button
+- `buttonIcon` (Object, optional): FontAwesome icon object for the button (e.g. faPlus)
+- `size` (String, default: 'm'): Button size ('xs', 'm', 'l')
+- `variant` (String, default: 'primary'): Button variant ('primary', 'secondary', etc.)
+- `disabled` (Boolean, default: false): Whether the button is disabled
 - `title` (String, optional): Tooltip text for the button
-- `dropdownWidth` (Number, default: 200): Width of the dropdown in pixels
-- `align` (String, default: 'left'): Alignment of dropdown ('left', 'right')
+- `dropdownWidth` (Number, default: 200): Width of the dropdown panel in pixels
+- `align` (String, default: 'left'): Dropdown alignment relative to button ('left' or 'right')
 
 ### Emits
 - `item-selected`: Emitted when a dropdown item is selected, passes the selected item
+- `click`: Emitted when the left (main) button is clicked
 
 ### Slots
 - `default`: Dropdown content with scoped slot props:
   - `close`: Function to close the dropdown
   - `handleItemClick`: Function to handle item clicks and emit selection
 
-### Features
-- Intelligent positioning (handles viewport overflow)
-- Teleported to body for proper z-index layering
-- Auto-closes on outside click and scroll
-- Responsive positioning (above/below based on viewport space)
-
 ### Usage Example
 ```vue
-<DropdownComponent
+<ButtonDropdownComponent
   button-text="Install"
   :button-icon="faDownload"
   size="xs"
@@ -155,6 +148,7 @@ A reusable dropdown component with customizable sizes, positioning, and variants
   :dropdown-width="250"
   align="left"
   @item-selected="handleSelection"
+  @click="handleMainClick"
 >
   <template #default="{ handleItemClick }">
     <div class="text-sm font-medium text-text-light mb-2">
@@ -169,7 +163,7 @@ A reusable dropdown component with customizable sizes, positioning, and variants
       {{ option.name }}
     </div>
   </template>
-</DropdownComponent>
+</ButtonDropdownComponent>
 ```
 
 ---

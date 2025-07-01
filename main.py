@@ -1,19 +1,15 @@
 import os
-import logging
 import shutil
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from api import auth_router, api_router
-from api_file_manager import file_router
-from api_models import models_router # Importation de notre router unifié
-from api_bundle import bundle_router
-from api_json_models import jsonmodels_router
-from api_workflows import workflows_router
-from auth import decode_jwt
-from model_utils import ModelManager
-from version import get_version_info, print_version_info, get_version
+from back.routers.main import api_router
+from back.services.auth_service import AuthService
+from back.services.config_service import ConfigService
+from back.services.model_manager import ModelManager
+from back.version import print_version_info, get_version
+from back.utils.logger import get_logger
 
 app = FastAPI(
     title="ComfyUI Model Manager",
@@ -21,12 +17,8 @@ app = FastAPI(
     version=get_version()
 )
 
-# Configuration du logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+# Initialize logger
+logger = get_logger(__name__)
 
 # Autorise le frontend Vue.js à accéder à l'API
 app.add_middleware(
@@ -72,7 +64,7 @@ async def auth_middleware(request: Request, call_next):
                 }
             )
         
-        user = decode_jwt(token)
+        user = AuthService.decode_jwt(token)
         if not user:
             return JSONResponse(
                 status_code=401,
@@ -86,24 +78,8 @@ async def auth_middleware(request: Request, call_next):
             )
     return await call_next(request)
 
-# Enregistrer les routers
-app.include_router(auth_router)
-app.include_router(file_router)
-app.include_router(models_router) # Nouveau router unifié
+# Register the consolidated API router
 app.include_router(api_router)
-app.include_router(jsonmodels_router)
-app.include_router(bundle_router)
-app.include_router(workflows_router)
-
-# Version endpoint - accessible sans authentification
-@app.get("/api/version")
-async def get_version_endpoint():
-    """
-    Get application version information.
-    This endpoint is publicly accessible and doesn't require authentication.
-    """
-    return get_version_info()
-
 logger.info("Tous les routers ont été enregistrés avec succès")
 
 # Afficher les informations de démarrage
@@ -114,7 +90,7 @@ async def startup_event():
     
     logger.info("=== Application démarrée ===")
     logger.info(f"Répertoire de travail: {os.getcwd()}")
-    logger.info(f"BASE_DIR: {ModelManager.get_base_dir()}")
+    logger.info(f"BASE_DIR: {ConfigService.get_base_dir()}")
     try:
         models_json_path = ModelManager.get_models_json_path()
         logger.info(f"Chemin du fichier models.json: {models_json_path}")

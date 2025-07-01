@@ -11,21 +11,17 @@ import {
   faTrashAlt,
   faCheckCircle,
   faTimesCircle,
-  faSync,
-  faExclamationCircle,
-  faChevronDown,
-  faChevronUp,
+  faSync
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import { computed, onMounted, onUnmounted, ref, Teleport } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useNotifications } from "../composables/useNotifications";
 import api from "../services/api";
 import { useInstallProgress } from "../composables/useInstallProgress";
 import CommonModal from "./common/CommonModal.vue";
 import CommonCard from "./common/CommonCard.vue";
-import CommonEmptyState from "./common/CommonEmptyState.vue";
 import AccordionComponent from "./common/AccordionComponent.vue";
-import DropdownComponent from "./common/DropdownComponent.vue";
+import ButtonDropdownComponent from "./common/ButtonDropdownComponent.vue";
 
 const { success, error, confirm } = useNotifications();
 const { startInstallation } = useInstallProgress();
@@ -554,7 +550,7 @@ const installAllProfiles = async (bundle) => {
                   </button>
 
                   <!-- Install/Download Dropdown -->
-                  <DropdownComponent
+                  <ButtonDropdownComponent
                     v-if="getAvailableProfiles(bundle).length > 0"
                     button-text="Install"
                     :button-icon="faDownload"
@@ -589,7 +585,7 @@ const installAllProfiles = async (bundle) => {
                         </div>
                       </div>
                     </template>
-                  </DropdownComponent>
+                  </ButtonDropdownComponent>
 
                   <!-- Uninstall Button -->
                   <button

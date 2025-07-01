@@ -178,3 +178,4 @@ workflows/
 config.json
 comfyui-server.log
 comfyui-server.pid
+tools/

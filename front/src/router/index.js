@@ -28,28 +28,24 @@ const router = createRouter({
       path: '/manage-bundles',
       name: 'manage-bundles',
       component: () => import('../components/BundleManagerComponent.vue'),
-      props: { feature: 'Manage Bundles' },
       meta: { requiresAuth: true }
     },
     {
       path: '/file-explorer',
       name: 'file-explorer',
       component: () => import('../components/FileManagerComponent.vue'),
-      props: { feature: 'File Explorer' },
       meta: { requiresAuth: true }
     },
     {
       path: '/json-editor',
       name: 'json-editor',
       component: () => import('../components/JsonEditorComponent.vue'),
-      props: { feature: 'JSON Editor' },
       meta: { requiresAuth: true }
     },
     {
       path: '/settings',
       name: 'settings',
       component: () => import('../components/SettingsComponent.vue'),
-      props: { feature: 'Settings' },
       meta: { requiresAuth: true }
     },
     {

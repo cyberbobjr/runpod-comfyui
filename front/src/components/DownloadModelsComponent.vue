@@ -596,7 +596,7 @@ async function downloadModels(modelsToDownload) {
     startGlobalDownloadPolling();
     
     // Envoyer la requête POST pour démarrer le téléchargement
-    const res = await api.post("/models/download", modelsToDownload);
+    const res = await api.post("/download", modelsToDownload);
     const results = Array.isArray(res.data) ? res.data : [res.data];
     let errors = results.filter(r => !r.ok);
     

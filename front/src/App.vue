@@ -15,9 +15,11 @@ import DialogContainer from './components/DialogContainer.vue'
 import InstallProgressIndicator from './components/InstallProgressIndicator.vue'
 import FooterComponent from './components/common/FooterComponent.vue'
 import { useNotifications } from './composables/useNotifications'
+import { useAuthStore } from './stores/auth'
 
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
 const { loadPersistentNotifications } = useNotifications()
 
 // Check if the user is authenticated
@@ -32,8 +34,7 @@ const showHeader = computed(() => {
 
 // Logout function
 const handleLogout = () => {
-  // Remove token from localStorage
-  localStorage.removeItem('auth_token')
+  authStore.logout();
   // Navigate to login page
   router.push({ name: 'login' })
 }
@@ -121,7 +122,7 @@ onMounted(() => {
       </div>
     </div>
     
-    <div class="view-container flex-1 overflow-auto bg-background w-full">
+    <div class="view-container flex-1 overflow-auto bg-background w-full mt-2">
       <RouterView />
     </div>
     

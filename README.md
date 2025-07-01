@@ -1,3 +1,12 @@
+## Components
+
+### ModelSelectorModal.vue
+
+- **Location:** `/front/src/components/common/ModelSelectorModal.vue`
+- **Goal:** Provide a reusable, filterable modal for model selection, usable in any part of the application where model selection is needed.
+- **Test file:** `/back/tests/test_model_selector_modal.spec.js`
+
+This component allows users to select models for a profile, with tag-based filtering and grouping. It emits events for closing and applying the selection.
 # ComfyUI Model & Bundle Manager
 
 A comprehensive web application for managing ComfyUI models, workflows, and bundles with a FastAPI backend and Vue.js frontend.
@@ -93,6 +102,8 @@ f:\runpod-comfyui\
 ├── front/                 # Vue.js frontend application
 │   ├── src/
 │   │   ├── components/    # Vue components
+│   │   │   ├── common/
+│   │   │   │   ├── ButtonDropdownComponent.vue   # Split button with dropdown (main action + dropdown menu)
 │   │   ├── composables/   # Vue composables
 │   │   └── main.js        # Frontend entry point
 └── README.md              # This file
@@ -469,3 +480,8 @@ The application provides comprehensive REST API endpoints for all functionality.
 - **Parameters**: Complete parameter documentation
 
 For detailed API documentation, run the application and visit `/docs` for the interactive Swagger documentation.
+
+## Components
+
+### ButtonDropdownComponent
+A split button Vue component: left side is a normal button (main action), right side is a dropdown toggle with chevron. The dropdown content is customizable via slot. Used for actions that have a primary action and additional options (e.g., install, add, etc.).

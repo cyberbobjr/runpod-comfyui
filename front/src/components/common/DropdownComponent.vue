@@ -4,19 +4,55 @@ import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
 import { computed, onMounted, onUnmounted, ref, Teleport, Transition } from "vue";
 
 /**
- * ### DropdownComponent
- * **Description:** A reusable dropdown component with customizable sizes and positioning.
- * **Parameters:**
- * - `buttonText` (string): Text to display on the dropdown button.
- * - `buttonIcon` (object): FontAwesome icon to display on the button.
- * - `size` (string): Size of the dropdown - 'xs', 'm', or 'l'. Default: 'm'.
- * - `variant` (string): Button variant - 'primary', 'secondary', 'danger', etc. Default: 'primary'.
- * - `disabled` (boolean): Whether the dropdown is disabled. Default: false.
- * - `title` (string): Tooltip text for the button.
- * - `dropdownWidth` (number): Width of the dropdown in pixels. Default: 200.
- * - `align` (string): Alignment of dropdown - 'left' or 'right'. Default: 'left'.
- * **Emits:**
- * - `item-selected`: Emitted when a dropdown item is selected.
+ * DropdownComponent
+ * -----------------------------------------------------------------------------
+ * A reusable dropdown component with customizable button, icon, size, variant,
+ * alignment, and animated dropdown panel. The dropdown content is provided via
+ * a slot and can be fully customized.
+ *
+ * ## Props
+ * - buttonText (string, required): The text to display on the dropdown button.
+ * - buttonIcon (object, optional): FontAwesome icon object for the button (e.g. faPlus).
+ * - size (string, default: 'm'): Button size ('xs', 'm', 'l').
+ * - variant (string, default: 'primary'): Button variant ('primary', 'secondary', etc.).
+ * - disabled (boolean, default: false): Whether the dropdown button is disabled.
+ * - title (string, optional): Tooltip text for the button.
+ * - dropdownWidth (number, default: 200): Width of the dropdown panel in pixels.
+ * - align (string, default: 'left'): Dropdown alignment relative to button ('left' or 'right').
+ *
+ * ## Emits
+ * - item-selected: Emitted when a dropdown item is selected (payload: item).
+ *
+ * ## Slots
+ * - default (scoped): The dropdown panel content.
+ *   Scoped slot props:
+ *     - close: Function to close the dropdown.
+ *     - handleItemClick: Function to handle item selection (emits 'item-selected' and closes).
+ *
+ * ## Usage Example
+ * <DropdownComponent
+ *   button-text="Add Workflow"
+ *   :button-icon="faPlus"
+ *   size="m"
+ *   variant="primary"
+ *   :dropdown-width="300"
+ *   align="left"
+ *   @item-selected="onWorkflowSelected"
+ * >
+ *   <template #default="{ handleItemClick, close }">
+ *     <div v-for="item in items" :key="item.id"
+ *          class="p-2 hover:bg-background-soft cursor-pointer rounded"
+ *          @click="handleItemClick(item)">
+ *       {{ item.name }}
+ *     </div>
+ *   </template>
+ * </DropdownComponent>
+ *
+ * ## Notes
+ * - The dropdown panel is teleported to <body> for correct layering and positioning.
+ * - The chevron icon rotates with animation when open.
+ * - The dropdown auto-closes on outside click or scroll.
+ * - Use the slot's handleItemClick for selection, or close() to close manually.
  */
 
 const props = defineProps({

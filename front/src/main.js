@@ -122,14 +122,16 @@ library.add(
   faPlus,
   faLayerGroup
 )
-
 import './assets/main.css'
+import { initializeStores } from './stores'
 
 const app = createApp(App)
+const pinia = createPinia()
 
 // Enregistrer FontAwesome globalement
 app.component('FontAwesomeIcon', FontAwesomeIcon)
-app.use(createPinia())
+app.use(pinia)
 app.use(router)
 
 app.mount('#app')
+await initializeStores()

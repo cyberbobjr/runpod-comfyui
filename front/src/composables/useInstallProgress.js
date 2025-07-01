@@ -5,7 +5,7 @@ import { useNotifications } from './useNotifications';
 // État global partagé entre toutes les instances
 const installations = ref(new Map());
 const modelDownloads = ref(new Map()); // Nouveau: suivi des téléchargements de modèles
-const rawDownloads = ref({}); // Nouveau: données brutes de l'API /models/downloads
+const rawDownloads = ref({}); // Nouveau: données brutes de l'API /downloads
 const pollingInterval = ref(null);
 const modelPollingInterval = ref(null); // Nouveau: polling séparé pour les modèles
 
@@ -70,7 +70,7 @@ export function useInstallProgress() {
 
     try {
       // Vérifier l'état des téléchargements en cours
-      const downloadsResponse = await api.get('/models/downloads');
+      const downloadsResponse = await api.get('/downloads');
       const downloads = downloadsResponse.data || {};
 
       // Vérifier si le bundle est installé
@@ -164,8 +164,8 @@ export function useInstallProgress() {
   // Nouveau: mettre à jour la progression des téléchargements de modèles
   const updateModelDownloadProgress = async () => {
     try {
-      console.log('Polling /models/downloads...');
-      const response = await api.get('/models/downloads');
+      console.log('Polling /downloads...');
+      const response = await api.get('/downloads');
       const downloads = response.data || {};
       
       console.log('Current downloads from API:', Object.keys(downloads).length, 'items');
@@ -369,7 +369,7 @@ export function useInstallProgress() {
   // Nouveau: restaurer les téléchargements actifs au démarrage
   const restoreActiveDownloads = async () => {
     try {
-      const response = await api.get('/models/downloads');
+      const response = await api.get('/downloads');
       const downloads = response.data || {};
       
       // Pour chaque téléchargement actif, créer un indicateur de progression
@@ -455,7 +455,7 @@ export function useInstallProgress() {
   // Nouveau: fonction pour forcer une mise à jour des téléchargements
   const refreshDownloads = async () => {
     try {
-      const response = await api.get('/models/downloads');
+      const response = await api.get('/downloads');
       rawDownloads.value = response.data || {};
       return rawDownloads.value;
     } catch (error) {
