@@ -29,7 +29,10 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, computed, withDefaults } from 'vue'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+
 /**
  * ### AccordionComponent
  * **Description:** A collapsible accordion component with customizable sizes and icons.
@@ -44,20 +47,6 @@
  *   - `m`: Default size with standard padding (p-4) and text - ideal for main sections
  *   - `l`: Large size with bigger padding (p-6) and text - ideal for prominent sections
  * 
- * **Slots:**
- * - `default`: Content displayed when the accordion is expanded
- * 
- * **Features:**
- * - Smooth expand/collapse animation with chevron rotation
- * - Hover effects on header for better UX
- * - Border and rounded corners for clean appearance
- * - Responsive sizing system
- * - Icon support with FontAwesome integration
- * - Click-to-toggle functionality
- * 
- * **Methods:**
- * - `toggleAccordion()`: Toggles the open/closed state of the accordion
- * 
  * **Usage Example:**
  * ```vue
  * <AccordionComponent 
@@ -65,166 +54,169 @@
  *   icon="server" 
  *   size="xs"
  *   :default-open="true"
+ *   @toggle="handleToggle"
  * >
  *   <div class="space-y-2">
- *     <p>Accordion content goes here</p>
- *     <div class="grid grid-cols-2 gap-4">
- *       <!-- Additional content -->
- *     </div>
+ *     <p>Hardware profile content</p>
+ *     <button class="btn btn-primary">Configure</button>
  *   </div>
  * </AccordionComponent>
  * ```
  */
-export default {
-  name: "AccordionComponent",
-  props: {
-    /**
-     * The title displayed in the accordion header
-     */
-    title: {
-      type: String,
-      required: true,
-    },
-    /**
-     * FontAwesome icon name to display next to the title (optional)
-     */
-    icon: {
-      type: String,
-      default: null,
-    },
-    /**
-     * Whether the accordion is open by default
-     */
-    defaultOpen: {
-      type: Boolean,
-      default: false,
-    },
-    /**
-     * Size of the accordion (xs, m, l)
-     * - xs: Compact size with smaller padding and text (ideal for nested content)
-     * - m: Default size with standard padding and text (ideal for main sections)
-     * - l: Large size with bigger padding and text (ideal for prominent sections)
-     */
-    size: {
-      type: String,
-      default: "m",
-      validator(value) {
-        return ["xs", "m", "l"].includes(value);
-      },
-    },
-  },
-  data() {
-    return {
-      isOpen: this.defaultOpen,
-    };
-  },
-  computed: {
-    /**
-     * CSS classes for the accordion header based on size
-     */
-    headerClasses() {
-      const sizeClasses = {
-        xs: "p-2",
-        m: "p-4",
-        l: "p-6",
-      };
-      return sizeClasses[this.size] || sizeClasses.m;
-    },
-    /**
-     * CSS classes for the accordion content based on size
-     */
-    contentClasses() {
-      const sizeClasses = {
-        xs: "p-2",
-        m: "p-4",
-        l: "p-6",
-      };
-      return sizeClasses[this.size] || sizeClasses.m;
-    },
-    /**
-     * CSS classes for the title based on size
-     */
-    titleClasses() {
-      const sizeClasses = {
-        xs: "text-sm font-medium",
-        m: "text-xl font-semibold",
-        l: "text-2xl font-bold",
-      };
-      return sizeClasses[this.size] || sizeClasses.m;
-    },
-    /**
-     * CSS classes for the icon based on size
-     */
-    iconClasses() {
-      const sizeClasses = {
-        xs: "text-sm",
-        m: "text-xl",
-        l: "text-2xl",
-      };
-      return sizeClasses[this.size] || sizeClasses.m;
-    },
-    /**
-     * CSS classes for the chevron icon based on size
-     */
-    chevronClasses() {
-      const sizeClasses = {
-        xs: "text-sm",
-        m: "text-base",
-        l: "text-lg",
-      };
-      return sizeClasses[this.size] || sizeClasses.m;
-    },
-    /**
-     * Gap classes for the header items based on size
-     */
-    gapClasses() {
-      const sizeClasses = {
-        xs: "gap-2",
-        m: "gap-3",
-        l: "gap-4",
-      };
-      return sizeClasses[this.size] || sizeClasses.m;
-    },
-  },
-  methods: {
-    /**
-     * ### toggleAccordion
-     * **Description:** Toggles the accordion open/closed state and emits toggle event.
-     * **Parameters:** None
-     * **Returns:** None
-     * **Emits:** toggle event with current open state (Boolean)
-     */
-    toggleAccordion() {
-      this.isOpen = !this.isOpen;
-      this.$emit("toggle", this.isOpen);
-    },
 
-    /**
-     * ### open
-     * **Description:** Opens the accordion programmatically and emits toggle event.
-     * **Parameters:** None
-     * **Returns:** None
-     * **Emits:** toggle event with true value
-     */
-    open() {
-      this.isOpen = true;
-      this.$emit("toggle", this.isOpen);
-    },
+/**
+ * Size variant type
+ */
+export type AccordionSize = 'xs' | 'm' | 'l'
 
-    /**
-     * ### close
-     * **Description:** Closes the accordion programmatically and emits toggle event.
-     * **Parameters:** None
-     * **Returns:** None
-     * **Emits:** toggle event with false value
-     */
-    close() {
-      this.isOpen = false;
-      this.$emit("toggle", this.isOpen);
-    },
-  },
-  emits: ["toggle"],
-};
+/**
+ * Component props interface
+ */
+interface Props {
+  /** The title displayed in the accordion header */
+  title: string;
+  /** FontAwesome icon name to display next to the title */
+  icon?: string;
+  /** Whether the accordion is open by default */
+  defaultOpen?: boolean;
+  /** Size variant of the accordion */
+  size?: AccordionSize;
+}
+
+/**
+ * Component emits interface
+ */
+interface Emits {
+  /** Emitted when accordion is toggled */
+  toggle: [isOpen: boolean];
+}
+
+// Define props with defaults
+const props = withDefaults(defineProps<Props>(), {
+  defaultOpen: false,
+  size: 'm'
+})
+
+// Define emits
+const emit = defineEmits<Emits>()
+
+// Reactive state
+const isOpen = ref<boolean>(props.defaultOpen)
+
+/**
+ * CSS classes for the accordion header based on size
+ */
+const headerClasses = computed<string>(() => {
+  const sizeClasses: Record<AccordionSize, string> = {
+    xs: 'p-2',
+    m: 'p-4',
+    l: 'p-6'
+  }
+  return sizeClasses[props.size]
+})
+
+/**
+ * CSS classes for the accordion content based on size
+ */
+const contentClasses = computed<string>(() => {
+  const sizeClasses: Record<AccordionSize, string> = {
+    xs: 'p-2',
+    m: 'p-4',
+    l: 'p-6'
+  }
+  return sizeClasses[props.size]
+})
+
+/**
+ * CSS classes for the title based on size
+ */
+const titleClasses = computed<string>(() => {
+  const sizeClasses: Record<AccordionSize, string> = {
+    xs: 'text-sm font-medium',
+    m: 'text-xl font-semibold',
+    l: 'text-2xl font-bold'
+  }
+  return sizeClasses[props.size]
+})
+
+/**
+ * CSS classes for the icon based on size
+ */
+const iconClasses = computed<string>(() => {
+  const sizeClasses: Record<AccordionSize, string> = {
+    xs: 'text-sm',
+    m: 'text-lg',
+    l: 'text-xl'
+  }
+  return sizeClasses[props.size]
+})
+
+/**
+ * CSS classes for the chevron based on size
+ */
+const chevronClasses = computed<string>(() => {
+  const sizeClasses: Record<AccordionSize, string> = {
+    xs: 'text-sm',
+    m: 'text-base',
+    l: 'text-lg'
+  }
+  return sizeClasses[props.size]
+})
+
+/**
+ * CSS classes for the gap between icon and title based on size
+ */
+const gapClasses = computed<string>(() => {
+  const sizeClasses: Record<AccordionSize, string> = {
+    xs: 'gap-1',
+    m: 'gap-2',
+    l: 'gap-3'
+  }
+  return sizeClasses[props.size]
+})
+
+/**
+ * ### toggleAccordion
+ * **Description:** Toggles the accordion open/closed state and emits toggle event.
+ * **Parameters:** None
+ * **Returns:** None
+ * **Emits:** toggle event with current open state
+ */
+const toggleAccordion = (): void => {
+  isOpen.value = !isOpen.value
+  emit('toggle', isOpen.value)
+}
+
+/**
+ * ### open
+ * **Description:** Opens the accordion programmatically and emits toggle event.
+ * **Parameters:** None
+ * **Returns:** None
+ * **Emits:** toggle event with true value
+ */
+const open = (): void => {
+  isOpen.value = true
+  emit('toggle', isOpen.value)
+}
+
+/**
+ * ### close
+ * **Description:** Closes the accordion programmatically and emits toggle event.
+ * **Parameters:** None
+ * **Returns:** None
+ * **Emits:** toggle event with false value
+ */
+const close = (): void => {
+  isOpen.value = false
+  emit('toggle', isOpen.value)
+}
+
+// Expose methods for template refs
+defineExpose({
+  open,
+  close,
+  toggleAccordion
+})
 </script>
 
 <style scoped>

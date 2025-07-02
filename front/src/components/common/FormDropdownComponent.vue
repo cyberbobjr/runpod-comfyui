@@ -1,30 +1,80 @@
-<script setup>
-import { ref, onMounted, onUnmounted, nextTick } from "vue";
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted, nextTick, withDefaults } from "vue";
+import type { Ref } from "vue";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 
 /**
  * FormDropdownComponent
  * -----------------------------------------------------------------------------
  * A simple, form-style dropdown for use in forms (e.g., workflow selection).
+ * Designed to integrate seamlessly with form layouts and styling.
  *
  * ## Props
- * - label (string, required): The label or button text to display.
- * - icon (object, optional): FontAwesome icon object for the button (e.g. faPlusCircle).
- * - items (Array<any>, required): The list of items to display in the dropdown.
- * - itemKey (string|function, default: 'id'): The property or function to use as unique key for each item.
- * - itemLabel (string|function, default: 'label'): The property or function to use as label for each item.
- * - placeholder (string, optional): Text to show when no items are available.
- * - disabled (boolean, default: false): Whether the dropdown is disabled.
- * - widthClass (string, default: 'w-full'): Tailwind width class for the dropdown panel.
+ * - `label` (string, required): The label or button text to display.
+ * - `icon` (IconDefinition, optional): FontAwesome icon object for the button (e.g. faPlusCircle).
+ * - `items` (Array<any>, required): The list of items to display in the dropdown.
+ * - `itemKey` (string|function, default: 'id'): The property or function to use as unique key for each item.
+ * - `itemLabel` (string|function, default: 'label'): The property or function to use as label for each item.
+ * - `placeholder` (string, default: 'No items available'): Text to show when no items are available.
+ * - `disabled` (boolean, default: false): Whether the dropdown is disabled.
+ * - `widthClass` (string, default: 'w-full'): Tailwind width class for the dropdown panel.
+ *
+ * ## Features & Behavior
+ * - Form-integrated styling that matches other form inputs
+ * - Auto-closes on outside click
+ * - Supports both primitive and object items
+ * - Flexible key/label extraction via properties or functions
+ * - Customizable item rendering via slots
+ * - Disabled state support
+ * - Smooth open/close animations
+ * - Keyboard accessibility ready
+ * - Scrollable item list for large datasets
  *
  * ## Emits
- * - select: Emitted when an item is selected (payload: item).
+ * - `select`: Emitted when an item is selected (payload: item).
  *
  * ## Slots
- * - default (scoped): Custom content for each item. Props: { item, select }
- * - empty: Custom content when no items are available.
+ * - `default` (scoped): Custom content for each item. Props: { item, select }
+ * - `empty`: Custom content when no items are available.
+ *
+ * ## Methods
+ * ### getItemKey
+ * **Description:** Returns the unique key for an item. If the item is a primitive, returns the item itself.
+ * **Parameters:**
+ * - `item` (any): The item from the items array.
+ * **Returns:** The key (string|number|any).
+ *
+ * ### getItemLabel
+ * **Description:** Returns the label for an item. If the item is a primitive, returns the item itself.
+ * **Parameters:**
+ * - `item` (any): The item from the items array.
+ * **Returns:** The label (string|number|any).
+ *
+ * ### toggleDropdown
+ * **Description:** Toggles the dropdown open/closed state.
+ * **Parameters:** None
+ * **Returns:** void
+ *
+ * ### closeDropdown
+ * **Description:** Closes the dropdown.
+ * **Parameters:** None
+ * **Returns:** void
+ *
+ * ### handleSelect
+ * **Description:** Handles item selection and emits the select event.
+ * **Parameters:**
+ * - `item` (any): The selected item.
+ * **Returns:** void
+ *
+ * ### handleClickOutside
+ * **Description:** Closes dropdown when clicking outside of it.
+ * **Parameters:**
+ * - `event` (Event): The click event.
+ * **Returns:** void
  *
  * ## Example Usage
+ * ```vue
  * <FormDropdownComponent
  *   label="Add Workflows"
  *   :icon="faPlusCircle"
@@ -34,78 +84,139 @@ import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
  *   placeholder="All workflows are already selected"
  *   @select="addWorkflowToSelection"
  * />
+ * ```
  */
 
-const props = defineProps({
-  label: { type: String, required: true },
-  icon: { type: String, default: null },
-  items: { type: Array, required: true },
-  itemKey: { type: [String, Function], default: "id" },
-  itemLabel: { type: [String, Function], default: "label" },
-  placeholder: { type: String, default: "No items available" },
-  disabled: { type: Boolean, default: false },
-  widthClass: { type: String, default: "w-full" },
+/**
+ * Key/Label extractor function type
+ */
+type KeyLabelExtractor = ((item: any) => string | number) | string;
+
+/**
+ * Component props interface
+ */
+interface Props {
+  /** The label or button text to display */
+  label: string;
+  /** FontAwesome icon object for the button */
+  icon?: IconDefinition;
+  /** The list of items to display in the dropdown */
+  items: any[];
+  /** The property or function to use as unique key for each item */
+  itemKey?: KeyLabelExtractor;
+  /** The property or function to use as label for each item */
+  itemLabel?: KeyLabelExtractor;
+  /** Text to show when no items are available */
+  placeholder?: string;
+  /** Whether the dropdown is disabled */
+  disabled?: boolean;
+  /** Tailwind width class for the dropdown panel */
+  widthClass?: string;
+}
+
+/**
+ * Component emits interface
+ */
+interface Emits {
+  /** Emitted when an item is selected */
+  select: [item: any];
+}
+
+// Define props with defaults
+const props = withDefaults(defineProps<Props>(), {
+  itemKey: "id",
+  itemLabel: "label",
+  placeholder: "No items available",
+  disabled: false,
+  widthClass: "w-full",
 });
 
-const emit = defineEmits(["select"]);
+// Define emits
+const emit = defineEmits<Emits>();
 
-const isOpen = ref(false);
-const dropdownRef = ref(null);
-const buttonRef = ref(null);
+// Reactive state
+const isOpen = ref<boolean>(false);
+const dropdownRef = ref<HTMLElement>();
+const buttonRef = ref<HTMLElement>();
 
 /**
- * getItemKey
- * Description: Returns the unique key for an item. If the item is a primitive, returns the item itself.
- * Parameters:
- * - item (any): The item from the items array.
- * Returns: The key (string|number|any).
+ * ### getItemKey
+ * **Description:** Returns the unique key for an item. If the item is a primitive, returns the item itself.
+ * **Parameters:**
+ * - `item` (any): The item from the items array.
  */
-function getItemKey(item) {
+function getItemKey(item: any): string | number | any {
   if (item !== Object(item)) return item; // primitive (string, number, etc.)
   if (typeof props.itemKey === "function") return props.itemKey(item);
-  return item[props.itemKey];
-}
-/**
- * getItemLabel
- * Description: Returns the label for an item. If the item is a primitive, returns the item itself.
- * Parameters:
- * - item (any): The item from the items array.
- * Returns: The label (string|number|any).
- */
-function getItemLabel(item) {
-  if (item !== Object(item)) return item; // primitive (string, number, etc.)
-  if (typeof props.itemLabel === "function") return props.itemLabel(item);
-  return item[props.itemLabel];
+  return item[props.itemKey as string];
 }
 
-function toggleDropdown() {
+/**
+ * ### getItemLabel
+ * **Description:** Returns the label for an item. If the item is a primitive, returns the item itself.
+ * **Parameters:**
+ * - `item` (any): The item from the items array.
+ */
+function getItemLabel(item: any): string | number | any {
+  if (item !== Object(item)) return item; // primitive (string, number, etc.)
+  if (typeof props.itemLabel === "function") return props.itemLabel(item);
+  return item[props.itemLabel as string];
+}
+
+/**
+ * ### toggleDropdown
+ * **Description:** Toggles the dropdown open/closed state.
+ */
+function toggleDropdown(): void {
   if (props.disabled) return;
   isOpen.value = !isOpen.value;
   if (isOpen.value) nextTick(() => {
     // Focus first item for accessibility if needed
   });
 }
-function closeDropdown() {
+
+/**
+ * ### closeDropdown
+ * **Description:** Closes the dropdown.
+ */
+function closeDropdown(): void {
   isOpen.value = false;
 }
-function handleSelect(item) {
+
+/**
+ * ### handleSelect
+ * **Description:** Handles item selection and emits the select event.
+ * **Parameters:**
+ * - `item` (any): The selected item.
+ */
+function handleSelect(item: any): void {
   emit("select", item);
   closeDropdown();
 }
 
-function handleClickOutside(event) {
+/**
+ * ### handleClickOutside
+ * **Description:** Closes dropdown when clicking outside of it.
+ * **Parameters:**
+ * - `event` (Event): The click event.
+ */
+function handleClickOutside(event: Event): void {
+  const target = event.target as Element;
   if (
     dropdownRef.value &&
-    !dropdownRef.value.contains(event.target) &&
+    !dropdownRef.value.contains(target) &&
     buttonRef.value &&
-    !buttonRef.value.contains(event.target)
+    !buttonRef.value.contains(target)
   ) {
     closeDropdown();
   }
 }
+
+// Lifecycle hooks
 onMounted(() => {
   document.addEventListener("mousedown", handleClickOutside);
 });
+
 onUnmounted(() => {
   document.removeEventListener("mousedown", handleClickOutside);
 });

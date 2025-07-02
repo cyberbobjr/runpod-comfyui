@@ -120,17 +120,21 @@
   </footer>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, onMounted, withDefaults } from 'vue'
+import { fetchVersionInfo } from '../../utils/version'
+
 /**
- * ### FooterComponent
- * **Description:** Application footer component showing version information and build details.
+ * FooterComponent
+ * -----------------------------------------------------------------------------
+ * Application footer component showing version information and build details.
  * Displays app branding, version info, and provides a detailed version modal with comprehensive system information.
- * 
- * **Props:**
- * - `showBuild` (Boolean, default: false): Whether to show the build number in the footer
- * - `showBuildDate` (Boolean, default: false): Whether to show the build date in the footer
- * 
- * **Features:**
+ *
+ * ## Props
+ * - `showBuild` (boolean, default: false): Whether to show the build number in the footer
+ * - `showBuildDate` (boolean, default: false): Whether to show the build date in the footer
+ *
+ * ## Features & Behavior
  * - App name and branding display
  * - Version information with optional build details
  * - Detailed version modal with component breakdown
@@ -138,12 +142,23 @@
  * - Responsive layout with proper spacing
  * - Dark theme integration
  * - FontAwesome icons for visual enhancement
- * 
- * **Methods:**
- * - `fetchVersionData()`: Loads version information from API
- * - `formatBuildDate()`: Formats build date for display
- * 
- * **Usage Example:**
+ * - Auto-loads version information on component mount
+ * - Graceful fallback to default version if API fails
+ *
+ * ## Methods
+ * ### loadVersionInfo
+ * **Description:** Load version information from the API with fallback to default values.
+ * **Parameters:** None
+ * **Returns:** Promise<void>
+ *
+ * ### formatBuildDate
+ * **Description:** Format the build date for display with optional detailed format.
+ * **Parameters:**
+ * - `dateString` (string): ISO date string to format
+ * - `detailed` (boolean, default: false): Whether to show detailed format with time
+ * **Returns:** string - Formatted date string
+ *
+ * ## Usage Example
  * ```vue
  * <FooterComponent 
  *   :show-build="true" 
@@ -151,95 +166,98 @@
  * />
  * ```
  */
-import { fetchVersionInfo } from '../../utils/version.js';
 
-export default {
-  name: 'FooterComponent',
-  props: {
-    /**
-     * Whether to show the build number in the footer
-     */
-    showBuild: {
-      type: Boolean,
-      default: false
-    },
-    /**
-     * Whether to show the build date in the footer
-     */
-    showBuildDate: {
-      type: Boolean,
-      default: false
-    }
-  },
-  data() {
-    return {
-      versionInfo: null,
-      showVersionModal: false,
-      loading: false
+/**
+ * Version info interface
+ */
+interface VersionInfo {
+  version: string;
+  build?: string;
+  buildDate?: string;
+  description?: string;
+  components?: Record<string, string>;
+}
+
+/**
+ * Component props interface
+ */
+interface Props {
+  /** Whether to show the build number in the footer */
+  showBuild?: boolean;
+  /** Whether to show the build date in the footer */
+  showBuildDate?: boolean;
+}
+
+// Define props with defaults
+const props = withDefaults(defineProps<Props>(), {
+  showBuild: false,
+  showBuildDate: false
+})
+
+// Reactive state
+const versionInfo = ref<VersionInfo | null>(null)
+const showVersionModal = ref<boolean>(false)
+const loading = ref<boolean>(false)
+
+/**
+ * ### loadVersionInfo
+ * **Description:** Load version information from the API with fallback to default values.
+ */
+const loadVersionInfo = async (): Promise<void> => {
+  loading.value = true;
+  try {
+    versionInfo.value = await fetchVersionInfo();
+  } catch (error) {
+    console.error('Failed to load version info:', error);
+    // Fallback to default version from utils
+    versionInfo.value = {
+      version: "2.0.0",
+      build: "20250622-1430",
+      description: "Configuration and Settings Management Refactoring"
     };
-  },
-  async mounted() {
-    await this.loadVersionInfo();
-  },
-  methods: {
-    /**
-     * ### loadVersionInfo
-     * **Description:** Load version information from the API with fallback to default values.
-     * **Parameters:** None
-     * **Returns:** Promise<void>
-     */
-    async loadVersionInfo() {
-      this.loading = true;
-      try {
-        this.versionInfo = await fetchVersionInfo();
-      } catch (error) {
-        console.error('Failed to load version info:', error);
-        // Fallback to default version from utils
-        this.versionInfo = {
-          version: "2.0.0",
-          build: "20250622-1430",
-          description: "Configuration and Settings Management Refactoring"
-        };
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    /**
-     * ### formatBuildDate
-     * **Description:** Format the build date for display with optional detailed format.
-     * **Parameters:**
-     * - `dateString` (string): ISO date string to format
-     * - `detailed` (boolean): Whether to show detailed format with time
-     * **Returns:** string - Formatted date string
-     */
-    formatBuildDate(dateString, detailed = false) {
-      if (!dateString) return 'Unknown';
-      
-      try {
-        const date = new Date(dateString);
-        if (detailed) {
-          return date.toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            timeZoneName: 'short'
-          });
-        } else {
-          return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-          });
-        }
-      } catch (error) {
-        return dateString;
-      }
-    }
+  } finally {
+    loading.value = false;
   }
-};
+}
+
+/**
+ * ### formatBuildDate
+ * **Description:** Format the build date for display with optional detailed format.
+ * **Parameters:**
+ * - `dateString` (string): ISO date string to format
+ * - `detailed` (boolean, default: false): Whether to show detailed format with time
+ * **Returns:** string - Formatted date string
+ */
+const formatBuildDate = (dateString: string, detailed: boolean = false): string => {
+  if (!dateString) return 'Unknown';
+  
+  try {
+    const date = new Date(dateString);
+    if (detailed) {
+      return date.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZoneName: 'short'
+      });
+    } else {
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    }
+  } catch (error) {
+    return dateString;
+  }
+}
+
+// Lifecycle hook
+onMounted(async () => {
+  await loadVersionInfo();
+})
 </script>
 
 <style scoped>

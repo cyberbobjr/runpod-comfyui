@@ -16,20 +16,34 @@
     "@fortawesome/free-regular-svg-icons": "^6.5.1",
     "@fortawesome/free-solid-svg-icons": "^6.5.1",
     "@fortawesome/vue-fontawesome": "^3.0.6",
+    "@vue/tsconfig": "^0.7.0",
     "axios": "^1.6.7",
     "pinia": "^3.0.3",
-    "vue": "^3.5.13",
-    "vue-router": "^4.5.0"
+    "vue": "^3.5.17",
+    "vue-router": "^4.5.0",
+    "vue-tsc": "^3.0.1"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^5.2.3",
+    "@types/node": "^24.0.10",
+    "@typescript-eslint/eslint-plugin": "^8.35.1",
+    "@typescript-eslint/parser": "^8.35.1",
+    "@vitejs/plugin-vue": "^6.0.0",
+    "@vue/reactivity": "^3.5.17",
+    "@vue/runtime-core": "^3.5.17",
+    "@vue/runtime-dom": "^3.5.17",
+    "@vue/shared": "^3.5.17",
+    "@vue/test-utils": "^2.4.6",
     "autoprefixer": "^10.4.16",
     "commitizen": "^4.3.1",
     "cz-conventional-changelog": "^3.3.0",
+    "jsdom": "^26.1.0",
     "postcss": "^8.4.31",
     "tailwindcss": "^3.3.5",
-    "vite": "^6.2.4",
-    "vite-plugin-vue-devtools": "^7.7.2"
+    "typescript": "^5.8.3",
+    "vite": "^7.0.0",
+    "vite-plugin-vue-devtools": "^7.7.2",
+    "vite-plugin-vue-inspector": "^5.3.2",
+    "vitest": "^3.2.4"
   },
   "config": {
     "commitizen": {

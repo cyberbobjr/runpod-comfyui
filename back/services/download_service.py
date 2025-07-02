@@ -60,13 +60,13 @@ class DownloadService:
         return DownloadManager.get_progress(model_id)
 
     @staticmethod
-    def get_all_downloads() -> Dict[str, Any]:
+    def get_all_downloads() -> List[Dict[str, Any]]:
         """
         Returns the status of all ongoing model downloads.
         
         **Description:** Gets progress information for all active downloads.
         **Parameters:** None
-        **Returns:** Dict with model_id as keys and progress info as values
+        **Returns:** A list of dicts, each containing progress info and the model ID.
         """
         DownloadManager.cleanup_finished_downloads()
         return DownloadManager.get_all_progress()

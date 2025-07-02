@@ -28,7 +28,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 /**
  * ### CommonModal
  * **Description:** A reusable modal dialog component with slots for title, content, and footer.
@@ -65,13 +65,26 @@
  * </CommonModal>
  * ```
  */
-defineProps({
-  show: {
-    type: Boolean,
-    required: true
-  }
-});
 
-// Emit the close event when modal needs to be closed
-defineEmits(['close']);
+/**
+ * Component props interface
+ */
+interface Props {
+  /** Controls the visibility of the modal */
+  show: boolean;
+}
+
+/**
+ * Component emits interface
+ */
+interface Emits {
+  /** Emitted when the modal requests to be closed */
+  close: [];
+}
+
+// Define props with TypeScript
+defineProps<Props>();
+
+// Define emits with TypeScript
+defineEmits<Emits>();
 </script>

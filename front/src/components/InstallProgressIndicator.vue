@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { 
   faDownload, 
@@ -11,24 +11,29 @@ import {
   faChevronUp,
   faMinus
 } from '@fortawesome/free-solid-svg-icons';
-import { useInstallProgress } from '../composables/useInstallProgress';
+import { useModelsStore } from '../stores/models';
+import type { ActiveInstallation } from '../stores/types/models.types';
+import { storeToRefs } from 'pinia';
 import { onMounted, ref, computed } from 'vue';
 
-const { 
-  activeInstallations, 
-  cancelInstallation, 
-  removeInstallation,
-  cancelModelDownload,
-  removeModelDownload,
-  restoreActiveDownloads
-} = useInstallProgress();
+const modelsStore = useModelsStore();
+const { activeInstallations } = storeToRefs(modelsStore);
 
 // État pour gérer l'expansion/réduction de la popup
-const isExpanded = ref(true);
-const isMinimized = ref(false);
+const isExpanded = ref<boolean>(true);
+const isMinimized = ref<boolean>(false);
+
+// Interface pour le résumé des téléchargements
+interface DownloadsSummary {
+  total: number;
+  downloading: number;
+  completed: number;
+  cancelled: number;
+  errors: number;
+}
 
 // Computed pour le résumé des téléchargements
-const downloadsSummary = computed(() => {
+const downloadsSummary = computed<DownloadsSummary>(() => {
   const total = activeInstallations.value.length;
   const downloading = activeInstallations.value.filter(i => i.status === 'downloading').length;
   const completed = activeInstallations.value.filter(i => i.status === 'completed').length;
@@ -38,7 +43,7 @@ const downloadsSummary = computed(() => {
   return { total, downloading, completed, cancelled, errors };
 });
 
-const getStatusIcon = (status) => {
+const getStatusIcon = (status: string) => {
   switch (status) {
     case 'downloading': return faDownload;
     case 'installing': return faCog;
@@ -49,7 +54,7 @@ const getStatusIcon = (status) => {
   }
 };
 
-const getStatusColor = (status) => {
+const getStatusColor = (status: string): string => {
   switch (status) {
     case 'downloading': return 'text-blue-500';
     case 'installing': return 'text-yellow-500';
@@ -60,62 +65,62 @@ const getStatusColor = (status) => {
   }
 };
 
-const formatElapsedTime = (startTime) => {
+const formatElapsedTime = (startTime: number): string => {
   const elapsed = Math.floor((Date.now() - startTime) / 1000);
   const minutes = Math.floor(elapsed / 60);
   const seconds = elapsed % 60;
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
 
-const toggleExpanded = () => {
+const toggleExpanded = (): void => {
   isExpanded.value = !isExpanded.value;
 };
 
-const toggleMinimized = () => {
+const toggleMinimized = (): void => {
   isMinimized.value = !isMinimized.value;
   if (!isMinimized.value) {
     isExpanded.value = true; // Si on déminimise, on expand automatiquement
   }
 };
 
-// Nouveau: gérer l'annulation selon le type
-const handleCancel = async (installation) => {
+// Handle cancellation based on type
+const handleCancel = async (installation: ActiveInstallation): Promise<void> => {
   try {
     if (installation.profiles && installation.profiles.includes('download') && installation.profiles.length === 1) {
-      // C'est un téléchargement de modèle - utiliser downloadId si disponible, sinon bundleId
+      // Model download - use downloadId if available, otherwise bundleId
       const idToCancel = installation.downloadId || installation.bundleId;
-      await cancelModelDownload(idToCancel);
+      await modelsStore.cancelModelDownload(idToCancel);
     } else {
-      // C'est une installation de bundle
-      await cancelInstallation(installation.bundleId);
+      // Bundle installation
+      await modelsStore.cancelBundleInstallation(installation.bundleId);
     }
   } catch (error) {
     console.error('Error cancelling:', error);
   }
 };
 
-// Nouveau: gérer la suppression selon le type
-const handleRemove = (installation) => {
+// Handle removal based on type
+const handleRemove = (installation: ActiveInstallation): void => {
   if (installation.profiles && installation.profiles.includes('download') && installation.profiles.length === 1) {
-    // C'est un téléchargement de modèle - utiliser downloadId si disponible, sinon bundleId
+    // Model download - use downloadId if available, otherwise bundleId
     const idToRemove = installation.downloadId || installation.bundleId;
-    removeModelDownload(idToRemove);
+    modelsStore.removeModelDownload(idToRemove);
   } else {
-    // C'est une installation de bundle
-    removeInstallation(installation.bundleId);
+    // Bundle installation
+    modelsStore.removeBundleInstallation(installation.bundleId);
   }
 };
 
-// Restaurer les téléchargements actifs au montage du composant
-onMounted(async () => {
-  await restoreActiveDownloads();
+// Restore active downloads on component mount
+onMounted(async (): Promise<void> => {
+  await modelsStore.restoreActiveDownloads();
 });
 </script>
 
 <template>
   <!-- Progress Indicators Container -->
   <div 
-    v-if="activeInstallations.length > 0" 
+    v-if="downloadsSummary.total > 0" 
     class="fixed bottom-4 right-4 z-50 space-y-2"
     :class="isMinimized ? 'max-w-xs' : 'max-w-sm'"
   >
@@ -250,7 +255,7 @@ onMounted(async () => {
             <button 
               v-if="installation.status === 'downloading' || installation.status === 'installing'"
               @click="handleCancel(installation)"
-              class="text-red-500 hover:text-red-400 text-xs px-2 py-1 border border-red-500 rounded hover:bg-red-500 hover:text-white transition-colors"
+              class="text-red-500 text-xs px-2 py-1 border border-red-500 rounded hover:bg-red-500 hover:text-white transition-colors"
             >
               Cancel
             </button>

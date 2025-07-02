@@ -15,7 +15,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 /**
  * ### CommonEmptyState
  * **Description:** A component for displaying empty states when there is no data to show.
@@ -54,4 +54,6 @@
  * </CommonEmptyState>
  * ```
  */
+
+// This component has no props, only slots
 </script>

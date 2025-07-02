@@ -37,7 +37,8 @@
             <p class="text-sm text-text-muted mt-1">
               Current source: {{ baseDirSource }}
             </p>
-          </div>          <button
+          </div>
+          <button
             type="submit"
             :disabled="baseDirLoading"
             class="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
@@ -48,7 +49,8 @@
               class="animate-spin"
             />
             <FontAwesomeIcon v-else icon="save" />
-            {{ baseDirLoading ? "Updating..." : "Update Base Directory" }}</button>
+            {{ baseDirLoading ? "Updating..." : "Update Base Directory" }}
+          </button>
         </form>
       </AccordionComponent>
 
@@ -102,7 +104,9 @@
                 @click="showCivitaiToken = !showCivitaiToken"
                 class="absolute right-3 top-1/2 transform -translate-y-1/2 text-text-muted hover:text-text-light"
               >
-                <FontAwesomeIcon :icon="showCivitaiToken ? 'eye-slash' : 'eye'" />
+                <FontAwesomeIcon
+                  :icon="showCivitaiToken ? 'eye-slash' : 'eye'"
+                />
               </button>
             </div>
             <p class="text-sm text-text-muted mt-1">
@@ -110,16 +114,21 @@
             </p>
           </div>
 
-          <div class="flex gap-4">            <button
+          <div class="flex gap-4">
+            <button
               type="submit"
               :disabled="tokensLoading"
               class="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              <FontAwesomeIcon v-if="tokensLoading" icon="spinner" class="animate-spin" />
+              <FontAwesomeIcon
+                v-if="tokensLoading"
+                icon="spinner"
+                class="animate-spin"
+              />
               <FontAwesomeIcon v-else icon="save" />
-              {{ tokensLoading ? 'Updating...' : 'Update Tokens' }}
+              {{ tokensLoading ? "Updating..." : "Update Tokens" }}
             </button>
-            
+
             <button
               type="button"
               @click="resetTokensForm"
@@ -270,7 +279,8 @@
               />
               <FontAwesomeIcon v-else icon="save" />
               {{ passwordLoading ? "Changing..." : "Change Password" }}
-            </button>            <button
+            </button>
+            <button
               type="button"
               @click="resetPasswordForm"
               class="btn btn-primary flex items-center gap-2"
@@ -287,15 +297,24 @@
           >
             <FontAwesomeIcon icon="info-circle" class="text-secondary" />
             Security Tips
-          </h3>          <ul class="text-sm text-text-muted space-y-1">
+          </h3>
+          <ul class="text-sm text-text-muted space-y-1">
             <li>• Use a strong, unique password</li>
             <li>• Include a mix of letters, numbers, and symbols</li>
             <li>• Avoid using personal information</li>
             <li>• Your password is encrypted and cannot be recovered</li>
             <li>• BASE_DIR changes are saved to a user-specific config file</li>
-            <li>• API tokens are stored securely and used for downloading models</li>
-            <li>• HuggingFace tokens allow access to gated models and private repositories</li>
-            <li>• CivitAI tokens are required for downloading some models from CivitAI</li>
+            <li>
+              • API tokens are stored securely and used for downloading models
+            </li>
+            <li>
+              • HuggingFace tokens allow access to gated models and private
+              repositories
+            </li>
+            <li>
+              • CivitAI tokens are required for downloading some models from
+              CivitAI
+            </li>
           </ul>
         </div>
       </AccordionComponent>
@@ -303,227 +322,355 @@
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import api from "../services/api.js";
 import AccordionComponent from "./common/AccordionComponent.vue";
 
-export default {
-  name: "SettingsComponent",
-  components: {
-    AccordionComponent,
-  },
-  data() {
-    return {      // Base Directory form
-      baseDirForm: {
-        base_dir: "",
-      },
-      baseDirSource: "",
-      baseDirLoading: false,
+// === ROUTER ===
+const router = useRouter();
 
-      // API Tokens form
-      tokensForm: {
-        hf_token: "",
-        civitai_token: "",
-      },
-      tokensLoading: false,
-      showHfToken: false,
-      showCivitaiToken: false,
+/**
+ * SettingsComponent
+ * -----------------------------------------------------------------------------
+ * A comprehensive settings management component for application configuration.
+ * Handles base directory settings, API tokens, and user authentication credentials.
+ *
+ * ## Features & Behavior
+ * - Base directory configuration with source tracking
+ * - API token management for Hugging Face and CivitAI
+ * - User authentication (username/password) management
+ * - Real-time form validation and error handling
+ * - Secure password input with visibility toggles
+ * - Responsive accordion layout for organized settings
+ * - Success/error messaging with visual feedback
+ * - Auto-loading of current configuration on mount
+ *
+ * ## State Management
+ * - Local reactive state for form data and UI state
+ * - Computed properties for validation and styling
+ * - RESTful API integration for persistence
+ * - Loading states for async operations
+ *
+ * ## Methods
+ * ### loadConfig
+ * **Description:** Loads current configuration from the API.
+ * **Parameters:** None
+ * **Returns:** Promise<void>
+ *
+ * ### updateBaseDir
+ * **Description:** Updates the base directory configuration.
+ * **Parameters:** None
+ * **Returns:** Promise<void>
+ *
+ * ### updateTokens
+ * **Description:** Updates API tokens for external services.
+ * **Parameters:** None
+ * **Returns:** Promise<void>
+ *
+ * ### updateCredentials
+ * **Description:** Updates user authentication credentials.
+ * **Parameters:** None
+ * **Returns:** Promise<void>
+ *
+ * ### showMessage
+ * **Description:** Displays a status message to the user.
+ * **Parameters:**
+ * - `message` (string): The message to display.
+ * - `type` (MessageType): The type of message (success, error, warning, info).
+ * **Returns:** void
+ *
+ * ### togglePasswordVisibility
+ * **Description:** Toggles password field visibility for different inputs.
+ * **Parameters:**
+ * - `field` (string): The password field to toggle.
+ * **Returns:** void
+ */
 
-      // Password form
-      passwordForm: {
-        oldUsername: "",
-        oldPassword: "",
-        newUsername: "",
-        newPassword: "",
-      },
-      confirmPassword: "",
-      passwordLoading: false,
+/**
+ * Message type enum
+ */
+type MessageType = 'success' | 'error' | 'warning' | 'info';
 
-      // UI state
-      message: "",
-      messageType: "info",
-      showCurrentPassword: false,
-      showNewPassword: false,
-      showConfirmPassword: false,
-    };
-  },
-  computed: {
-    passwordsMatch() {
-      return this.passwordForm.newPassword === this.confirmPassword;
-    },
-    isPasswordFormValid() {
-      return (
-        this.passwordForm.oldUsername.trim() &&
-        this.passwordForm.oldPassword &&
-        this.passwordForm.newUsername.trim() &&
-        this.passwordForm.newPassword.length >= 4 &&
-        this.passwordsMatch
-      );
-    },
-    messageClass() {
-      const baseClass = "border-l-4";
-      switch (this.messageType) {
-        case "success":
-          return `${baseClass} border-green-500 bg-green-900/20 text-green-300`;
-        case "error":
-          return `${baseClass} border-red-500 bg-red-900/20 text-red-300`;
-        case "warning":
-          return `${baseClass} border-yellow-500 bg-yellow-900/20 text-yellow-300`;
-        default:
-          return `${baseClass} border-secondary bg-blue-900/20 text-secondary`;
-      }
-    },
-    messageIcon() {
-      switch (this.messageType) {
-        case "success":
-          return "check-circle";
-        case "error":
-          return "exclamation-circle";
-        case "warning":
-          return "exclamation-triangle";
-        default:
-          return "info-circle";
-      }
-    },
-  },
-  async mounted() {
-    await this.loadConfig();
-  },
-  methods: {    async loadConfig() {
-      try {
-        // Load base directory config
-        const configResponse = await api.get("/jsonmodels/config");
-        this.baseDirForm.base_dir = configResponse.data.BASE_DIR;
-        this.baseDirSource = configResponse.data.source;
+/**
+ * Base directory form interface
+ */
+interface BaseDirForm {
+  base_dir: string;
+}
 
-        // Load API tokens
-        const tokensResponse = await api.get("/models/tokens");
-        this.tokensForm.hf_token = tokensResponse.data.hf_token || "";
-        this.tokensForm.civitai_token = tokensResponse.data.civitai_token || "";
-      } catch (error) {
-        console.error("Error loading config:", error);
-        this.showMessage("Failed to load configuration.", "error");
-      }
-    },
+/**
+ * API tokens form interface
+ */
+interface TokensForm {
+  hf_token: string;
+  civitai_token: string;
+}
 
-    async updateBaseDir() {
-      if (!this.baseDirForm.base_dir.trim()) return;
+/**
+ * Password form interface
+ */
+interface PasswordForm {
+  oldUsername: string;
+  oldPassword: string;
+  newUsername: string;
+  newPassword: string;
+}
 
-      this.baseDirLoading = true;
-      this.message = "";
+/**
+ * Configuration response interface
+ */
+interface ConfigResponse {
+  BASE_DIR: string;
+  source: string;
+}
 
-      try {
-        await api.post("/jsonmodels/config", {
-          base_dir: this.baseDirForm.base_dir,
-        });
+/**
+ * Tokens response interface
+ */
+interface TokensResponse {
+  hf_token: string;
+  civitai_token: string;
+}
 
-        this.showMessage("Base directory updated successfully!", "success");
+// --- Reactive State ---
+// Base Directory form
+const baseDirForm = ref<BaseDirForm>({
+  base_dir: "",
+});
+const baseDirSource = ref<string>("");
+const baseDirLoading = ref<boolean>(false);
 
-        // Reload config to get updated source
-        await this.loadConfig();
-      } catch (error) {
-        console.error("Error updating base directory:", error);
-        this.showMessage(
-          "Failed to update base directory. Please try again.",
-          "error"
-        );      } finally {
-        this.baseDirLoading = false;
-      }
-    },
+// API Tokens form
+const tokensForm = ref<TokensForm>({
+  hf_token: "",
+  civitai_token: "",
+});
+const tokensLoading = ref<boolean>(false);
+const showHfToken = ref<boolean>(false);
+const showCivitaiToken = ref<boolean>(false);
 
-    async updateTokens() {
-      this.tokensLoading = true;
-      this.message = "";
+// Password form
+const passwordForm = ref<PasswordForm>({
+  oldUsername: "",
+  oldPassword: "",
+  newUsername: "",
+  newPassword: "",
+});
+const confirmPassword = ref<string>("");
+const passwordLoading = ref<boolean>(false);
 
-      try {
-        await api.post("/models/tokens", {
-          hf_token: this.tokensForm.hf_token || null,
-          civitai_token: this.tokensForm.civitai_token || null,
-        });
+// UI state
+const message = ref<string>("");
+const messageType = ref<MessageType>("info");
+const showCurrentPassword = ref<boolean>(false);
+const showNewPassword = ref<boolean>(false);
+const showConfirmPassword = ref<boolean>(false);
 
-        this.showMessage("API tokens updated successfully!", "success");
-      } catch (error) {
-        console.error("Error updating tokens:", error);
-        this.showMessage("Failed to update API tokens. Please try again.", "error");
-      } finally {
-        this.tokensLoading = false;
-      }
-    },
+// --- Computed Properties ---
+const passwordsMatch = computed((): boolean =>
+  passwordForm.value.newPassword === confirmPassword.value
+);
 
-    resetTokensForm() {
-      this.tokensForm = {
-        hf_token: "",
-        civitai_token: "",
-      };
-      this.showHfToken = false;
-      this.showCivitaiToken = false;
-    },
+const isPasswordFormValid = computed((): boolean =>
+  !!passwordForm.value.oldUsername.trim() &&
+  !!passwordForm.value.oldPassword &&
+  !!passwordForm.value.newUsername.trim() &&
+  passwordForm.value.newPassword.length >= 4 &&
+  !!passwordsMatch.value
+);
 
-    async changePassword() {
-      if (!this.isPasswordFormValid) return;
+const messageClass = computed((): string => {
+  const baseClass = "border-l-4";
+  switch (messageType.value) {
+    case "success":
+      return `${baseClass} border-green-500 bg-green-900/20 text-green-300`;
+    case "error":
+      return `${baseClass} border-red-500 bg-red-900/20 text-red-300`;
+    case "warning":
+      return `${baseClass} border-yellow-500 bg-yellow-900/20 text-yellow-300`;
+    default:
+      return `${baseClass} border-secondary bg-blue-900/20 text-secondary`;
+  }
+});
 
-      this.passwordLoading = true;
-      this.message = "";
+const messageIcon = computed((): string => {
+  switch (messageType.value) {
+    case "success":
+      return "check-circle";
+    case "error":
+      return "exclamation-circle";
+    case "warning":
+      return "exclamation-triangle";
+    default:
+      return "info-circle";
+  }
+});
 
-      try {
-        await api.post("/models/change_user", {
-          old_username: this.passwordForm.oldUsername,
-          old_password: this.passwordForm.oldPassword,
-          new_username: this.passwordForm.newUsername,
-          new_password: this.passwordForm.newPassword,
-        });
+// === METHODS ===
 
-        this.showMessage(
-          "Password changed successfully! Please log in again with your new credentials.",
-          "success"
-        );
+/**
+ * Load configuration from API
+ */
+const loadConfig = async (): Promise<void> => {
+  try {
+    // Load base directory config
+    const configResponse = await api.get("/jsonmodels/config");
+    baseDirForm.value.base_dir = configResponse.data.BASE_DIR;
+    baseDirSource.value = configResponse.data.source;
 
-        // Clear form after success
-        this.resetPasswordForm();
-
-        // Redirect to login after a delay
-        setTimeout(() => {
-          localStorage.removeItem("auth_token");
-          this.$router.push({ name: "login" });
-        }, 2000);
-      } catch (error) {
-        console.error("Error changing password:", error);
-
-        if (error.response?.status === 401) {
-          this.showMessage("Invalid current username or password.", "error");
-        } else if (error.response?.status === 409) {
-          this.showMessage(
-            "Username already exists. Please choose a different username.",
-            "error"
-          );
-        } else {
-          this.showMessage(
-            "Failed to change password. Please try again.",
-            "error"
-          );
-        }
-      } finally {
-        this.passwordLoading = false;
-      }
-    },
-
-    resetPasswordForm() {
-      this.passwordForm = {
-        oldUsername: "",
-        oldPassword: "",
-        newUsername: "",
-        newPassword: "",
-      };
-      this.confirmPassword = "";
-      this.showCurrentPassword = false;
-      this.showNewPassword = false;
-      this.showConfirmPassword = false;
-    },
-
-    showMessage(text, type = "info") {
-      this.message = text;
-      this.messageType = type;
-    },
-  },
+    // Load API tokens
+    const tokensResponse = await api.get("/models/tokens");
+    tokensForm.value.hf_token = tokensResponse.data.hf_token || "";
+    tokensForm.value.civitai_token = tokensResponse.data.civitai_token || "";
+  } catch (error: any) {
+    console.error("Error loading config:", error);
+    showMessage("Failed to load configuration.", "error");
+  }
 };
+
+/**
+ * Update base directory configuration
+ */
+const updateBaseDir = async (): Promise<void> => {
+  if (!baseDirForm.value.base_dir.trim()) return;
+
+  baseDirLoading.value = true;
+  message.value = "";
+
+  try {
+    await api.post("/jsonmodels/config", {
+      base_dir: baseDirForm.value.base_dir,
+    });
+
+    showMessage("Base directory updated successfully!", "success");
+
+    // Reload config to get updated source
+    await loadConfig();
+  } catch (error: any) {
+    console.error("Error updating base directory:", error);
+    showMessage(
+      "Failed to update base directory. Please try again.",
+      "error"
+    );
+  } finally {
+    baseDirLoading.value = false;
+  }
+};
+
+/**
+ * Update API tokens
+ */
+const updateTokens = async (): Promise<void> => {
+  tokensLoading.value = true;
+  message.value = "";
+
+  try {
+    await api.post("/models/tokens", {
+      hf_token: tokensForm.value.hf_token || null,
+      civitai_token: tokensForm.value.civitai_token || null,
+    });
+
+    showMessage("API tokens updated successfully!", "success");
+  } catch (error: any) {
+    console.error("Error updating tokens:", error);
+    showMessage("Failed to update API tokens. Please try again.", "error");
+  } finally {
+    tokensLoading.value = false;
+  }
+};
+
+/**
+ * Reset tokens form
+ */
+const resetTokensForm = (): void => {
+  tokensForm.value = {
+    hf_token: "",
+    civitai_token: "",
+  };
+  showHfToken.value = false;
+  showCivitaiToken.value = false;
+};
+
+/**
+ * Change user password
+ */
+const changePassword = async (): Promise<void> => {
+  if (!isPasswordFormValid.value) return;
+
+  passwordLoading.value = true;
+  message.value = "";
+
+  try {
+    await api.post("/models/change_user", {
+      old_username: passwordForm.value.oldUsername,
+      old_password: passwordForm.value.oldPassword,
+      new_username: passwordForm.value.newUsername,
+      new_password: passwordForm.value.newPassword,
+    });
+
+    showMessage(
+      "Password changed successfully! Please log in again with your new credentials.",
+      "success"
+    );
+
+    // Clear form after success
+    resetPasswordForm();
+
+    // Redirect to login after a delay
+    setTimeout(() => {
+      localStorage.removeItem("auth_token");
+      router.push({ name: "login" });
+    }, 2000);
+  } catch (error: any) {
+    console.error("Error changing password:", error);
+
+    if (error.response?.status === 401) {
+      showMessage("Invalid current username or password.", "error");
+    } else if (error.response?.status === 409) {
+      showMessage(
+        "Username already exists. Please choose a different username.",
+        "error"
+      );
+    } else {
+      showMessage(
+        "Failed to change password. Please try again.",
+        "error"
+      );
+    }
+  } finally {
+    passwordLoading.value = false;
+  }
+};
+
+/**
+ * Reset password form
+ */
+const resetPasswordForm = (): void => {
+  passwordForm.value = {
+    oldUsername: "",
+    oldPassword: "",
+    newUsername: "",
+    newPassword: "",
+  };
+  confirmPassword.value = "";
+  showCurrentPassword.value = false;
+  showNewPassword.value = false;
+  showConfirmPassword.value = false;
+};
+
+/**
+ * Show message to user
+ */
+const showMessage = (text: string, type: MessageType = "info"): void => {
+  message.value = text;
+  messageType.value = type;
+};
+
+// === LIFECYCLE ===
+
+onMounted(() => {
+  loadConfig();
+});
 </script>

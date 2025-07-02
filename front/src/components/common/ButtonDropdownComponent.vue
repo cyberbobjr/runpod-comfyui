@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
 import {
@@ -8,7 +8,10 @@ import {
   ref,
   Teleport,
   Transition,
+  withDefaults
 } from "vue";
+import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
+import type { ComponentSize, ComponentVariant } from "../types/common.types";
 
 /**
  * ButtonDropdownComponent
@@ -18,7 +21,7 @@ import {
  *
  * ## Props
  * - `buttonText` (string, required): The text to display on the main button.
- * - `buttonIcon` (object, optional): FontAwesome icon object for the main button (e.g. faPlus).
+ * - `buttonIcon` (IconDefinition, optional): FontAwesome icon object for the main button (e.g. faPlus).
  * - `size` (string, default: 'm'): Button size ('xs', 'm', 'l').
  * - `variant` (string, default: 'primary'): Button variant ('primary', 'secondary', 'danger', etc.).
  * - `disabled` (boolean, default: false): Whether the button is disabled.
@@ -48,42 +51,6 @@ import {
  *     - `close`: Function to close the dropdown.
  *     - `handleItemClick`: Function to handle item selection (emits 'item-selected' and closes).
  *
- * ## Methods
- * ### toggleDropdown
- * **Description:** Toggles the dropdown open/closed state and calculates position.
- * **Parameters:**
- * - `event` (Event): The click event from the chevron button.
- * **Returns:** void
- *
- * ### handleMainClick
- * **Description:** Emits the click event for the main (left) button.
- * **Parameters:**
- * - `event` (Event): The click event from the main button.
- * **Returns:** void
- *
- * ### openDropdown
- * **Description:** Opens the dropdown and calculates its position.
- * **Parameters:**
- * - `event` (Event): The click event from the button.
- * **Returns:** void
- *
- * ### closeDropdown
- * **Description:** Closes the dropdown.
- * **Parameters:** None
- * **Returns:** void
- *
- * ### handleItemClick
- * **Description:** Handles click on a dropdown item and emits the selection.
- * **Parameters:**
- * - `item` (any): The selected item data.
- * **Returns:** void
- *
- * ### handleOutsideClick
- * **Description:** Closes dropdown when clicking outside of it.
- * **Parameters:**
- * - `event` (Event): The click event.
- * **Returns:** void
- *
  * ## Usage Example
  * ```vue
  * <ButtonDropdownComponent
@@ -104,60 +71,75 @@ import {
  *   </template>
  * </ButtonDropdownComponent>
  * ```
- *
- * ## Notes
- * - The dropdown panel is teleported to <body> for correct layering and positioning.
- * - The chevron icon rotates with animation when open.
- * - The dropdown auto-closes on outside click or scroll.
- * - Use the slot's handleItemClick for selection, or close() to close manually.
  */
 
-const props = defineProps({
-  buttonText: {
-    type: String,
-    required: true,
-  },
-  buttonIcon: {
-    type: Object,
-    default: null,
-  },
-  size: {
-    type: String,
-    default: "m",
-    validator: (value) => ["xs", "m", "l"].includes(value),
-  },
-  variant: {
-    type: String,
-    default: "primary",
-  },
-  disabled: {
-    type: Boolean,
-    default: false,
-  },
-  title: {
-    type: String,
-    default: "",
-  },
-  dropdownAlign: {
-    type: String,
-    default: "left",
-    validator: (value) => ["left", "right"].includes(value),
-  },
-});
+/**
+ * Dropdown alignment type
+ */
+export type DropdownAlign = 'left' | 'right'
 
-const emit = defineEmits(["item-selected", "click"]);
+/**
+ * Dropdown position interface
+ */
+interface DropdownPosition {
+  top: number;
+  left: number;
+  buttonWidth?: number;
+}
+
+/**
+ * Component props interface
+ */
+interface Props {
+  /** The text to display on the main button */
+  buttonText: string;
+  /** FontAwesome icon object for the main button */
+  buttonIcon?: IconDefinition;
+  /** Button size variant */
+  size?: ComponentSize;
+  /** Button variant style */
+  variant?: ComponentVariant;
+  /** Whether the button is disabled */
+  disabled?: boolean;
+  /** Tooltip text for the main button */
+  title?: string;
+  /** Dropdown alignment relative to the whole button */
+  dropdownAlign?: DropdownAlign;
+}
+
+/**
+ * Component emits interface
+ */
+interface Emits {
+  /** Emitted when a dropdown item is selected */
+  'item-selected': [item: any];
+  /** Emitted when the left (main) button is clicked */
+  'click': [event: MouseEvent];
+}
+
+// Define props with defaults
+const props = withDefaults(defineProps<Props>(), {
+  size: 'm',
+  variant: 'primary',
+  disabled: false,
+  title: '',
+  dropdownAlign: 'left'
+})
+
+// Define emits
+const emit = defineEmits<Emits>()
 
 // Reactive state
-const isOpen = ref(false);
-const dropdownPosition = ref({ top: 0, left: 0 });
-const dropdownId = ref(`dropdown-${Math.random().toString(36).substr(2, 9)}`);
-const dropdownRef = ref(null);
-const splitButtonRef = ref(null); // Add splitButtonRef for the root container
+const isOpen = ref<boolean>(false)
+const dropdownPosition = ref<DropdownPosition>({ top: 0, left: 0 })
+const dropdownId = ref<string>(`dropdown-${Math.random().toString(36).substr(2, 9)}`)
+const dropdownRef = ref<HTMLElement>()
+const splitButtonRef = ref<HTMLElement>() // Add splitButtonRef for the root container
 
 // Computed classes based on size
-const buttonClasses = computed(() => {
+const buttonClasses = computed((): string => {
   const baseClasses = `btn btn-${props.variant} flex items-center justify-center`;
-  const sizeClasses = {
+  const sizeClasses: Record<ComponentSize, string> = {
     xs: "text-xs px-2 py-1 h-8",
     m: "text-sm px-3 py-2 h-10",
     l: "text-base px-4 py-3 h-12",
@@ -165,12 +147,12 @@ const buttonClasses = computed(() => {
   return `${baseClasses} ${sizeClasses[props.size]}`;
 });
 
-const splitButtonLeftClasses = computed(() => {
+const splitButtonLeftClasses = computed((): string => {
   // Remove right border radius for left button
   return `${buttonClasses.value} rounded-r-none border-r-0`;
 });
 // Helper to get Tailwind color classes for variants
-function getVariantHoverBg(variant) {
+function getVariantHoverBg(variant: ComponentVariant): string {
   switch (variant) {
     case "primary":
       return "hover:bg-primary-dark";
@@ -183,7 +165,7 @@ function getVariantHoverBg(variant) {
   }
 }
 
-function getVariantBorderDarker(variant) {
+function getVariantBorderDarker(variant: ComponentVariant): string {
   switch (variant) {
     case "primary":
       return "border-primary-darker";
@@ -196,13 +178,13 @@ function getVariantBorderDarker(variant) {
   }
 }
 
-const splitButtonRightClasses = computed(() => {
+const splitButtonRightClasses = computed((): string => {
   // Remove left border radius for right button, add no ring/outline, but keep variant bg and text, and match hover color
   return `${buttonClasses.value} rounded-l-none px-2 w-10 flex items-center justify-center split-button shadow-none focus:ring-0 focus:outline-none active:bg-inherit ${getVariantHoverBg(props.variant)} ${getVariantBorderDarker(props.variant)}`;
 });
 
-const iconSize = computed(() => {
-  const sizes = {
+const iconSize = computed((): string => {
+  const sizes: Record<ComponentSize, string> = {
     xs: "text-xs",
     m: "text-sm",
     l: "text-base",
@@ -214,9 +196,9 @@ const iconSize = computed(() => {
  * ### toggleDropdown
  * **Description:** Toggles the dropdown open/closed state and calculates position.
  * **Parameters:**
- * - `event` (Event): The click event from the chevron button.
+ * - `event` (MouseEvent): The click event from the chevron button.
  */
-const toggleDropdown = (event) => {
+const toggleDropdown = (event: MouseEvent): void => {
   if (props.disabled) return;
   if (isOpen.value) {
     closeDropdown();
@@ -229,9 +211,9 @@ const toggleDropdown = (event) => {
  * ### handleMainClick
  * **Description:** Emits the click event for the main (left) button.
  * **Parameters:**
- * - `event` (Event): The click event from the main button.
+ * - `event` (MouseEvent): The click event from the main button.
  */
-const handleMainClick = (event) => {
+const handleMainClick = (event: MouseEvent): void => {
   if (props.disabled) return;
   emit("click", event);
 };
@@ -240,22 +222,22 @@ const handleMainClick = (event) => {
  * ### openDropdown
  * **Description:** Opens the dropdown and calculates its position.
  * **Parameters:**
- * - `event` (Event): The click event from the button.
+ * - `event` (MouseEvent): The click event from the button.
  */
-const openDropdown = (event) => {
+const openDropdown = (event: MouseEvent): void => {
   // Always use the bounding rect of the whole split button for alignment
-  let rect;
+  let rect: DOMRect | undefined;
   if (splitButtonRef.value) {
     rect = splitButtonRef.value.getBoundingClientRect();
   } else if (event && event.currentTarget) {
-    rect = event.currentTarget.getBoundingClientRect();
+    rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
   }
   if (rect) {
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
 
-    let left;
-    let top = rect.bottom + 4;
+    let left: number;
+    let top: number = rect.bottom + 4;
 
     // Align dropdown to left or right of the WHOLE button
     if (props.dropdownAlign === "right") {
@@ -291,7 +273,7 @@ const openDropdown = (event) => {
  * ### closeDropdown
  * **Description:** Closes the dropdown.
  */
-const closeDropdown = () => {
+const closeDropdown = (): void => {
   isOpen.value = false;
 };
 
@@ -301,7 +283,7 @@ const closeDropdown = () => {
  * **Parameters:**
  * - `item` (any): The selected item data.
  */
-const handleItemClick = (item) => {
+const handleItemClick = (item: any): void => {
   emit("item-selected", item);
   closeDropdown();
 };
@@ -312,17 +294,19 @@ const handleItemClick = (item) => {
  * **Parameters:**
  * - `event` (Event): The click event.
  */
-const handleOutsideClick = (event) => {
+const handleOutsideClick = (event: Event): void => {
   if (!event.target) return;
 
+  const target = event.target as Element;
+
   // Don't close if clicking on the button
-  const buttonElement = event.target.closest(
+  const buttonElement = target.closest(
     `[data-dropdown-id="${dropdownId.value}"]`
   );
   if (buttonElement) return;
 
   // Don't close if clicking inside the dropdown
-  const dropdownElement = event.target.closest(".dropdown-content");
+  const dropdownElement = target.closest(".dropdown-content") as HTMLElement;
   if (
     dropdownElement &&
     dropdownElement.dataset.dropdownId === dropdownId.value

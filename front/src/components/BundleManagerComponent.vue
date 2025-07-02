@@ -149,7 +149,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from "vue";
+import { ref,  onMounted } from "vue";
 import { useNotifications } from "../composables/useNotifications";
 import api from "../services/api";
 import { useBundlesStore } from "../stores/bundles";

@@ -23,7 +23,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 /**
  * ### TooltipComponent
  * **Description:** A tooltip component that shows additional information on hover.
@@ -60,29 +60,36 @@
  * </TooltipComponent>
  * ```
  */
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, withDefaults } from 'vue'
 
-const props = defineProps({
-  text: {
-    type: String,
-    required: true
-  },
-  position: {
-    type: String,
-    default: 'top',
-    validator: (value) => ['top', 'bottom', 'left', 'right'].includes(value)
-  },
-  delay: {
-    type: Number,
-    default: 500
-  }
+/**
+ * Tooltip position type
+ */
+export type TooltipPosition = 'top' | 'bottom' | 'left' | 'right'
+
+/**
+ * Component props interface
+ */
+interface Props {
+  /** The tooltip text to display */
+  text: string;
+  /** Position of the tooltip */
+  position?: TooltipPosition;
+  /** Delay in milliseconds before showing the tooltip */
+  delay?: number;
+}
+
+// Define props with defaults
+const props = withDefaults(defineProps<Props>(), {
+  position: 'top',
+  delay: 500
 })
 
 // Reactive state for tooltip visibility and positioning
-const visible = ref(false)
-const triggerRef = ref(null)
-const tooltipStyle = ref({})
-let timeoutId = null
+const visible = ref<boolean>(false)
+const triggerRef = ref<HTMLElement>()
+const tooltipStyle = ref<Record<string, string>>({})
+let timeoutId: number | null = null
 
 const arrowClasses = computed(() => {
   switch (props.position) {
@@ -156,7 +163,7 @@ function calculatePosition() {
  * **Returns:** None
  */
 function showTooltip() {
-  timeoutId = setTimeout(async () => {
+  timeoutId = window.setTimeout(async () => {
     visible.value = true
     await nextTick()
     calculatePosition()
@@ -171,7 +178,7 @@ function showTooltip() {
  */
 function hideTooltip() {
   if (timeoutId) {
-    clearTimeout(timeoutId)
+    window.clearTimeout(timeoutId)
     timeoutId = null
   }
   visible.value = false

@@ -48,7 +48,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -57,35 +57,46 @@ import {
   faBoxOpen, 
   faCubes 
 } from '@fortawesome/free-solid-svg-icons'
+import type { InstallTabType } from './types/views.types'
 
 // Import components
 import DownloadBundlesComponent from '../components/DownloadBundlesComponent.vue'
+// @ts-ignore - TODO: Convert DownloadModelsComponent to TypeScript
 import DownloadModelsComponent from '../components/DownloadModelsComponent.vue'
 
 // Router
 const route = useRoute()
 const router = useRouter()
 
-// Active tab state
-const activeTab = ref('bundles')
+// Active tab state with proper typing
+const activeTab = ref<InstallTabType>('bundles')
 
-// Set initial tab based on query parameter or default to bundles
+/**
+ * Set initial tab based on query parameter or default to bundles
+ * Validates the tab parameter to ensure it's a valid InstallTabType
+ */
 onMounted(() => {
-  const tab = route.query.tab
+  const tab = route.query.tab as string
   if (tab === 'models' || tab === 'bundles') {
-    activeTab.value = tab
+    activeTab.value = tab as InstallTabType
   }
 })
 
-// Watch for route changes to update active tab
+/**
+ * Watch for route changes to update active tab
+ * Ensures the tab parameter is valid before updating state
+ */
 watch(() => route.query.tab, (newTab) => {
-  if (newTab === 'models' || newTab === 'bundles') {
-    activeTab.value = newTab
+  if (typeof newTab === 'string' && (newTab === 'models' || newTab === 'bundles')) {
+    activeTab.value = newTab as InstallTabType
   }
 })
 
-// Handle tab click and update URL
-const handleTabClick = (tab) => {
+/**
+ * Handle tab click and update URL with query parameter
+ * @param tab - The tab to activate (bundles or models)
+ */
+const handleTabClick = (tab: InstallTabType): void => {
   activeTab.value = tab
   router.push({ 
     name: 'install', 

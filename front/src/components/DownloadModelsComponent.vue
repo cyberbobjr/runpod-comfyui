@@ -166,7 +166,7 @@
                           type="checkbox"
                           :checked="allChecked(groupModels)"
                           @change="
-                            (e) => toggleAll(groupModels, e.target.checked)
+                            (e) => toggleAll(groupModels, (e.target as HTMLInputElement)?.checked || false)
                           "
                           :disabled="
                             groupModels.every((row) => isDownloading(row))
@@ -197,7 +197,7 @@
                           type="checkbox"
                           :checked="selected[modelKey(model)] || false"
                           @change="
-                            (e) => handleRowCheck(model, e.target.checked)
+                            (e) => handleRowCheck(model, (e.target as HTMLInputElement)?.checked || false)
                           "
                           :disabled="isDownloading(model)"
                           class="rounded"
@@ -303,36 +303,225 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted, watchEffect, reactive } from "vue";
+<script setup lang="ts">
+import { ref, computed, onMounted, watchEffect } from "vue";
 import { useNotifications } from "../composables/useNotifications";
-import { useInstallProgress } from "../composables/useInstallProgress";
 import AccordionComponent from "./common/AccordionComponent.vue";
 import { useModelsStore } from "../stores/models";
 import { storeToRefs } from "pinia";
+
+/**
+ * DownloadModelsComponent
+ * -----------------------------------------------------------------------------
+ * Main component for managing model downloads, deletion, and organization.
+ * Provides a comprehensive interface for browsing, filtering, and managing AI models.
+ *
+ * ## Features & Behavior
+ * - Model browsing with search and tag filtering
+ * - Bulk selection and operations (download/delete)
+ * - Real-time download progress tracking
+ * - Grouped model organization with accordion layout
+ * - NSFW content filtering and indication
+ * - Integration with models store for state management
+ * - Centralized download polling and status updates
+ * - Responsive design with modern UI components
+ * - Auto-refresh on download completion
+ * - Intelligent download conflict detection
+ *
+ * ## State Management
+ * - Uses Pinia models store for global state
+ * - Local state for UI selections and filters
+ * - Real-time synchronization with download progress
+ * - Automatic refresh on download completion
+ * - Reactive filter system with computed properties
+ *
+ * ## Methods
+ * ### fetchModels
+ * **Description:** Fetches the latest models list from the API.
+ * **Parameters:** None
+ * **Returns:** Promise<void>
+ *
+ * ### handleGroupToggle
+ * **Description:** Handles accordion group expand/collapse state.
+ * **Parameters:**
+ * - `groupName` (string): Name of the group to toggle.
+ * - `isOpen` (boolean): Whether the group should be open.
+ * **Returns:** void
+ *
+ * ### handleRowCheck
+ * **Description:** Handles individual model selection checkbox.
+ * **Parameters:**
+ * - `model` (ModelItem): The model object.
+ * - `checked` (boolean): Whether the model is selected.
+ * **Returns:** void
+ *
+ * ### toggleTagFilter
+ * **Description:** Toggles a tag filter on/off.
+ * **Parameters:**
+ * - `tag` (string): The tag to toggle.
+ * **Returns:** void
+ *
+ * ### clearFilters
+ * **Description:** Clears all search and tag filters.
+ * **Parameters:** None
+ * **Returns:** void
+ *
+ * ### modelKey
+ * **Description:** Returns unique identifier for a model.
+ * **Parameters:**
+ * - `model` (ModelItem): The model object.
+ * **Returns:** string - Unique key for the model
+ *
+ * ### lastPath
+ * **Description:** Extracts filename from a path string.
+ * **Parameters:**
+ * - `path` (string, optional): The path string.
+ * **Returns:** string - The filename or empty string
+ *
+ * ### formatSize
+ * **Description:** Formats file size in human-readable format.
+ * **Parameters:**
+ * - `size` (number, optional): Size in bytes.
+ * **Returns:** string - Formatted size string
+ *
+ * ### isNSFW
+ * **Description:** Checks if a model is marked as NSFW.
+ * **Parameters:**
+ * - `model` (ModelItem): The model object.
+ * **Returns:** boolean - True if model is NSFW
+ *
+ * ### isDownloading
+ * **Description:** Checks if a model is currently downloading.
+ * **Parameters:**
+ * - `model` (ModelItem): The model object.
+ * **Returns:** boolean - True if model is downloading
+ *
+ * ### allChecked
+ * **Description:** Checks if all models in a group are selected.
+ * **Parameters:**
+ * - `groupModels` (ModelItem[]): Array of models in the group.
+ * **Returns:** boolean - True if all are selected
+ *
+ * ### toggleAll
+ * **Description:** Toggles selection for all models in a group.
+ * **Parameters:**
+ * - `groupModels` (ModelItem[]): Array of models in the group.
+ * - `checked` (boolean): Whether to select or deselect all.
+ * **Returns:** void
+ *
+ * ### unselectModels
+ * **Description:** Removes models from selection.
+ * **Parameters:**
+ * - `modelsList` (ModelItem | ModelItem[]): Model(s) to unselect.
+ * **Returns:** void
+ *
+ * ### confirmDeleteSelected
+ * **Description:** Shows confirmation dialog and deletes selected models.
+ * **Parameters:** None
+ * **Returns:** Promise<void>
+ *
+ * ### confirmDownloadSelected
+ * **Description:** Shows confirmation dialog and downloads selected models.
+ * **Parameters:** None
+ * **Returns:** Promise<void>
+ *
+ * ### deleteModels
+ * **Description:** Deletes one or more models with error handling.
+ * **Parameters:**
+ * - `modelsToDelete` (ModelItem | ModelItem[]): Model(s) to delete.
+ * **Returns:** Promise<void>
+ *
+ * ### downloadModels
+ * **Description:** Downloads one or more models with error handling and progress tracking.
+ * **Parameters:**
+ * - `modelsToDownload` (ModelItem | ModelItem[]): Model(s) to download.
+ * **Returns:** Promise<void>
+ *
+ * ### confirmDownload
+ * **Description:** Shows confirmation dialog and downloads a single model.
+ * **Parameters:**
+ * - `model` (ModelItem): The model to download.
+ * **Returns:** Promise<void>
+ *
+ * ### confirmDelete
+ * **Description:** Shows confirmation dialog and deletes a single model.
+ * **Parameters:**
+ * - `model` (ModelItem): The model to delete.
+ * **Returns:** Promise<void>
+ *
+ * ## Computed Properties
+ * - `allTags`: Array of all available tags from models
+ * - `filteredModels`: Models filtered by search text and tags
+ * - `filteredGroupedModels`: Filtered models grouped by category
+ * - `selectedToDelete`: Models selected for deletion
+ * - `selectedToDownload`: Models selected for download
+ * - `hasSelectedToDelete`: Whether any models are selected for deletion
+ * - `hasSelectedToDownload`: Whether any models are selected for download
+ *
+ * ## Integration Notes
+ * - Integrates with useModelsStore for state management
+ * - Uses useNotifications for user feedback
+ * - Coordinates with InstallProgressIndicator for download status
+ * - Supports AccordionComponent for grouped layout
+ * - Follows project design system and Tailwind CSS conventions
+ */
+interface ModelItem {
+  url?: string;
+  git?: string;
+  dest?: string;
+  group?: string;
+  tags?: string | string[];
+  exists?: boolean;
+  size?: number;
+  [key: string]: any;
+}
+
+/**
+ * Download progress interface
+ */
+interface DownloadProgress {
+  progress: number;
+  status?: string;
+  [key: string]: any;
+}
+
+/**
+ * Configuration interface
+ */
+interface Config {
+  group_order?: string[];
+  [key: string]: any;
+}
+
+/**
+ * Selected models record type
+ */
+type SelectedModels = Record<string, boolean>;
+
+/**
+ * Grouped models type
+ */
+type GroupedModels = Record<string, ModelItem[]>;
+
 const modelsStore = useModelsStore();
 
 // --- State ---
-const { models } = storeToRefs(modelsStore);
-const selected = ref({});
-const config = ref({});
+const { models, rawDownloads } = storeToRefs(modelsStore);
+const selected = ref<SelectedModels>({});
+const config = ref<Config>({});
 
 // --- Filter state ---
-const filterText = ref("");
-const selectedTagFilters = ref([]);
+const filterText = ref<string>("");
+const selectedTagFilters = ref<string[]>([]);
 
 // --- Notifications system ---
 const { showNotification, showDialog } = useNotifications();
 
-// --- Install progress system ---
-const { rawDownloads, refreshDownloads, startGlobalDownloadPolling } =
-  useInstallProgress();
-
-// --- Utiliser les données centralisées au lieu de downloads local ---
-const downloads = rawDownloads;
+// --- Use centralized downloads data instead of local downloads ---
+const downloads = rawDownloads as any; // Type assertion to handle store structure
 
 // --- Fetch models ---
-const fetchModels = async () => {
+const fetchModels = async (): Promise<void> => {
   try {
     await modelsStore.fetchModels();
     selected.value = { ...selected.value };
@@ -342,7 +531,7 @@ const fetchModels = async () => {
 };
 
 // --- Rafraîchir la liste des modèles à la fin d'un téléchargement ---
-let previousDownloads = {};
+let previousDownloads: any = {};
 watchEffect(() => {
   // Pour chaque modèle en cours de téléchargement précédemment
   for (const key in previousDownloads) {
@@ -361,9 +550,9 @@ watchEffect(() => {
 });
 
 // --- Additional state for UI ---
-const expandedGroups = ref([]);
+const expandedGroups = ref<string[]>([]);
 
-const handleGroupToggle = (groupName, isOpen) => {
+const handleGroupToggle = (groupName: string, isOpen: boolean): void => {
   const index = expandedGroups.value.indexOf(groupName);
   if (isOpen && index === -1) {
     expandedGroups.value.push(groupName);
@@ -372,7 +561,7 @@ const handleGroupToggle = (groupName, isOpen) => {
   }
 };
 
-const handleRowCheck = (model, checked) => {
+const handleRowCheck = (model: ModelItem, checked: boolean): void => {
   const key = modelKey(model);
   if (checked) {
     selected.value[key] = true;
@@ -384,9 +573,9 @@ const handleRowCheck = (model, checked) => {
 };
 
 // --- Computed properties for filtering ---
-const allTags = computed(() => {
-  const tags = new Set();
-  models.value.forEach((model) => {
+const allTags = computed((): string[] => {
+  const tags = new Set<string>();
+  (models.value as ModelItem[]).forEach((model) => {
     if (model.tags) {
       if (Array.isArray(model.tags)) {
         model.tags.forEach((tag) => tags.add(tag));
@@ -398,8 +587,8 @@ const allTags = computed(() => {
   return Array.from(tags).sort();
 });
 
-const filteredModels = computed(() => {
-  let filtered = models.value;
+const filteredModels = computed((): ModelItem[] => {
+  let filtered = models.value as ModelItem[];
 
   // Filter by text (name or tags)
   if (filterText.value.trim()) {
@@ -430,8 +619,8 @@ const filteredModels = computed(() => {
   return filtered;
 });
 
-const filteredGroupedModels = computed(() => {
-  const groups = {};
+const filteredGroupedModels = computed((): GroupedModels => {
+  const groups: GroupedModels = {};
   filteredModels.value.forEach((model) => {
     const group = model.group || "Other";
     if (!groups[group]) {
@@ -441,11 +630,11 @@ const filteredGroupedModels = computed(() => {
   });
 
   // Trier les groupes selon l'ordre défini dans la configuration
-  const sortedGroups = {};
+  const sortedGroups: GroupedModels = {};
   const groupOrder = config.value.group_order || [];
 
   // D'abord, ajouter les groupes dans l'ordre défini
-  groupOrder.forEach((groupName) => {
+  groupOrder.forEach((groupName: string) => {
     if (groups[groupName]) {
       sortedGroups[groupName] = groups[groupName];
     }
@@ -463,7 +652,7 @@ const filteredGroupedModels = computed(() => {
 });
 
 // --- Filter actions ---
-const toggleTagFilter = (tag) => {
+const toggleTagFilter = (tag: string): void => {
   const index = selectedTagFilters.value.indexOf(tag);
   if (index > -1) {
     selectedTagFilters.value.splice(index, 1);
@@ -472,35 +661,35 @@ const toggleTagFilter = (tag) => {
   }
 };
 
-const clearFilters = () => {
+const clearFilters = (): void => {
   filterText.value = "";
   selectedTagFilters.value = [];
 };
 
 // --- Helpers ---
-const modelKey = (model) => model.url || model.git;
-const lastPath = (path) => path?.split("/").pop() || "";
-const formatSize = (size) => {
+const modelKey = (model: ModelItem): string => model.url || model.git || '';
+const lastPath = (path?: string): string => path?.split("/").pop() || "";
+const formatSize = (size?: number): string => {
   if (!size) return "-";
   if (size > 1e9) return (size / 1e9).toFixed(2) + " GB";
   if (size > 1e6) return (size / 1e6).toFixed(2) + " MB";
   if (size > 1e3) return (size / 1e3).toFixed(2) + " KB";
   return size + " B";
 };
-const isNSFW = (model) => {
+const isNSFW = (model: ModelItem): boolean => {
   const tags = model.tags;
   if (!tags) return false;
   if (Array.isArray(tags)) return tags.includes("nsfw");
   return tags === "nsfw";
 };
-const isDownloading = (model) => !!downloads.value[modelKey(model)];
+const isDownloading = (model: ModelItem): boolean => !!downloads.value[modelKey(model)];
 
 // --- Selection logic ---
-const allChecked = (groupModels) =>
+const allChecked = (groupModels: ModelItem[]): boolean =>
   groupModels
     .filter((m) => !isDownloading(m))
     .every((m) => selected.value[modelKey(m)]);
-const toggleAll = (groupModels, checked) => {
+const toggleAll = (groupModels: ModelItem[], checked: boolean): void => {
   for (const m of groupModels) {
     if (!isDownloading(m)) {
       selected.value[modelKey(m)] = checked;
@@ -508,11 +697,11 @@ const toggleAll = (groupModels, checked) => {
   }
 };
 
-const selectedToDelete = computed(() =>
-  models.value.filter((m) => selected.value[modelKey(m)] && m.exists)
+const selectedToDelete = computed((): ModelItem[] =>
+  (models.value as ModelItem[]).filter((m) => selected.value[modelKey(m)] && m.exists)
 );
-const selectedToDownload = computed(() =>
-  models.value.filter(
+const selectedToDownload = computed((): ModelItem[] =>
+  (models.value as ModelItem[]).filter(
     (m) =>
       selected.value[modelKey(m)] && !m.exists && !downloads.value[modelKey(m)]
   )
@@ -536,14 +725,15 @@ const hasSelectedToDownload = computed(
 );
 
 // --- Actions ---
-function unselectModels(modelsList) {
-  for (const m of modelsList) {
+function unselectModels(modelsList: ModelItem | ModelItem[]): void {
+  const models = Array.isArray(modelsList) ? modelsList : [modelsList];
+  for (const m of models) {
     delete selected.value[modelKey(m)];
   }
   selected.value = { ...selected.value };
 }
 
-const confirmDeleteSelected = async () => {
+const confirmDeleteSelected = async (): Promise<void> => {
   if (!selectedToDelete.value.length) return;
 
   const result = await showDialog({
@@ -560,7 +750,7 @@ const confirmDeleteSelected = async () => {
   }
 };
 
-const confirmDownloadSelected = async () => {
+const confirmDownloadSelected = async (): Promise<void> => {
   if (!selectedToDownload.value.length) return;
 
   const result = await showDialog({
@@ -578,13 +768,13 @@ const confirmDownloadSelected = async () => {
 };
 
 // Fonction unique pour supprimer un ou plusieurs modèles
-async function deleteModels(modelsToDelete) {
+async function deleteModels(modelsToDelete: ModelItem | ModelItem[]): Promise<void> {
   try {
     const res = await modelsStore.deleteModels(modelsToDelete);
     const results = Array.isArray(res) ? res : [res];
-    let errors = results.filter((r) => r && r.ok === false);
+    let errors = results.filter((r: any) => r && r.ok === false);
     if (errors.length) {
-      errors.forEach((r) =>
+      errors.forEach((r: any) =>
         showNotification(r.msg || "Delete failed", "error")
       );
     } else {
@@ -602,7 +792,7 @@ async function deleteModels(modelsToDelete) {
 }
 
 // Fonction unique pour télécharger un ou plusieurs modèles
-async function downloadModels(modelsToDownload) {
+async function downloadModels(modelsToDownload: ModelItem | ModelItem[]): Promise<void> {
   try {
     const modelsArray = Array.isArray(modelsToDownload)
       ? modelsToDownload
@@ -620,12 +810,12 @@ async function downloadModels(modelsToDownload) {
       );
       return;
     }
-    startGlobalDownloadPolling();
+    modelsStore.startGlobalDownloadPolling();
     const res = await modelsStore.startDownload(modelsToDownload);
     const results = Array.isArray(res) ? res : [res];
-    let errors = results.filter((r) => r && r.ok === false);
+    let errors = results.filter((r: any) => r && r.ok === false);
     if (errors.length) {
-      errors.forEach((r) =>
+      errors.forEach((r: any) =>
         showNotification(r.msg || "Download failed", "error")
       );
     } else {
@@ -636,7 +826,7 @@ async function downloadModels(modelsToDownload) {
         "success"
       );
       setTimeout(async () => {
-        await refreshDownloads();
+        await modelsStore.refreshDownloads();
         console.log(
           "Downloads refreshed after POST, current downloads:",
           Object.keys(rawDownloads.value)
@@ -649,7 +839,7 @@ async function downloadModels(modelsToDownload) {
   }
 }
 
-const confirmDownload = async (model) => {
+const confirmDownload = async (model: ModelItem): Promise<void> => {
   // Vérifier si le modèle est déjà en cours de téléchargement
   if (isDownloading(model)) {
     showNotification(
@@ -672,7 +862,7 @@ const confirmDownload = async (model) => {
   }
 };
 
-const confirmDelete = async (model) => {
+const confirmDelete = async (model: ModelItem): Promise<void> => {
   const result = await showDialog({
     title: "Delete model",
     message: `Delete model "${lastPath(model.dest) || model.git}"?`,
@@ -686,23 +876,23 @@ const confirmDelete = async (model) => {
   }
 };
 
-// --- Polling simplifié (utilise maintenant le polling centralisé) ---
-// Le polling est maintenant géré par useInstallProgress.js
+// --- Simplified polling (now uses centralized polling) ---
+// Polling is now managed by the models store
 // Nous n'avons plus besoin de polling séparé ici
 
 onMounted(async () => {
-  await fetchModels(); // La configuration est maintenant extraite directement de /models/
-  await refreshDownloads();
+  await fetchModels(); // Configuration is now extracted directly from /jsonmodels/
+  await modelsStore.refreshDownloads();
 
-  // Démarrer le polling global des téléchargements
-  startGlobalDownloadPolling();
+  // Start global download polling
+  modelsStore.startGlobalDownloadPolling();
 
-  // Note: Le polling des downloads est maintenant géré par useInstallProgress
-  // restoreActiveDownloads() est appelé par InstallProgressIndicator
+  // Note: Download polling is now managed by the models store
+  // restoreActiveDownloads() is called by InstallProgressIndicator
 });
 </script>
 
-<script>
+<script lang="ts">
 // Pour l'import dynamique dans HomeView
 export default {
   name: "DownloadModelsComponent",

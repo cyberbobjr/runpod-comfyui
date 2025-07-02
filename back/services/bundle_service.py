@@ -428,29 +428,81 @@ class BundleService:
             "failed": failed_models
         }
 
-    def uninstall_bundle(self, bundle_id: str) -> None:
+    def uninstall_bundle(self, bundle_id: str, profile: str) -> None:
         """
-        Uninstall a bundle.
-        
-        **Description:** Removes a bundle from installed bundles tracking.
+        Uninstall a specific hardware profile from a bundle and remove its models from disk if not used elsewhere.
+
+        **Description:** Removes a hardware profile from the installed bundle tracking. Deletes models from disk if they are not used by any other installed bundle/profile. If all profiles are uninstalled, the bundle is fully removed from installed bundles.
         **Parameters:**
         - `bundle_id` (str): Bundle identifier
+        - `profile` (str): Hardware profile to uninstall
         **Returns:** None
-        **Raises:** FileNotFoundError if bundle not installed
+        **Raises:** FileNotFoundError if bundle or profile not installed
         """
+        from .model_manager import ModelManager
         installed_file = self.get_installed_bundles_file()
-        
         if not os.path.exists(installed_file):
             raise FileNotFoundError(f"Bundle {bundle_id} is not installed")
-        
+
         with open(installed_file, "r", encoding="utf-8") as f:
             installed_bundles = json.load(f)
-        
+
         if bundle_id not in installed_bundles:
             raise FileNotFoundError(f"Bundle {bundle_id} is not installed")
-        
-        del installed_bundles[bundle_id]
-        
+
+        bundle_entry = installed_bundles[bundle_id]
+        if 'profile' in bundle_entry:
+            # Convert to multi-profile format
+            bundle_entry = {bundle_entry['profile']: bundle_entry}
+            installed_bundles[bundle_id] = bundle_entry
+
+        if profile not in bundle_entry:
+            raise FileNotFoundError(f"Profile {profile} not found for bundle {bundle_id}")
+
+        # Get the models to remove for this profile
+        try:
+            bundle = self.get_bundle(bundle_id)
+            profile_data = bundle.hardware_profiles[profile] if hasattr(bundle, 'hardware_profiles') else bundle["hardware_profiles"][profile]
+            models_to_remove = [m.dest for m in profile_data.models if hasattr(m, 'dest')] if hasattr(profile_data, 'models') else [m.get('dest') for m in profile_data["models"]]
+        except Exception as e:
+            logger.error(f"Could not determine models to remove for bundle {bundle_id} profile {profile}: {e}")
+            models_to_remove = []
+
+        # Build a set of all models still in use by other installed profiles
+        used_models = set()
+        for b_id, profiles in installed_bundles.items():
+            # Convert legacy
+            if 'profile' in profiles:
+                profiles = {profiles['profile']: profiles}
+            for prof_name in profiles:
+                if b_id == bundle_id and prof_name == profile:
+                    continue  # skip the one being uninstalled
+                try:
+                    b = self.get_bundle(b_id)
+                    prof_data = b.hardware_profiles[prof_name] if hasattr(b, 'hardware_profiles') else b["hardware_profiles"][prof_name]
+                    prof_models = [m.dest for m in prof_data.models if hasattr(m, 'dest')] if hasattr(prof_data, 'models') else [m.get('dest') for m in prof_data["models"]]
+                    used_models.update([d for d in prof_models if d])
+                except Exception as e:
+                    logger.warning(f"Could not check models for bundle {b_id} profile {prof_name}: {e}")
+                    continue
+
+        # Remove models from disk if not used elsewhere
+        base_dir = ConfigService.get_base_dir()
+        for model_path in models_to_remove:
+            if model_path and model_path not in used_models:
+                abs_path = ModelManager.resolve_path(model_path, base_dir)
+                try:
+                    if abs_path and os.path.exists(abs_path):
+                        os.remove(abs_path)
+                        logger.info(f"Removed model file: {abs_path}")
+                except Exception as e:
+                    logger.warning(f"Failed to remove model file {abs_path}: {e}")
+
+        # Remove the profile from installed tracking
+        del bundle_entry[profile]
+        if not bundle_entry:
+            del installed_bundles[bundle_id]
+
         with open(installed_file, "w", encoding="utf-8") as f:
             json.dump(installed_bundles, f, indent=2)
 
@@ -575,9 +627,9 @@ class BundleService:
     @staticmethod
     def _track_installed_bundle(bundle_id: str, profile: str, installation_status: Dict[str, Any]) -> None:
         """
-        Track an installed bundle.
+        Track an installed bundle, supporting multiple profiles per bundle.
         
-        **Description:** Records bundle installation information.
+        **Description:** Records bundle installation information, merging new profiles into the existing structure.
         **Parameters:**
         - `bundle_id` (str): Bundle identifier
         - `profile` (str): Hardware profile used
@@ -585,7 +637,6 @@ class BundleService:
         **Returns:** None
         """
         installed_file = BundleService.get_installed_bundles_file()
-        
         installed_bundles = {}
         if os.path.exists(installed_file):
             try:
@@ -593,16 +644,30 @@ class BundleService:
                     installed_bundles = json.load(f)
             except Exception:
                 pass
-        
-        installed_bundles[bundle_id] = {
+
+        # Convert legacy single-profile format to multi-profile if needed
+        if bundle_id in installed_bundles:
+            entry = installed_bundles[bundle_id]
+            if isinstance(entry, dict) and 'profile' in entry:
+                # Convert to multi-profile
+                installed_bundles[bundle_id] = {entry['profile']: entry}
+
+        # Prepare the new profile installation info
+        profile_info = {
             "profile": profile,
             "installed_at": datetime.now().isoformat(),
             "status": installation_status["status"],
             "installed_models": installation_status["installed_models"],
             "failed_models": installation_status["failed_models"]
         }
-        
-        os.makedirs(os.path.dirname(installed_file), exist_ok=True)
+
+        # Merge or create
+        if bundle_id not in installed_bundles:
+            installed_bundles[bundle_id] = {profile: profile_info}
+        else:
+            installed_bundles[bundle_id][profile] = profile_info
+
+        os.makedirs(os.path.dirname(installed_file) or ".", exist_ok=True)
         with open(installed_file, "w", encoding="utf-8") as f:
             json.dump(installed_bundles, f, indent=2)
 

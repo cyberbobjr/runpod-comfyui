@@ -14,7 +14,7 @@ logger = get_logger(__name__)
 # Constants for JWT authentication
 JWT_SECRET = "change_this_secret"
 JWT_ALGO = "HS256"
-JWT_EXP_MINUTES = 60*8
+JWT_EXP_MINUTES = 60*8*8
 USERS_JSON = "users.json"
 
 

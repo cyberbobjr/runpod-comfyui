@@ -1,7 +1,8 @@
-<script setup>
+<script setup lang="ts">
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
-import { computed, onMounted, onUnmounted, ref, Teleport, Transition } from "vue";
+import { computed, onMounted, onUnmounted, ref, Teleport, Transition, withDefaults } from "vue";
+import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 
 /**
  * DropdownComponent
@@ -12,7 +13,7 @@ import { computed, onMounted, onUnmounted, ref, Teleport, Transition } from "vue
  *
  * ## Props
  * - buttonText (string, required): The text to display on the dropdown button.
- * - buttonIcon (object, optional): FontAwesome icon object for the button (e.g. faPlus).
+ * - buttonIcon (IconDefinition, optional): FontAwesome icon object for the button (e.g. faPlus).
  * - size (string, default: 'm'): Button size ('xs', 'm', 'l').
  * - variant (string, default: 'primary'): Button variant ('primary', 'secondary', etc.).
  * - disabled (boolean, default: false): Whether the dropdown button is disabled.
@@ -55,49 +56,71 @@ import { computed, onMounted, onUnmounted, ref, Teleport, Transition } from "vue
  * - Use the slot's handleItemClick for selection, or close() to close manually.
  */
 
-const props = defineProps({
-  buttonText: {
-    type: String,
-    required: true
-  },
-  buttonIcon: {
-    type: Object,
-    default: null
-  },
-  size: {
-    type: String,
-    default: 'm',
-    validator: (value) => ['xs', 'm', 'l'].includes(value)
-  },
-  variant: {
-    type: String,
-    default: 'primary'
-  },
-  disabled: {
-    type: Boolean,
-    default: false
-  },
-  title: {
-    type: String,
-    default: ''
-  },
-  dropdownWidth: {
-    type: Number,
-    default: 200
-  },
-  align: {
-    type: String,
-    default: 'left',
-    validator: (value) => ['left', 'right'].includes(value)
-  }
-});
+/**
+ * Size variant type
+ */
+export type DropdownSize = 'xs' | 'm' | 'l'
 
-const emit = defineEmits(['item-selected']);
+/**
+ * Alignment type
+ */
+export type DropdownAlign = 'left' | 'right'
+
+/**
+ * Dropdown position interface
+ */
+interface DropdownPosition {
+  top: number;
+  left: number;
+}
+
+/**
+ * Component props interface
+ */
+interface Props {
+  /** The text to display on the dropdown button */
+  buttonText: string;
+  /** FontAwesome icon object for the button */
+  buttonIcon?: IconDefinition;
+  /** Button size variant */
+  size?: DropdownSize;
+  /** Button variant style */
+  variant?: string;
+  /** Whether the dropdown button is disabled */
+  disabled?: boolean;
+  /** Tooltip text for the button */
+  title?: string;
+  /** Width of the dropdown panel in pixels */
+  dropdownWidth?: number;
+  /** Dropdown alignment relative to button */
+  align?: DropdownAlign;
+}
+
+/**
+ * Component emits interface
+ */
+interface Emits {
+  /** Emitted when a dropdown item is selected */
+  'item-selected': [item: any];
+}
+
+// Define props with defaults
+const props = withDefaults(defineProps<Props>(), {
+  size: 'm',
+  variant: 'primary',
+  disabled: false,
+  title: '',
+  dropdownWidth: 200,
+  align: 'left'
+})
+
+// Define emits
+const emit = defineEmits<Emits>()
 
 // Reactive state
-const isOpen = ref(false);
-const dropdownPosition = ref({ top: 0, left: 0 });
-const dropdownId = ref(`dropdown-${Math.random().toString(36).substr(2, 9)}`);
+const isOpen = ref<boolean>(false)
+const dropdownPosition = ref<DropdownPosition>({ top: 0, left: 0 })
+const dropdownId = ref<string>(`dropdown-${Math.random().toString(36).substr(2, 9)}`)
 
 // Computed classes based on size
 const buttonClasses = computed(() => {
@@ -125,7 +148,7 @@ const iconSize = computed(() => {
  * **Parameters:**
  * - `event` (Event): The click event from the button.
  */
-const toggleDropdown = (event) => {
+const toggleDropdown = (event: MouseEvent): void => {
   if (props.disabled) return;
   
   if (isOpen.value) {
@@ -141,9 +164,9 @@ const toggleDropdown = (event) => {
  * **Parameters:**
  * - `event` (Event): The click event from the button.
  */
-const openDropdown = (event) => {
+const openDropdown = (event: MouseEvent): void => {
   if (event && event.currentTarget) {
-    const buttonElement = event.currentTarget;
+    const buttonElement = event.currentTarget as HTMLElement;
     const rect = buttonElement.getBoundingClientRect();
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
@@ -193,7 +216,7 @@ const closeDropdown = () => {
  * **Parameters:**
  * - `item` (any): The selected item data.
  */
-const handleItemClick = (item) => {
+const handleItemClick = (item: any): void => {
   emit('item-selected', item);
   closeDropdown();
 };
@@ -204,16 +227,18 @@ const handleItemClick = (item) => {
  * **Parameters:**
  * - `event` (Event): The click event.
  */
-const handleOutsideClick = (event) => {
+const handleOutsideClick = (event: MouseEvent): void => {
   if (!event.target) return;
   
+  const target = event.target as Element;
+  
   // Don't close if clicking on the button
-  const buttonElement = event.target.closest(`[data-dropdown-id="${dropdownId.value}"]`);
+  const buttonElement = target.closest(`[data-dropdown-id="${dropdownId.value}"]`);
   if (buttonElement) return;
   
   // Don't close if clicking inside the dropdown
-  const dropdownElement = event.target.closest('.dropdown-content');
-  if (dropdownElement && dropdownElement.dataset.dropdownId === dropdownId.value) return;
+  const dropdownElement = target.closest('.dropdown-content');
+  if (dropdownElement && (dropdownElement as HTMLElement).dataset.dropdownId === dropdownId.value) return;
   
   closeDropdown();
 };

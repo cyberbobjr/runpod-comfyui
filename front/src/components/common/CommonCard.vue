@@ -13,7 +13,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 /**
  * ### CommonCard
  * **Description:** A simple card container component for grouping content with consistent styling.
@@ -66,10 +66,14 @@
  * ```
  */
 
-defineProps({
-  title: {
-    type: String,
-    required: false
-  }
-});
+/**
+ * Component props interface
+ */
+interface Props {
+  /** Title to display in the card header */
+  title?: string;
+}
+
+// Define props with TypeScript
+defineProps<Props>();
 </script>

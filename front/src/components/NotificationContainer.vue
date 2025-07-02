@@ -30,27 +30,36 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { useNotifications } from '../composables/useNotifications'
+import { useNotifications, type NotificationType } from '@/composables/useNotifications'
 
 const { notifications, removeNotification } = useNotifications()
 
-const notificationIcons = {
+/**
+ * Notification icon mapping by type
+ */
+const notificationIcons: Record<NotificationType, string> = {
   success: 'check-circle',
   error: 'exclamation-circle',
   warning: 'exclamation-triangle',
   info: 'info-circle'
 }
 
-const notificationStyles = {
+/**
+ * Notification border styles by type
+ */
+const notificationStyles: Record<NotificationType, string> = {
   success: 'border-green-500',
   error: 'border-red-500',
   warning: 'border-yellow-500',
   info: 'border-blue-500'
 }
 
-const iconStyles = {
+/**
+ * Notification icon color styles by type
+ */
+const iconStyles: Record<NotificationType, string> = {
   success: 'text-green-500',
   error: 'text-red-500',
   warning: 'text-yellow-500',

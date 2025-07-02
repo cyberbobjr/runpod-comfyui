@@ -42,15 +42,19 @@ class DownloadManager:
         return cls.PROGRESS.get(model_id, {"progress": 0, "status": "idle"})   
     
     @classmethod
-    def get_all_progress(cls) -> Dict[str, Dict]:
+    def get_all_progress(cls) -> List[Dict]:
         """
         Returns the progress and status of all ongoing downloads.
         
         **Description:** Retrieves progress information for all currently active downloads.
         **Parameters:** None
-        **Returns:** Dict mapping model IDs to their progress information
+        **Returns:** A list of dicts, each containing progress info and the model ID.
         """
-        return {k: v for k, v in cls.PROGRESS.items() if v.get("status") in ["downloading", "stopped"]}
+        return [
+            {"model_id": k, **v}
+            for k, v in cls.PROGRESS.items()
+            if v.get("status") in ["downloading", "stopped"]
+        ]
 
     @classmethod
     def stop_download(cls, model_id: str) -> bool:

@@ -57,6 +57,174 @@ def get_all_bundles(user=Depends(protected)):
         raise HTTPException(status_code=500, detail=f"Error retrieving bundles: {str(e)}")
 
 
+@router.post("/install", response_model=BundleInstallResponse)
+def install_bundle(install_request: BundleInstallRequest, user=Depends(protected)):
+    """
+    POST /api/bundles/install
+
+    Installs a bundle's models and workflows for a specific hardware profile.
+
+    Arguments:
+    - install_request (BundleInstallRequest):
+        - bundle_id (str): The unique identifier of the bundle to install.
+        - profile (str): The hardware profile to use for installation (e.g., 'default', 'cuda', etc.).
+    - user: Authentication token (automatic via Depends)
+
+    Returns:
+    - Status: 200 OK
+    - Body: BundleInstallResponse object with:
+        - ok (bool): True if installation succeeded.
+        - message (str): Human-readable status message.
+        - results (dict):
+            - installed (list of str): List of successfully installed model filenames.
+            - failed (list of str): List of model filenames that failed to install.
+
+    Example response:
+    ```
+    {
+        "ok": true,
+        "message": "Bundle installed successfully",
+        "results": {
+            "installed": ["modelA.safetensors", "modelB.safetensors"],
+            "failed": []
+        }
+    }
+    ```
+
+    Possible errors:
+    - 401: Not authenticated
+    - 404: Bundle or profile not found
+    - 400: Invalid installation request
+    - 500: Error during installation
+
+    Usage: Use this endpoint to install all models and workflows for a bundle under a specific hardware profile. The response details which models were installed or failed.
+    """
+    try:
+        result = bundle_service.install_bundle(install_request.bundle_id, install_request.profile)
+        return BundleInstallResponse(
+            ok=True,
+            message="Bundle installed successfully",
+            results=result
+        )
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error installing bundle: {e}")
+        raise HTTPException(status_code=500, detail=f"Error installing bundle: {str(e)}")
+
+
+from pydantic import BaseModel
+
+class BundleUninstallRequest(BaseModel):
+    bundle_id: str
+    profile: str
+
+@router.post("/uninstall")
+def uninstall_bundle(uninstall_request: BundleUninstallRequest, user=Depends(protected)):
+    """
+    POST /api/bundles/uninstall
+
+    Uninstalls a specific hardware profile from an installed bundle. If all profiles are uninstalled, the bundle is considered fully uninstalled.
+
+    Arguments:
+    - uninstall_request (BundleUninstallRequest):
+        - bundle_id (str): The unique identifier of the bundle to uninstall.
+        - profile (str): The hardware profile to uninstall from the bundle.
+    - user: Authentication token (automatic via Depends)
+
+    Returns:
+    - Status: 200 OK
+    - Body: {"ok": true, "message": "Profile '<profile>' uninstalled from bundle '<bundle_id>'"}
+
+    Example response:
+    ```
+    {
+        "ok": true,
+        "message": "Profile 'cuda' uninstalled from bundle 'example-bundle-id'"
+    }
+    ```
+
+    Possible errors:
+    - 401: Not authenticated
+    - 404: Bundle or profile not found or not installed
+    - 500: Error during uninstallation
+
+    Usage: Use this endpoint to uninstall a specific hardware profile from a bundle. If all profiles are uninstalled, the bundle will be fully removed from the installed list.
+    """
+    try:
+        bundle_service.uninstall_bundle(uninstall_request.bundle_id, uninstall_request.profile)
+        return {"ok": True, "message": f"Profile '{uninstall_request.profile}' uninstalled from bundle '{uninstall_request.bundle_id}'"}
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Bundle {uninstall_request.bundle_id} or profile {uninstall_request.profile} not found or not installed")
+    except Exception as e:
+        logger.error(f"Error uninstalling profile {uninstall_request.profile} from bundle {uninstall_request.bundle_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Error uninstalling bundle profile: {str(e)}")
+
+
+@router.get("/installed", response_model=List[Dict[str, Any]])
+def get_installed_bundles(user=Depends(protected)):
+    """
+    GET /api/bundles/installed
+
+    Retrieves the list of all installed bundles with their installation details.
+
+    Arguments:
+    - user: Authentication token (automatic via Depends)
+
+    Returns:
+    - Status: 200 OK
+    - Body: Array of objects, each containing:
+        - "bundle": Bundle object (full bundle metadata)
+        - "installation": Installation information, including:
+            - profile (str): Hardware profile used for installation
+            - installed_at (str): ISO timestamp of installation
+            - status (str): Installation status (e.g., "completed", "partial")
+            - installed_models (list of str): List of successfully installed models
+            - failed_models (list of str): List of models that failed to install
+
+    Example response:
+    
+    ```
+    [
+        {
+            "bundle": {
+                "id": "example-bundle-id",
+                "name": "Example Bundle",
+                "description": "A test bundle.",
+                "version": "1.0.0",
+                "author": "Author Name",
+                "website": "https://example.com",
+                "hardware_profiles": { ... },
+                "workflows": [ ... ]
+            },
+            "installation": {
+                "profile": "default",
+                "installed_at": "2024-07-01T12:34:56.789Z",
+                "status": "completed",
+                "installed_models": ["modelA.safetensors", "modelB.safetensors"],
+                "failed_models": []
+            }
+        },
+        ...
+    ]
+    ```
+    
+    Possible errors:
+    - 401: Not authenticated
+    - 500: Error reading installation records
+
+    Usage: Get list of bundles that are currently installed, including their installation status and details.
+    """
+    try:
+        return bundle_service.get_installed_bundles()
+    except Exception as e:
+        logger.error(f"Error getting installed bundles: {e}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving installed bundles: {str(e)}")
+
+
+
 @router.get("/{bundle_id}", response_model=Bundle)
 def get_bundle(bundle_id: str, user=Depends(protected)):
     """
@@ -92,24 +260,42 @@ def get_bundle(bundle_id: str, user=Depends(protected)):
 def create_bundle(bundle_data: BundleCreate, user=Depends(protected)):
     """
     POST /api/bundles/
-    
+
     Creates a new bundle.
-    
-    Arguments:
-    - bundle_data (BundleCreate): Bundle creation data
-    - user: Authentication token (automatic via Depends)
-    
-    Returns:
+
+    **Arguments:**
+    - `bundle_data` (BundleCreate): Bundle creation data (see BundleCreate schema)
+    - `user`: Authentication token (automatic via Depends)
+
+    **Returns:**
     - Status: 200 OK
-    - Body: Created Bundle object
-    
-    Possible errors:
+    - Body: Created Bundle object (see Bundle schema)
+
+    **Example response:**
+    ```
+    {
+        "id": "example-bundle-id",
+        "name": "Example Bundle",
+        "description": "A test bundle.",
+        "version": "1.0.0",
+        "author": "Author Name",
+        "website": "https://example.com",
+        "hardware_profiles": { ... },
+        "workflows": [ ... ],
+        "workflow_params": { ... },
+        "created_at": "2024-07-01T12:34:56.789Z",
+        "updated_at": "2024-07-01T12:34:56.789Z"
+    }
+    ```
+
+    **Possible errors:**
     - 401: Not authenticated
     - 400: Invalid bundle data
     - 409: Bundle with same name already exists
     - 500: Error creating bundle
-    
-    Usage: Create a new bundle from provided data.
+
+    **Usage:**
+    Create a new bundle from provided data for later installation or sharing.
     """
     try:
         return bundle_service.create_bundle(bundle_data)
@@ -124,25 +310,35 @@ def create_bundle(bundle_data: BundleCreate, user=Depends(protected)):
 def update_bundle(bundle_id: str, bundle_data: BundleUpdate, user=Depends(protected)):
     """
     PUT /api/bundles/{bundle_id}
-    
+
     Updates an existing bundle.
-    
-    Arguments:
-    - bundle_id (str): Bundle identifier (in URL path)
-    - bundle_data (BundleUpdate): Bundle update data
-    - user: Authentication token (automatic via Depends)
-    
-    Returns:
+
+    **Arguments:**
+    - `bundle_id` (str): Bundle identifier (in URL path)
+    - `bundle_data` (BundleUpdate): Bundle update data (see BundleUpdate schema)
+    - `user`: Authentication token (automatic via Depends)
+
+    **Returns:**
     - Status: 200 OK
-    - Body: Updated Bundle object
-    
-    Possible errors:
+    - Body: Updated Bundle object (see Bundle schema)
+
+    **Example response:**
+    ```
+    {
+        "id": "example-bundle-id",
+        "name": "Updated Bundle Name",
+        ...
+    }
+    ```
+
+    **Possible errors:**
     - 401: Not authenticated
     - 404: Bundle not found
     - 400: Invalid update data
     - 500: Error updating bundle
-    
-    Usage: Update an existing bundle's properties.
+
+    **Usage:**
+    Update an existing bundle's properties, such as name, description, or hardware profiles.
     """
     try:
         return bundle_service.update_bundle(bundle_id, bundle_data)
@@ -159,23 +355,32 @@ def update_bundle(bundle_id: str, bundle_data: BundleUpdate, user=Depends(protec
 def delete_bundle(bundle_id: str, user=Depends(protected)):
     """
     DELETE /api/bundles/{bundle_id}
-    
+
     Deletes a bundle.
-    
-    Arguments:
-    - bundle_id (str): Bundle identifier (in URL path)
-    - user: Authentication token (automatic via Depends)
-    
-    Returns:
+
+    **Arguments:**
+    - `bundle_id` (str): Bundle identifier (in URL path)
+    - `user`: Authentication token (automatic via Depends)
+
+    **Returns:**
     - Status: 200 OK
-    - Body: {"ok": true, "message": "Bundle deleted"}
-    
-    Possible errors:
+    - Body: `{ "ok": true, "message": "Bundle deleted successfully" }`
+
+    **Example response:**
+    ```
+    {
+        "ok": true,
+        "message": "Bundle deleted successfully"
+    }
+    ```
+
+    **Possible errors:**
     - 401: Not authenticated
     - 404: Bundle not found
     - 500: Error deleting bundle
-    
-    Usage: Remove a bundle from the system.
+
+    **Usage:**
+    Remove a bundle from the system and delete its ZIP file.
     """
     try:
         bundle_service.delete_bundle(bundle_id)
@@ -191,24 +396,34 @@ def delete_bundle(bundle_id: str, user=Depends(protected)):
 def upload_bundle(file: UploadFile = File(...), user=Depends(protected)):
     """
     POST /api/bundles/upload
-    
+
     Uploads and imports a bundle from a ZIP file.
-    
-    Arguments:
-    - file (UploadFile): ZIP file containing bundle data
-    - user: Authentication token (automatic via Depends)
-    
-    Returns:
+
+    **Arguments:**
+    - `file` (UploadFile): ZIP file containing bundle data
+    - `user`: Authentication token (automatic via Depends)
+
+    **Returns:**
     - Status: 200 OK
-    - Body: {"ok": true, "message": "Bundle imported", "bundle_id": "id"}
-    
-    Possible errors:
+    - Body: `{ "ok": true, "message": "Bundle imported successfully", "bundle_id": "id" }`
+
+    **Example response:**
+    ```
+    {
+        "ok": true,
+        "message": "Bundle imported successfully",
+        "bundle_id": "example-bundle-id"
+    }
+    ```
+
+    **Possible errors:**
     - 401: Not authenticated
     - 400: Invalid file format or corrupted bundle
     - 409: Bundle already exists
     - 500: Error processing upload
-    
-    Usage: Import a bundle from an uploaded ZIP file.
+
+    **Usage:**
+    Import a bundle from an uploaded ZIP file for installation or sharing.
     """
     try:
         bundle_id = bundle_service.import_bundle_from_zip(file)
@@ -228,24 +443,25 @@ def upload_bundle(file: UploadFile = File(...), user=Depends(protected)):
 def download_bundle(bundle_id: str, user=Depends(protected)):
     """
     GET /api/bundles/download/{bundle_id}
-    
+
     Downloads a bundle as a ZIP file.
-    
-    Arguments:
-    - bundle_id (str): Bundle identifier (in URL path)
-    - user: Authentication token (automatic via Depends)
-    
-    Returns:
+
+    **Arguments:**
+    - `bundle_id` (str): Bundle identifier (in URL path)
+    - `user`: Authentication token (automatic via Depends)
+
+    **Returns:**
     - Status: 200 OK
     - Body: ZIP file download
     - Headers: Content-Disposition with filename
-    
-    Possible errors:
+
+    **Usage:**
+    Download a bundle as a ZIP file for backup, migration, or sharing with others.
+
+    **Possible errors:**
     - 401: Not authenticated
     - 404: Bundle not found
     - 500: Error creating download
-    
-    Usage: Download a bundle as a ZIP file for backup or sharing.
     """
     try:
         zip_path = bundle_service.get_bundle_download_path(bundle_id)
@@ -261,127 +477,39 @@ def download_bundle(bundle_id: str, user=Depends(protected)):
         raise HTTPException(status_code=500, detail=f"Error downloading bundle: {str(e)}")
 
 
-@router.post("/install", response_model=BundleInstallResponse)
-def install_bundle(install_request: BundleInstallRequest, user=Depends(protected)):
-    """
-    POST /api/bundles/install
-    
-    Installs a bundle with a specific hardware profile.
-    
-    Arguments:
-    - install_request (BundleInstallRequest): Installation request with bundle_id and profile
-    - user: Authentication token (automatic via Depends)
-    
-    Returns:
-    - Status: 200 OK
-    - Body: BundleInstallResponse with results
-    
-    Possible errors:
-    - 401: Not authenticated
-    - 404: Bundle or profile not found
-    - 400: Invalid installation request
-    - 500: Error during installation
-    
-    Usage: Install a bundle's models and workflows for a specific hardware profile.
-    """
-    try:
-        result = bundle_service.install_bundle(install_request.bundle_id, install_request.profile)
-        return BundleInstallResponse(
-            ok=True,
-            message="Bundle installed successfully",
-            results=result
-        )
-    except FileNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        logger.error(f"Error installing bundle: {e}")
-        raise HTTPException(status_code=500, detail=f"Error installing bundle: {str(e)}")
-
-
-@router.post("/uninstall")
-def uninstall_bundle(bundle_id: str, user=Depends(protected)):
-    """
-    POST /api/bundles/uninstall
-    
-    Uninstalls a previously installed bundle.
-    
-    Arguments:
-    - bundle_id (str): Bundle identifier in request body
-    - user: Authentication token (automatic via Depends)
-    
-    Returns:
-    - Status: 200 OK
-    - Body: {"ok": true, "message": "Bundle uninstalled"}
-    
-    Possible errors:
-    - 401: Not authenticated
-    - 404: Bundle not found or not installed
-    - 500: Error during uninstallation
-    
-    Usage: Remove an installed bundle's models and workflows.
-    """
-    try:
-        bundle_service.uninstall_bundle(bundle_id)
-        return {"ok": True, "message": f"Bundle {bundle_id} uninstalled successfully"}
-    except FileNotFoundError:
-        raise HTTPException(status_code=404, detail=f"Bundle {bundle_id} not found or not installed")
-    except Exception as e:
-        logger.error(f"Error uninstalling bundle {bundle_id}: {e}")
-        raise HTTPException(status_code=500, detail=f"Error uninstalling bundle: {str(e)}")
-
-
-@router.get("/installed/", response_model=List[Dict[str, Any]])
-def get_installed_bundles(user=Depends(protected)):
-    """
-    GET /api/bundles/installed/
-    
-    Retrieves list of all installed bundles.
-    
-    Arguments:
-    - user: Authentication token (automatic via Depends)
-    
-    Returns:
-    - Status: 200 OK
-    - Body: Array of installed bundle information
-    
-    Possible errors:
-    - 401: Not authenticated
-    - 500: Error reading installation records
-    
-    Usage: Get list of bundles that are currently installed.
-    """
-    try:
-        return bundle_service.get_installed_bundles()
-    except Exception as e:
-        logger.error(f"Error getting installed bundles: {e}")
-        raise HTTPException(status_code=500, detail=f"Error retrieving installed bundles: {str(e)}")
-
-
 @router.post("/duplicate/{bundle_id}")
 def duplicate_bundle(bundle_id: str, duplicate_data: BundleDuplicateRequest, user=Depends(protected)):
     """
     POST /api/bundles/duplicate/{bundle_id}
-    
+
     Creates a duplicate of an existing bundle with a new name.
-    
-    Arguments:
-    - bundle_id (str): Source bundle identifier (in URL path)
-    - duplicate_data (BundleDuplicateRequest): New bundle name and optional modifications
-    - user: Authentication token (automatic via Depends)
-    
-    Returns:
+
+    **Arguments:**
+    - `bundle_id` (str): Source bundle identifier (in URL path)
+    - `duplicate_data` (BundleDuplicateRequest): New bundle name and optional modifications
+    - `user`: Authentication token (automatic via Depends)
+
+    **Returns:**
     - Status: 200 OK
-    - Body: {"ok": true, "message": "Bundle duplicated", "new_bundle_id": "id"}
-    
-    Possible errors:
+    - Body: `{ "ok": true, "message": "Bundle duplicated successfully", "new_bundle_id": "id" }`
+
+    **Example response:**
+    ```
+    {
+        "ok": true,
+        "message": "Bundle duplicated successfully",
+        "new_bundle_id": "new-bundle-id"
+    }
+    ```
+
+    **Possible errors:**
     - 401: Not authenticated
     - 404: Source bundle not found
     - 409: Target bundle name already exists
     - 500: Error during duplication
-    
-    Usage: Create a copy of a bundle with a different name for modification.
+
+    **Usage:**
+    Create a copy of a bundle with a different name for modification, testing, or versioning.
     """
     try:
         new_bundle_id = bundle_service.duplicate_bundle(bundle_id, duplicate_data.new_name)

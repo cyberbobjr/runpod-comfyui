@@ -74,29 +74,42 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, reactive } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import { useNotifications } from "../composables/useNotifications";
+import type { LoginFormData, LoginFormErrors } from './types/views.types'
+
+import { useNotifications } from "@/composables/useNotifications";
 import { useAuthStore } from "@/stores/auth";
 
 const router = useRouter();
 const route = useRoute();
-const loading = ref(false);
-const showPassword = ref(false);
+const loading = ref<boolean>(false);
+const showPassword = ref<boolean>(false);
 const { success, error } = useNotifications();
 const authStore = useAuthStore();
-const formValue = reactive({
+
+/**
+ * Form data with proper typing
+ */
+const formValue = reactive<LoginFormData>({
   username: "",
   password: "",
 });
 
-const errors = reactive({
+/**
+ * Form validation errors with proper typing
+ */
+const errors = reactive<LoginFormErrors>({
   username: "",
   password: "",
 });
 
-const validateForm = () => {
+/**
+ * Validates the login form and returns whether it's valid
+ * @returns {boolean} True if the form is valid, false otherwise
+ */
+const validateForm = (): boolean => {
   let isValid = true;
 
   // Reset errors
@@ -118,7 +131,11 @@ const validateForm = () => {
   return isValid;
 };
 
-const handleLogin = async () => {
+/**
+ * Handles the login form submission
+ * Validates the form, authenticates the user, and redirects on success
+ */
+const handleLogin = async (): Promise<void> => {
   if (!validateForm()) return;
 
   loading.value = true;
@@ -128,8 +145,10 @@ const handleLogin = async () => {
     // Show success message with elegant notification
     success("Login successful!");
 
-    router.push(route.query.redirect || "/");
-  } catch (err) {
+    // Redirect to the intended page or home
+    const redirectPath = (route.query.redirect as string) || "/";
+    router.push(redirectPath);
+  } catch (err: any) {
     if (err.response) {
       error(err.response.data.message || "Authentication failed");
     } else {
@@ -140,7 +159,10 @@ const handleLogin = async () => {
   }
 };
 
-const resetForm = () => {
+/**
+ * Resets the login form to initial state
+ */
+const resetForm = (): void => {
   formValue.username = "";
   formValue.password = "";
   errors.username = "";

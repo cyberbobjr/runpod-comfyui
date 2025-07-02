@@ -1,1 +1,0 @@
-import{c as e,o as r,r as s}from"./index--V_irXaw.js";const a={class:"card bg-background rounded-lg shadow p-4"},d={__name:"CommonCard",setup(t){return(o,c)=>(r(),e("div",a,[s(o.$slots,"default")]))}};export{d as _};
