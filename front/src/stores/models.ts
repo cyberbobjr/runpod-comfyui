@@ -3,17 +3,13 @@ import api from "../services/api"; // Assuming you have an api.js file for API r
 import {
   type Model,
   type DownloadProgress,
-  type BundleInstallation,
-  type ModelDownload,
-  type ActiveInstallation,
   type ModelFilterCriteria,
   type ModelEntry,
   type ModelsState,
-  type DownloadsApiResponse,
   type CompleteModelsApiResponse,
   getModelId,
+  DownloadStatus,
 } from "./types/models.types";
-import { stat } from "fs";
 
 /**
  * # Models Store Documentation
@@ -111,18 +107,13 @@ export const useModelsStore = defineStore("models", {
     loading: false,
     error: null,
     selectedModels: [],
-    downloadProgress: new Map<string, DownloadProgress>(),
+    downloadProgress: [],
     _downloadPollingInterval: null,
-    // Bundle installation tracking
-    bundleInstallations: new Map<string, BundleInstallation>(),
-    _bundlePollingInterval: null,
-    // Model download tracking for UI display
-    modelDownloads: new Map<string, ModelDownload>(),
   }),
 
   // === GETTERS ===
   getters: {
-    installedModels: (state: ModelsState) : Set<string> => {
+    installedModels: (state: ModelsState): Set<string> => {
       return state.models.reduce((set, model) => {
         if (!!model.exists) set.add(getModelId(model));
         return set;
@@ -135,9 +126,11 @@ export const useModelsStore = defineStore("models", {
     isModelDownloading:
       (state: ModelsState) =>
       (modelId: string): boolean => {
-        const prog = state.downloadProgress.get(modelId);
+        const prog = state.downloadProgress.find(
+          (progress) => progress.model_id === modelId
+        );
         return prog
-          ? prog.status === "downloading" && prog.progress < 100
+          ? prog.status === DownloadStatus.DOWNLOADING && prog.progress < 100
           : false;
       },
 
@@ -218,16 +211,6 @@ export const useModelsStore = defineStore("models", {
       },
 
     /**
-     * Get download progress for a model
-     * @returns {Function} Function that takes modelId and returns progress object
-     */
-    getDownloadProgress:
-      (state: ModelsState) =>
-      (modelId: string): DownloadProgress | null => {
-        return state.downloadProgress.get(modelId) || null;
-      },
-
-    /**
      * Get selected models count
      * @returns {Number} Number of selected models
      */
@@ -243,70 +226,24 @@ export const useModelsStore = defineStore("models", {
       return state.models.length;
     },
 
-    /**
-     * Get all active installations (bundles + models)
-     * @returns {Array} List of active installations
-     */
-    activeInstallations: (state: ModelsState): ActiveInstallation[] => {
-      const bundleInstallations = Array.from(
-        state.bundleInstallations.entries()
-      )
-        .filter(
-          ([_, installation]) =>
-            installation.status !== "completed" &&
-            installation.status !== "cancelled"
-        )
-        .map(([installationId, installation]) => ({
-          downloadId: installationId,
-          bundleId: installation.bundleId,
-          bundleName: installation.bundleName,
-          profiles: installation.profiles,
-          status: installation.status,
-          progress: installation.progress,
-          currentStep: installation.currentStep,
-          startTime: installation.startTime,
-          errors: installation.errors,
-        }));
+    getProgressByModelId:
+      (state: ModelsState) =>
+      (modelId: string): DownloadProgress | undefined => {
+        return state.downloadProgress.find(
+          (progress) => progress.model_id === modelId
+        );
+      },
 
-      const modelDownloadsList = Array.from(state.modelDownloads.entries()).map(
-        ([downloadId, download]) => ({
-          downloadId,
-          bundleId: download.modelId,
-          bundleName: download.modelName,
-          profiles: ["download"],
-          status: download.status,
-          progress: download.progress,
-          currentStep: download.currentStep,
-          startTime: download.startTime,
-          errors: download.errors,
-        })
-      );
-
-      return [...bundleInstallations, ...modelDownloadsList];
-    },
-
-    /**
-     * Check if there are active installations
-     * @returns {Boolean} True if there are active installations
-     */
-    hasActiveInstallations: (state: ModelsState): boolean => {
-      const hasActiveDownloads = Array.from(
-        state.downloadProgress.values()
-      ).some((p) => p.status === "downloading");
-      const hasActiveBundles = Array.from(
-        state.bundleInstallations.values()
-      ).some((b) => b.status === "installing");
-      return hasActiveDownloads || hasActiveBundles;
-    },
-
-    /**
-     * Get raw downloads data (equivalent to rawDownloads in useInstallProgress)
-     * @returns {Object} Raw downloads data from API
-     */
-    rawDownloads: (state: ModelsState): DownloadProgress[] => {
-      // Convert Map to array of values for components that need an array
-      return Array.from(state.downloadProgress.values());
-    },
+    removeProgressByModelId:
+      (state: ModelsState) =>
+      (modelId: string): void => {
+        const index = state.downloadProgress.findIndex(
+          (progress) => progress.model_id === modelId
+        );
+        if (index !== -1) {
+          state.downloadProgress.splice(index, 1);
+        }
+      },
   },
 
   // === ACTIONS ===
@@ -332,11 +269,11 @@ export const useModelsStore = defineStore("models", {
     startDownloadPolling(intervalMs: number = 2000): void {
       if (this._downloadPollingInterval) return;
       this._downloadPollingInterval = setInterval(
-        this.refreshDownloadProgress,
+        this.updateModelDownloadProgress,
         intervalMs
       );
       // Initial fetch
-      this.refreshDownloadProgress();
+      this.updateModelDownloadProgress();
     },
 
     /**
@@ -346,23 +283,6 @@ export const useModelsStore = defineStore("models", {
       if (this._downloadPollingInterval) {
         clearInterval(this._downloadPollingInterval);
         this._downloadPollingInterval = null;
-      }
-    },
-
-    /**
-     * Refresh download progress from backend and update downloadProgress state
-     */
-    async refreshDownloadProgress(): Promise<void> {
-      try {
-        const response = await api.get<DownloadsApiResponse>("/downloads/");
-        const downloads = response.data || {};
-        // Update downloadProgress with backend state
-        this.downloadProgress = new Map(Object.entries(downloads));
-
-        // Update model downloads and clean up finished ones
-        await this.updateModelDownloadProgress();
-      } catch (error: any) {
-        this.setError(error.message);
       }
     },
 
@@ -408,9 +328,9 @@ export const useModelsStore = defineStore("models", {
      * Fetch all ongoing downloads from the backend
      * @returns {Promise} Promise resolving to all downloads status
      */
-    async fetchAllDownloads(): Promise<DownloadsApiResponse> {
+    async fetchAllDownloads(): Promise<DownloadProgress[]> {
       try {
-        const response = await api.get<DownloadsApiResponse>("/downloads/");
+        const response = await api.get<DownloadProgress[]>("/downloads");
         return response.data;
       } catch (error: any) {
         this.setError(error.message);
@@ -449,21 +369,6 @@ export const useModelsStore = defineStore("models", {
     },
 
     /**
-     * Get download progress for a model
-     * @param {Object} entry - Model entry to check progress
-     * @returns {Promise} Progress info
-     */
-    async fetchDownloadProgress(entry: ModelEntry): Promise<DownloadProgress> {
-      try {
-        const response = await api.post("/downloads/progress", entry);
-        return response.data;
-      } catch (error: any) {
-        this.setError(error.message);
-        throw error;
-      }
-    },
-
-    /**
      * Delete one or more models
      * @param {Object|Array} entries - Model entry or list of entries
      * @returns {Promise} Deletion status result(s)
@@ -479,24 +384,6 @@ export const useModelsStore = defineStore("models", {
     },
 
     /**
-     * Update download progress for a model
-     * @param {String} modelId - The model ID
-     * @param {Number} progress - Progress percentage (0-100)
-     * @param {String} status - Download status
-     */
-    updateDownloadProgress(
-      modelId: string,
-      progress: number,
-      status: DownloadProgress["status"] = "downloading"
-    ): void {
-      this.downloadProgress.set(modelId, {
-        progress,
-        status,
-        error: null,
-      });
-    },
-
-    /**
      * Cancel model download
      * @param {String} modelId - The model ID to cancel
      */
@@ -504,7 +391,7 @@ export const useModelsStore = defineStore("models", {
       try {
         await api.post(`/models/download/${modelId}/cancel`);
         // Remove download progress
-        this.downloadProgress.delete(modelId);
+        this.removeProgressByModelId(modelId);
       } catch (error: any) {
         console.error("Error canceling download:", error);
         throw error;
@@ -713,7 +600,7 @@ export const useModelsStore = defineStore("models", {
     clearModels(): void {
       this.models = [];
       this.selectedModels = [];
-      this.downloadProgress = new Map();
+      this.downloadProgress = [];
       this.error = null;
     },
 
@@ -743,171 +630,23 @@ export const useModelsStore = defineStore("models", {
      */
     async startBundleInstallation(
       bundleId: string,
-      bundleName: string,
       profiles: string[]
     ): Promise<string> {
-      const installationId = `${bundleId}_${Date.now()}`;
-
-      this.bundleInstallations.set(installationId, {
-        bundleId,
-        bundleName,
-        profiles,
-        status: "starting",
-        progress: 0,
-        currentStep: "Initializing installation...",
-        steps: [],
-        errors: [],
-        startTime: Date.now(),
-      });
-
+      // Simplified: Only trigger the download of all models in the bundle, and rely on updateModelDownloadProgress for progress tracking.
+      // This avoids duplicating download tracking logic and UI.
       try {
-        // Start installation for each profile
+        // Start installation for each profile (triggers backend to download models)
         for (const profile of profiles) {
           await api.post("/bundles/install", {
             bundle_id: bundleId,
             profile: profile,
           });
         }
-
-        // Start polling for progress
-        this.startBundlePolling(installationId);
-
-        return installationId;
+        // No custom polling or bundleInstallations tracking: rely on updateModelDownloadProgress for all download progress UI.
+        return bundleId;
       } catch (err: any) {
-        const installation = this.bundleInstallations.get(installationId);
-        if (installation) {
-          installation.status = "error";
-          installation.errors.push(err.response?.data?.detail || err.message);
-        }
+        this.setError(err.response?.data?.detail || err.message);
         throw err;
-      }
-    },
-
-    /**
-     * Start bundle polling
-     * @param {String} installationId - Installation ID to track
-     */
-    startBundlePolling(installationId: string): void {
-      if (this._bundlePollingInterval) return;
-
-      this._bundlePollingInterval = setInterval(async () => {
-        try {
-          await this.updateBundleInstallationProgress(installationId);
-        } catch (err: any) {
-          console.error("Error polling bundle installation progress:", err);
-        }
-      }, 1000);
-    },
-
-    /**
-     * Update bundle installation progress
-     * @param {String} installationId - Installation ID to update
-     */
-    async updateBundleInstallationProgress(
-      installationId: string
-    ): Promise<void> {
-      const installation = this.bundleInstallations.get(installationId);
-      if (
-        !installation ||
-        installation.status === "completed" ||
-        installation.status === "error"
-      ) {
-        return;
-      }
-
-      try {
-        // Check download status
-        const downloadsResponse = await api.get("/downloads/");
-        const downloads = downloadsResponse.data || {};
-
-        // Check if bundle is installed
-        const installedResponse = await api.get("/bundles/installed/");
-        const installedBundles = installedResponse.data || [];
-
-        const isInstalled = installedBundles.some(
-          (b: any) =>
-            b.id === installation.bundleId &&
-            installation.profiles.includes(b.profile)
-        );
-
-        // Calculate progress based on downloads
-        const downloadKeys = Object.keys(downloads);
-        const activeDownloads = downloadKeys.filter(
-          (key) => downloads[key].status === "downloading"
-        );
-
-        if (activeDownloads.length > 0) {
-          const totalProgress = activeDownloads.reduce(
-            (sum, key) => sum + (downloads[key].progress || 0),
-            0
-          );
-          const avgProgress = Math.floor(
-            totalProgress / activeDownloads.length
-          );
-
-          installation.status = "downloading";
-          installation.progress = Math.min(avgProgress, 95);
-          installation.currentStep = `Downloading models... (${activeDownloads.length} active)`;
-        } else if (isInstalled) {
-          installation.status = "completed";
-          installation.progress = 100;
-          installation.currentStep = "Installation completed successfully";
-
-          this.stopBundlePolling();
-
-          setTimeout(() => {
-            this.removeBundleInstallation(installationId);
-          }, 5000);
-        } else {
-          installation.status = "installing";
-          installation.progress = Math.min(installation.progress + 1, 90);
-          installation.currentStep = "Installing models and workflows...";
-        }
-      } catch (err: any) {
-        installation.status = "error";
-        installation.errors.push(err.response?.data?.detail || err.message);
-        this.setError(
-          `Installation failed for bundle "${installation.bundleName}": ${err.message}`
-        );
-        this.stopBundlePolling();
-      }
-    },
-
-    /**
-     * Stop bundle polling
-     */
-    stopBundlePolling(): void {
-      if (this._bundlePollingInterval) {
-        clearInterval(this._bundlePollingInterval);
-        this._bundlePollingInterval = null;
-      }
-    },
-
-    /**
-     * Cancel bundle installation
-     * @param {String} installationId - Installation ID to cancel
-     */
-    cancelBundleInstallation(installationId: string): void {
-      const installation = this.bundleInstallations.get(installationId);
-      if (installation) {
-        installation.status = "cancelled";
-        installation.currentStep = "Installation cancelled";
-
-        setTimeout(() => {
-          this.removeBundleInstallation(installationId);
-        }, 2000);
-      }
-    },
-
-    /**
-     * Remove bundle installation
-     * @param {String} installationId - Installation ID to remove
-     */
-    removeBundleInstallation(installationId: string): void {
-      this.bundleInstallations.delete(installationId);
-
-      if (this.bundleInstallations.size === 0) {
-        this.stopBundlePolling();
       }
     },
 
@@ -932,150 +671,31 @@ export const useModelsStore = defineStore("models", {
 
     /**
      * Update model download progress from API
+     *
+     * Description:
+     * Polls the backend API ("/downloads") to retrieve the current download status for all models, updates the store's download progress map, and synchronizes the UI-tracked downloads (modelDownloads) with the backend state. This method is responsible for:
+     * - Fetching the latest download progress for all models from the backend.
+     * - Updating the downloadProgress map with the latest data.
+     * - Iterating through each download to update or add entries in modelDownloads for UI tracking.
+     * - Handling active downloads (progress < 100 and not stopped), stopped downloads, and cleaning up completed or cancelled downloads.
+     * - Stopping polling if there are no active downloads left.
+     *
+     * Returns: Promise<void>
+     *
+     * Example usage:
+     *   await store.updateModelDownloadProgress();
      */
     async updateModelDownloadProgress(): Promise<void> {
       try {
-        console.log("Polling /downloads...");
-        const response = await api.get("/downloads");
-        const downloads = response.data || {};
-
-        console.log(
-          "Current downloads from API:",
-          Object.keys(downloads).length,
-          "items"
-        );
-
-        // Update downloadProgress with fresh data
-        this.downloadProgress = new Map(Object.entries(downloads));
-
-        // Process each download detected by the API
-        for (const [modelId, downloadInfo] of Object.entries(downloads) as [
-          string,
-          DownloadProgress
-        ][]) {
-          console.log(
-            `Processing download ${modelId}:`,
-            downloadInfo.status,
-            downloadInfo.progress + "%"
-          );
-
-          // Handle active downloads
-          if (
-            downloadInfo.status === "downloading" ||
-            (downloadInfo.progress < 100 && downloadInfo.status !== "stopped")
-          ) {
-            let found = false;
-            for (const [
-              downloadId,
-              download,
-            ] of this.modelDownloads.entries()) {
-              if (download.modelId === modelId) {
-                download.progress = downloadInfo.progress || 0;
-                download.currentStep = `Downloading... ${download.progress}%`;
-                download.status = "downloading";
-                found = true;
-                break;
-              }
-            }
-
-            if (!found) {
-              const downloadId = `${modelId}_detected_${Date.now()}`;
-
-              let modelName = modelId;
-              try {
-                const modelsResponse = await api.get("/jsonmodels/");
-                const allModels: Model[] = [];
-                for (const [group, entries] of Object.entries(
-                  modelsResponse.data.groups || {}
-                )) {
-                  (entries as any[]).forEach((model: any) => {
-                    allModels.push({
-                      ...model,
-                      group,
-                      id: `${group}_${model.url.split("/").pop()}`,
-                    });
-                  });
-                }
-                const model = allModels.find(
-                  (m) => (m.dest || m.git) === modelId
-                );
-                if (model) {
-                  modelName = model.name || model.id;
-                }
-              } catch (err) {
-                console.warn("Could not fetch model name for", modelId);
-              }
-
-              this.modelDownloads.set(downloadId, {
-                modelId,
-                modelName,
-                status: "downloading",
-                progress: downloadInfo.progress || 0,
-                currentStep: `Downloading... ${downloadInfo.progress || 0}%`,
-                startTime: Date.now(),
-                errors: [],
-              });
-            }
-          }
-          // Handle stopped downloads
-          else if (downloadInfo.status === "stopped") {
-            for (const [
-              downloadId,
-              download,
-            ] of this.modelDownloads.entries()) {
-              if (download.modelId === modelId) {
-                download.status = "cancelled";
-                download.currentStep = "Download stopped";
-
-                setTimeout(() => {
-                  this.removeModelDownload(downloadId);
-                }, 2000);
-                break;
-              }
-            }
-          }
-        }
-
-        // Clean up completed downloads
-        for (const [downloadId, download] of this.modelDownloads.entries()) {
-          const apiDownload = downloads[download.modelId];
-
-          if (!apiDownload) {
-            if (download.status === "cancelled") {
-              console.log(
-                `Download ${download.modelId} already marked as cancelled`
-              );
-            } else {
-              console.log(
-                `Download ${download.modelId} completed, marking as finished`
-              );
-              download.status = "completed";
-              download.progress = 100;
-              download.currentStep = "Download completed successfully";
-
-              setTimeout(() => {
-                this.removeModelDownload(downloadId);
-              }, 3000);
-            }
-          }
-        }
-
+        // Fetch the latest download status for all models from the backend
+        this.downloadProgress = await this.fetchAllDownloads();
         // Stop polling if no downloads
-        if (
-          Object.keys(downloads).length === 0 &&
-          this.modelDownloads.size === 0
-        ) {
-          console.log("No downloads detected, attempting to stop polling");
+        if (this.downloadProgress.length === 0) {
           this.stopDownloadPolling();
-        } else {
-          console.log(
-            "Continuing polling - downloads found:",
-            Object.keys(downloads).length,
-            "managed:",
-            this.modelDownloads.size
-          );
+          this.refreshModels()
         }
       } catch (error: any) {
+        this.setError(error.message);
         console.error("Error updating model download progress:", error);
       }
     },
@@ -1085,61 +705,18 @@ export const useModelsStore = defineStore("models", {
      * @param {String} downloadId - Download ID or model ID to cancel
      */
     async cancelModelDownload(downloadId: string): Promise<void> {
-      let download = this.modelDownloads.get(downloadId);
-      let actualModelId = downloadId;
+      let isModelDownloading = this.isModelDownloading(downloadId);
 
-      if (download) {
-        actualModelId = download.modelId;
-      } else {
-        for (const [id, dl] of this.modelDownloads.entries()) {
-          if (dl.modelId === downloadId) {
-            download = dl;
-            downloadId = id;
-            actualModelId = dl.modelId;
-            break;
-          }
-        }
-      }
-
-      if (download) {
+      if (isModelDownloading) {
         try {
-          await api.post("/models/stop_download", {
-            model_id: actualModelId,
-            dest: actualModelId,
-            git: actualModelId,
-          });
-
-          download.status = "cancelled";
-          download.currentStep = "Download cancelled";
-
-          setTimeout(() => {
-            this.removeModelDownload(downloadId);
-          }, 2000);
+          await api.post("/downloads/stop", { dest: downloadId });
+          this.removeProgressByModelId(downloadId);
         } catch (error: any) {
           console.error("Error cancelling download:", error);
           this.setError("Failed to cancel download");
-
-          download.status = "cancelled";
-          download.currentStep = "Download cancelled (forced)";
-
-          setTimeout(() => {
-            this.removeModelDownload(downloadId);
-          }, 2000);
         }
       } else {
         console.warn("Download not found for cancellation:", downloadId);
-      }
-    },
-
-    /**
-     * Remove model download
-     * @param {String} downloadId - Download ID to remove
-     */
-    removeModelDownload(downloadId: string): void {
-      this.modelDownloads.delete(downloadId);
-
-      if (this.modelDownloads.size === 0) {
-        this.stopDownloadPolling();
       }
     },
 
@@ -1148,31 +725,13 @@ export const useModelsStore = defineStore("models", {
      */
     async restoreActiveDownloads(): Promise<void> {
       try {
-        const response = await api.get("/downloads");
-        const downloads = response.data || {};
+        const downloads: DownloadProgress[] = await this.fetchAllDownloads();
+        const isDownloadingInProgress = downloads.some(
+          (download) =>
+            download.status === DownloadStatus.DOWNLOADING && download.progress < 100
+        );
 
-        for (const [modelId, downloadInfo] of Object.entries(downloads) as [
-          string,
-          DownloadProgress
-        ][]) {
-          if (
-            downloadInfo.status === "downloading" &&
-            downloadInfo.progress < 100
-          ) {
-            const downloadId = `${modelId}_restored_${Date.now()}`;
-            this.modelDownloads.set(downloadId, {
-              modelId,
-              modelName: modelId,
-              status: "downloading",
-              progress: downloadInfo.progress || 0,
-              currentStep: `Downloading... ${downloadInfo.progress || 0}%`,
-              startTime: Date.now(),
-              errors: [],
-            });
-          }
-        }
-
-        if (this.modelDownloads.size > 0) {
+        if (isDownloadingInProgress) {
           this.startDownloadPolling();
         }
       } catch (error: any) {
@@ -1184,14 +743,9 @@ export const useModelsStore = defineStore("models", {
      * Force refresh downloads from API
      * @returns {Object} Downloads data
      */
-    async refreshDownloads(): Promise<Record<string, DownloadProgress>> {
+    async refreshDownloads(): Promise<void> {
       try {
-        const response = await api.get("/downloads");
-        const downloads = response.data || {};
-
-        this.downloadProgress = new Map(Object.entries(downloads));
-
-        return downloads;
+        this.downloadProgress = await this.fetchAllDownloads();
       } catch (error: any) {
         console.error("Error refreshing downloads:", error);
         this.setError("Failed to refresh downloads");
@@ -1216,9 +770,6 @@ export const useModelsStore = defineStore("models", {
 export type {
   Model,
   DownloadProgress,
-  BundleInstallation,
-  ModelDownload,
-  ActiveInstallation,
   ModelFilterCriteria,
   ModelEntry,
   ModelsState,

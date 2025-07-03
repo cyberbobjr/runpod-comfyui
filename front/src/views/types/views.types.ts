@@ -253,3 +253,95 @@ export const validateMinLength = (value: string, minLength: number, fieldName: s
     ? `${fieldName} must be at least ${minLength} characters long` 
     : '';
 };
+
+/**
+ * File Manager Types
+ */
+
+/**
+ * File item interface for file manager
+ */
+export interface FileItem {
+  name: string;
+  type: 'file' | 'directory';
+  size?: number;
+  modified?: string;
+  path?: string;
+  extension?: string;
+  is_registered?: boolean;
+  is_corrupted?: boolean;
+  expected_size?: number;
+  actual_size?: number;
+}
+
+/**
+ * Directory item interface for folder tree
+ */
+export interface DirectoryItem {
+  name: string;
+  path: string;
+  children?: DirectoryItem[];
+}
+
+/**
+ * File properties interface
+ */
+export interface FileProperties {
+  name: string;
+  path: string;
+  size: number;
+  type: string;
+  modified: string;
+  extension?: string;
+  isRegistered?: boolean;
+  registeredAs?: string;
+  [key: string]: any;
+}
+
+/**
+ * Upload progress interface
+ */
+export interface UploadProgress {
+  isUploading: boolean;
+  percentage: number;
+  loaded: number;
+  total: number;
+  fileName: string;
+}
+
+/**
+ * File upload event interface
+ */
+export interface FileUploadEvent {
+  target: HTMLInputElement & {
+    files: FileList | null;
+    value: string;
+  };
+}
+
+/**
+ * Props interface for DirectoryDetailsComponent
+ */
+export interface DirectoryDetailsProps {
+  currentPath?: string;
+  files?: FileItem[];
+  dirs?: DirectoryItem[];
+  selectedFile?: FileItem | null;
+  fileProps?: FileProperties | null;
+}
+
+/**
+ * Emits interface for DirectoryDetailsComponent
+ */
+export interface DirectoryDetailsEmits {
+  (e: 'go-up'): void;
+  (e: 'refresh'): void;
+  (e: 'file-upload', event: FileUploadEvent): void;
+  (e: 'create-directory'): void;
+  (e: 'navigate-to-folder', path: string): void;
+  (e: 'select-file', file: FileItem): void;
+  (e: 'rename', item: FileItem): void;
+  (e: 'delete', item: FileItem): void;
+  (e: 'download', file: FileItem): void;
+  (e: 'copy', file: FileItem): void;
+}

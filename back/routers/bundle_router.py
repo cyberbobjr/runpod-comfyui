@@ -11,6 +11,7 @@ This module contains all API routes for bundle management including:
 from fastapi import APIRouter, HTTPException, Depends, File, UploadFile, Query
 from fastapi.responses import FileResponse
 from typing import List, Dict, Any
+import traceback
 
 from ..services.auth_middleware import protected
 from ..services.bundle_service import BundleService
@@ -54,6 +55,7 @@ def get_all_bundles(user=Depends(protected)):
         return bundle_service.get_all_bundles()
     except Exception as e:
         logger.error(f"Error getting bundles: {e}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Error retrieving bundles: {str(e)}")
 
 
@@ -112,6 +114,7 @@ def install_bundle(install_request: BundleInstallRequest, user=Depends(protected
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Error installing bundle: {e}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Error installing bundle: {str(e)}")
 
 
@@ -160,6 +163,7 @@ def uninstall_bundle(uninstall_request: BundleUninstallRequest, user=Depends(pro
         raise HTTPException(status_code=404, detail=f"Bundle {uninstall_request.bundle_id} or profile {uninstall_request.profile} not found or not installed")
     except Exception as e:
         logger.error(f"Error uninstalling profile {uninstall_request.profile} from bundle {uninstall_request.bundle_id}: {e}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Error uninstalling bundle profile: {str(e)}")
 
 
@@ -188,24 +192,13 @@ def get_installed_bundles(user=Depends(protected)):
     
     ```
     [
+            
         {
-            "bundle": {
-                "id": "example-bundle-id",
-                "name": "Example Bundle",
-                "description": "A test bundle.",
-                "version": "1.0.0",
-                "author": "Author Name",
-                "website": "https://example.com",
-                "hardware_profiles": { ... },
-                "workflows": [ ... ]
-            },
-            "installation": {
-                "profile": "default",
-                "installed_at": "2024-07-01T12:34:56.789Z",
-                "status": "completed",
-                "installed_models": ["modelA.safetensors", "modelB.safetensors"],
-                "failed_models": []
-            }
+            "profile": "default",
+            "installed_at": "2024-07-01T12:34:56.789Z",
+            "status": "completed",
+            "installed_models": ["modelA.safetensors", "modelB.safetensors"],
+            "failed_models": []
         },
         ...
     ]
@@ -221,6 +214,7 @@ def get_installed_bundles(user=Depends(protected)):
         return bundle_service.get_installed_bundles()
     except Exception as e:
         logger.error(f"Error getting installed bundles: {e}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Error retrieving installed bundles: {str(e)}")
 
 
@@ -248,11 +242,13 @@ def get_bundle(bundle_id: str, user=Depends(protected)):
     Usage: Get details of a specific bundle.
     """
     try:
-        return bundle_service.get_bundle(bundle_id)
+        bundle = bundle_service.get_bundle(bundle_id)
+        return bundle
     except FileNotFoundError:
-        raise HTTPException(status_code=404, detail=f"Bundle {bundle_id} not found")
+        raise HTTPException(status_code=404, detail=f"Bundle with id {bundle_id} not found")
     except Exception as e:
         logger.error(f"Error getting bundle {bundle_id}: {e}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Error retrieving bundle: {str(e)}")
 
 
@@ -298,11 +294,13 @@ def create_bundle(bundle_data: BundleCreate, user=Depends(protected)):
     Create a new bundle from provided data for later installation or sharing.
     """
     try:
-        return bundle_service.create_bundle(bundle_data)
+        new_bundle = bundle_service.create_bundle(bundle_data)
+        return new_bundle
     except ValueError as e:
-        raise HTTPException(status_code=409, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Error creating bundle: {e}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Error creating bundle: {str(e)}")
 
 
@@ -341,13 +339,15 @@ def update_bundle(bundle_id: str, bundle_data: BundleUpdate, user=Depends(protec
     Update an existing bundle's properties, such as name, description, or hardware profiles.
     """
     try:
-        return bundle_service.update_bundle(bundle_id, bundle_data)
+        updated_bundle = bundle_service.update_bundle(bundle_id, bundle_data)
+        return updated_bundle
     except FileNotFoundError:
-        raise HTTPException(status_code=404, detail=f"Bundle {bundle_id} not found")
+        raise HTTPException(status_code=404, detail=f"Bundle with id {bundle_id} not found")
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Error updating bundle {bundle_id}: {e}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Error updating bundle: {str(e)}")
 
 
@@ -384,11 +384,12 @@ def delete_bundle(bundle_id: str, user=Depends(protected)):
     """
     try:
         bundle_service.delete_bundle(bundle_id)
-        return {"ok": True, "message": f"Bundle {bundle_id} deleted successfully"}
+        return {"ok": True, "message": f"Bundle with id {bundle_id} deleted successfully"}
     except FileNotFoundError:
-        raise HTTPException(status_code=404, detail=f"Bundle {bundle_id} not found")
+        raise HTTPException(status_code=404, detail=f"Bundle with id {bundle_id} not found")
     except Exception as e:
         logger.error(f"Error deleting bundle {bundle_id}: {e}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Error deleting bundle: {str(e)}")
 
 
@@ -436,6 +437,7 @@ def upload_bundle(file: UploadFile = File(...), user=Depends(protected)):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Error uploading bundle: {e}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Error uploading bundle: {str(e)}")
 
 
@@ -474,10 +476,11 @@ def download_bundle(bundle_id: str, user=Depends(protected)):
         raise HTTPException(status_code=404, detail=f"Bundle {bundle_id} not found")
     except Exception as e:
         logger.error(f"Error downloading bundle {bundle_id}: {e}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Error downloading bundle: {str(e)}")
 
 
-@router.post("/duplicate/{bundle_id}")
+@router.post("/duplicate", response_model=Bundle)
 def duplicate_bundle(bundle_id: str, duplicate_data: BundleDuplicateRequest, user=Depends(protected)):
     """
     POST /api/bundles/duplicate/{bundle_id}
@@ -512,16 +515,83 @@ def duplicate_bundle(bundle_id: str, duplicate_data: BundleDuplicateRequest, use
     Create a copy of a bundle with a different name for modification, testing, or versioning.
     """
     try:
-        new_bundle_id = bundle_service.duplicate_bundle(bundle_id, duplicate_data.new_name)
-        return {
-            "ok": True,
-            "message": f"Bundle duplicated successfully",
-            "new_bundle_id": new_bundle_id
-        }
-    except FileNotFoundError:
-        raise HTTPException(status_code=404, detail=f"Bundle {bundle_id} not found")
+        new_bundle = bundle_service.duplicate_bundle(duplicate_data.original_bundle_id, duplicate_data.new_name)
+        return new_bundle
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
     except ValueError as e:
-        raise HTTPException(status_code=409, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Error duplicating bundle {bundle_id}: {e}")
+        logger.error(f"Error duplicating bundle: {e}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Error duplicating bundle: {str(e)}")
+
+
+@router.post("/export/{bundle_id}", response_class=FileResponse)
+def export_bundle(bundle_id: str, user=Depends(protected)):
+    """
+    POST /api/bundles/export/{bundle_id}
+
+    Exports a bundle as a ZIP file.
+
+    **Arguments:**
+    - `bundle_id` (str): Bundle identifier (in URL path)
+    - `user`: Authentication token (automatic via Depends)
+
+    **Returns:**
+    - Status: 200 OK
+    - Body: ZIP file download
+    - Headers: Content-Disposition with filename
+
+    **Usage:**
+    Export a bundle as a ZIP file for backup, migration, or sharing with others.
+
+    **Possible errors:**
+    - 401: Not authenticated
+    - 404: Bundle not found
+    - 500: Error creating export
+    """
+    try:
+        zip_path = bundle_service.export_bundle(bundle_id)
+        return FileResponse(zip_path, media_type='application/zip', filename=f"{bundle_id}.zip")
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Bundle with id {bundle_id} not found")
+    except Exception as e:
+        logger.error(f"Error exporting bundle {bundle_id}: {e}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Error exporting bundle: {str(e)}")
+
+
+@router.post("/import", response_model=Bundle)
+async def import_bundle(file: UploadFile = File(...), user=Depends(protected)):
+    """
+    POST /api/bundles/import
+
+    Imports a bundle from a ZIP file.
+
+    **Arguments:**
+    - `file` (UploadFile): ZIP file containing the bundle
+    - `user`: Authentication token (automatic via Depends)
+
+    **Returns:**
+    - Status: 200 OK
+    - Body: Imported Bundle object
+
+    **Possible errors:**
+    - 401: Not authenticated
+    - 400: Invalid file format or corrupted bundle
+    - 409: Bundle with the same name already exists
+    - 500: Error processing import
+
+    **Usage:**
+    Import a bundle from an uploaded ZIP file for installation or sharing.
+    """
+    try:
+        imported_bundle = await bundle_service.import_bundle(file)
+        return imported_bundle
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error importing bundle: {e}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Error importing bundle: {str(e)}")

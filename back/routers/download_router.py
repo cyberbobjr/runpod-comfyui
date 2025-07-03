@@ -7,7 +7,6 @@ from back.services.auth_middleware import protected
 download_router = APIRouter(prefix="/api/downloads")
 
 
-@download_router.get("/")
 @download_router.get("")
 def get_all_downloads(user=Depends(protected)):
     """
@@ -18,21 +17,35 @@ def get_all_downloads(user=Depends(protected)):
     **Parameters:**
     - `user` (str): Authenticated user from JWT token
     
-    **Returns:** 
-    A list of dictionaries, each containing the model_id and its progress information.
-    
+    **Returns:**
+    A list of dictionaries, each containing the model_id and its download progress information. Each progress object includes:
+    - `progress` (int): Download progress percentage (0-100)
+    - `status` (str): Download status (e.g., 'downloading', 'done', 'stopped', 'error', 'idle')
+    - `dest_path` (str, optional): Destination file or directory path
+    - `start_time` (float, optional): Timestamp when download started (seconds since epoch)
+    - `finished_time` (float, optional): Timestamp when download finished (seconds since epoch)
+    - `error` (str, optional): Error message if any
+
     **Example response:**
     ```json
     [
       {
         "model_id": "model_123",
         "progress": 50,
-        "status": "downloading"
+        "status": "downloading",
+        "dest_path": "/models/model_123.safetensors",
+        "start_time": 1720000000.0,
+        "finished_time": null,
+        "error": null
       },
       {
         "model_id": "model_456",
         "progress": 100,
-        "status": "stopped"
+        "status": "stopped",
+        "dest_path": "/models/model_456.safetensors",
+        "start_time": 1720000000.0,
+        "finished_time": 1720000030.0,
+        "error": null
       }
     ]
     ```
@@ -102,18 +115,29 @@ async def download_models(
 def stop_download(entry: dict, user=Depends(protected)):
     """
     Stops an ongoing download for a given model.
-    
-    **Description:** 
-    Cancels an active download and cleans up partial files.
-    The request body must contain the model information to identify the download to stop.
-    
+
+    **Description:**
+    Cancels an active download and cleans up partial files. The request body must contain exactly one of the following keys to uniquely identify the download to stop:
+    - `dest` (str): The destination path of the model file (for HTTP/HTTPS downloads)
+    - `git` (str): The git repository URL (for git downloads)
+
     **Parameters:**
-    - `entry` (dict): Model information to identify the download.
+    - `entry` (dict): Model information to identify the download. Must include either:
+        - `dest` (str): The destination path of the model file (for HTTP/HTTPS downloads)
+        - OR `git` (str): The git repository URL (for git downloads)
+      Example request bodies:
+      ```json
+      { "dest": "models/checkpoints/flux1-dev.safetensors" }
+      ```
+      or
+      ```json
+      { "git": "https://github.com/owner/repo.git" }
+      ```
     - `user` (str): Authenticated user from JWT token.
-    
-    **Returns:** 
+
+    **Returns:**
     A dictionary with the operation status and a message.
-    
+
     **Example response (success):**
     ```json
     {
@@ -146,14 +170,24 @@ def get_progress(entry: dict = Body(...), user=Depends(protected)):
     - `entry` (dict): Model information to identify the download.
     - `user` (str): Authenticated user from JWT token.
     
-    **Returns:** 
-    A dictionary containing the progress percentage and status.
-    
+    **Returns:**
+    A dictionary containing the download progress information for the model. The object includes:
+    - `progress` (int): Download progress percentage (0-100)
+    - `status` (str): Download status (e.g., 'downloading', 'done', 'stopped', 'error', 'idle')
+    - `dest_path` (str, optional): Destination file or directory path
+    - `start_time` (float, optional): Timestamp when download started (seconds since epoch)
+    - `finished_time` (float, optional): Timestamp when download finished (seconds since epoch)
+    - `error` (str, optional): Error message if any
+
     **Example response:**
     ```json
     {
       "progress": 75,
-      "status": "downloading"
+      "status": "downloading",
+      "dest_path": "/models/model_123.safetensors",
+      "start_time": 1720000000.0,
+      "finished_time": null,
+      "error": null
     }
     ```
     """

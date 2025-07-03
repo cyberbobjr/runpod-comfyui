@@ -2,7 +2,7 @@
   <div class="border border-border rounded-lg overflow-hidden">
     <!-- Accordion Header -->
     <div
-      class="flex justify-between items-center cursor-pointer bg-background-mute hover:bg-background-soft transition-colors"
+      class="flex justify-between items-center cursor-pointer bg-background-mute hover:bg-background-soft transition-colors duration-200 ease-in-out"
       :class="[headerClasses, { 'border-b border-border': isOpen }]"
       @click="toggleAccordion"
     >
@@ -17,15 +17,24 @@
       </div>
       <FontAwesomeIcon
         icon="chevron-down"
-        class="text-text-muted transform transition-transform duration-200"
+        class="text-text-muted transition-transform duration-200 ease-in-out"
         :class="[chevronClasses, { 'rotate-180': isOpen }]"
       />
     </div>
 
     <!-- Accordion Content -->
-    <div v-if="isOpen" class="bg-background" :class="contentClasses">
-      <slot></slot>
-    </div>
+    <transition
+      enter-active-class="transition-all duration-300 ease-out overflow-hidden"
+      enter-from-class="max-h-0 opacity-0 -translate-y-2"
+      enter-to-class="max-h-screen opacity-100 translate-y-0"
+      leave-active-class="transition-all duration-250 ease-in overflow-hidden"
+      leave-from-class="max-h-screen opacity-100 translate-y-0"
+      leave-to-class="max-h-0 opacity-0 -translate-y-2"
+    >
+      <div v-if="isOpen" class="bg-background" :class="contentClasses">
+        <slot></slot>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -218,7 +227,3 @@ defineExpose({
   toggleAccordion
 })
 </script>
-
-<style scoped>
-/* Additional custom styles if needed */
-</style>

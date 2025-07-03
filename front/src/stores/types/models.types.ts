@@ -3,7 +3,6 @@
  * Contains all interfaces and types used in the models management system
  */
 
-
 /**
  * Model object structure
  * @TODO : clean deprecated fields and ensure consistency
@@ -23,20 +22,48 @@ export interface Model {
   comments?: string;
   filename?: string;
   [key: string]: any;
-    exists?: boolean;
+  exists?: boolean;
 }
-
 
 /**
- * Download progress information
+ * Download progress information returned by the /downloads API
+ */
+/**
+ * Enum for download status values
+ */
+export enum DownloadStatus {
+  DOWNLOADING = "downloading",
+  DONE = "done",
+  STOPPED = "stopped",
+  ERROR = "error",
+  IDLE = "idle"
+}
+
+/**
+ * Download progress information returned by the /downloads API
  */
 export interface DownloadProgress {
+  model_id : string;
+  /** Download progress percentage (0-100) */
   progress: number;
-  status: "downloading" | "completed" | "stopped" | "error" | "cancelled";
+  /** Download status (see DownloadStatus enum) */
+  status: DownloadStatus;
+  /** Destination file or directory path */
+  dest_path?: string | null;
+  /** Timestamp when download started (seconds since epoch) */
+  start_time?: number | null;
+  /** Timestamp when download finished (seconds since epoch) */
+  finished_time?: number | null;
+  /** Error message if any */
   error?: string | null;
-  startTime?: number;
-  endTime?: number;
 }
+
+/**
+ * API response for /downloads endpoint
+ * Maps modelId to DownloadProgress object
+ */
+// API response for /downloads endpoint (Record of modelId to DownloadProgress)
+export type DownloadsApiResponse = DownloadProgress[];
 
 /**
  * Bundle installation tracking
@@ -60,33 +87,6 @@ export interface BundleInstallation {
   endTime?: number;
 }
 
-/**
- * Model download tracking for UI display
- */
-export interface ModelDownload {
-  modelId: string;
-  modelName: string;
-  status: "downloading" | "completed" | "cancelled" | "error";
-  progress: number;
-  currentStep: string;
-  startTime: number;
-  errors: string[];
-}
-
-/**
- * Active installation item for UI display
- */
-export interface ActiveInstallation {
-  downloadId: string;
-  bundleId: string;
-  bundleName: string;
-  profiles: string[];
-  status: string;
-  progress: number;
-  currentStep: string;
-  startTime: number;
-  errors: string[];
-}
 
 /**
  * Filter criteria for models
@@ -117,11 +117,8 @@ export interface ModelsState {
   loading: boolean;
   error: string | null;
   selectedModels: Model[];
-  downloadProgress: Map<string, DownloadProgress>;
+  downloadProgress: DownloadProgress[];
   _downloadPollingInterval: any | null;
-  bundleInstallations: Map<string, BundleInstallation>;
-  _bundlePollingInterval: any | null;
-  modelDownloads: Map<string, ModelDownload>;
 }
 
 /**
@@ -147,10 +144,6 @@ export interface ModelsApiResponse {
   groups: Record<string, any[]>;
 }
 
-export interface DownloadsApiResponse {
-  [modelId: string]: DownloadProgress;
-}
-
 export interface InstalledBundlesApiResponse {
   id: string;
   profile: string;
@@ -163,5 +156,5 @@ export interface InstalledBundlesApiResponse {
  * @returns Model ID calculated from dest or git property
  */
 export const getModelId = (model: Model): string => {
-  return model.dest || model.git || '';
+  return model.dest || model.git || "";
 };

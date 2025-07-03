@@ -10,6 +10,7 @@
 
 import { defineStore } from 'pinia'
 import api from '../services/api'
+import { TOKENSTORAGEKEY } from '@/services/types/api.types'
 
 /**
  * User role types
@@ -104,7 +105,7 @@ export const useAuthStore = defineStore('auth', {
     isAuthenticated: false,
     loading: false,
     error: null,
-    token: localStorage.getItem('auth_token') || null,
+    token: localStorage.getItem(TOKENSTORAGEKEY) || null,
     sessionExpiry: null,
     permissions: []
   }),
@@ -180,7 +181,7 @@ export const useAuthStore = defineStore('auth', {
         this.sessionExpiry = response.data.expiresAt || null
 
         // Store token in localStorage
-        localStorage.setItem('auth_token', response.data.token)
+        localStorage.setItem(TOKENSTORAGEKEY, response.data.token)
 
         return true
       } catch (error: any) {
@@ -218,7 +219,7 @@ export const useAuthStore = defineStore('auth', {
         this.loading = false
 
         // Clear token from localStorage
-        localStorage.removeItem('auth_token')
+        localStorage.removeItem(TOKENSTORAGEKEY)
 
         if (redirect) {
           // Redirect handled by router guard
@@ -276,7 +277,7 @@ export const useAuthStore = defineStore('auth', {
           this.isAuthenticated = true
           this.permissions = response.data.permissions || []
           this.sessionExpiry = response.data.expiresAt || null
-          localStorage.setItem('auth_token', response.data.token)
+          localStorage.setItem(TOKENSTORAGEKEY, response.data.token)
         }
 
         return response.data

@@ -1,6 +1,4 @@
 <template>
-  <div class="install-page p-4 bg-background min-h-screen">
-    <!-- Tabs Navigation -->
     <div class="bg-background-soft border border-border rounded-lg">
       <!-- Tab Headers -->
       <div class="border-b border-border">
@@ -45,7 +43,6 @@
         </div>
       </div>
     </div>
-  </div>
 </template>
 
 <script setup lang="ts">
@@ -53,7 +50,6 @@ import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { 
-  faDownload, 
   faBoxOpen, 
   faCubes 
 } from '@fortawesome/free-solid-svg-icons'

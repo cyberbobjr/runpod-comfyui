@@ -43,7 +43,7 @@ export const useBundlesStore = defineStore('bundles', {
      */
     isBundleInstalled(): (bundleId: string, profile : string) => boolean {
       return (bundleId: string, profile : string): boolean => {
-        return this.installedBundles.some((installedBundle: InstalledBundle) => installedBundle.bundle.id === bundleId && installedBundle.installation.profile === profile);
+        return this.installedBundles.some((installedBundle: InstalledBundle) => installedBundle.bundle_id === bundleId && installedBundle.profile === profile && installedBundle.status === 'completed');
       };
     },
 

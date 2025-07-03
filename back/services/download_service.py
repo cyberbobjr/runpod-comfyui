@@ -72,8 +72,7 @@ class DownloadService:
         return DownloadManager.get_all_progress()
 
     @staticmethod
-    def start_download(entry: dict, hf_token: Optional[str] = None, 
-                      civitai_token: Optional[str] = None) -> bool:
+    def start_download(entry: dict, hf_token: Optional[str] = None, civitai_token: Optional[str] = None) -> bool:
         """
         Starts downloading a model (url or git), merges identical requests.
         
@@ -205,11 +204,46 @@ class DownloadService:
     def stop_download(entry: dict) -> Dict[str, any]:
         """
         Stops an ongoing download for a given model.
-        
-        **Description:** Cancels an active download and cleans up partial files.
+
+        **Description:**
+        Cancels an active download and cleans up any partial files or directories associated with the model.
+        The request body (entry) must contain exactly one of the following keys to uniquely identify the download to stop:
+        - `dest` (str): The destination path of the model file (for HTTP/HTTPS downloads)
+        - `git` (str): The git repository URL (for git downloads)
+
         **Parameters:**
-        - `entry` (dict): Model information to identify the download
-        **Returns:** Dict with operation status and message
+        - `entry` (dict): Model information to identify the download. Must include either:
+            - `dest` (str): The destination path of the model file (for HTTP/HTTPS downloads)
+            - OR `git` (str): The git repository URL (for git downloads)
+          Example request bodies:
+          ```json
+          { "dest": "models/checkpoints/flux1-dev.safetensors" }
+          ```
+          or
+          ```json
+          { "git": "https://github.com/owner/repo.git" }
+          ```
+
+        **Returns:**
+        Dict[str, any]: A dictionary with the operation status and a message.
+            - `ok` (bool): True if the stop was requested, False otherwise
+            - `msg` (str): Human-readable message about the result
+
+        **Example response (success):**
+        ```json
+        {
+          "ok": true,
+          "msg": "Stop requested"
+        }
+        ```
+
+        **Example response (failure):**
+        ```json
+        {
+          "ok": false,
+          "msg": "No active download for this model"
+        }
+        ```
         """
         model_id = DownloadService.get_model_id(entry)
         stopped = DownloadManager.stop_download(model_id)

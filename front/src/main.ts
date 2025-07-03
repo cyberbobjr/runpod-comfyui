@@ -18,7 +18,6 @@ import type { App as VueApp } from 'vue';
 // @ts-ignore - Vue component import
 import App from './App.vue';
 import router from './router';
-import { setApiRouter } from './services/api';
 
 // Font Awesome
 import { library } from '@fortawesome/fontawesome-svg-core';
@@ -85,6 +84,7 @@ import {
 // Import global styles
 import './assets/main.css';
 import { initializeStores } from './stores/index';
+import { initializeApp } from './core/app-initialization';
 
 /**
  * Array of FontAwesome icons to register
@@ -170,12 +170,9 @@ async function bootstrapApp(): Promise<void> {
     app.use(pinia);
     app.use(router);
 
-    // Initialize API router after router is set up
-    setApiRouter(router);
-
     // Mount the application
     app.mount('#app');
-
+    initializeApp(router);
     // Initialize stores after app is mounted
     await initializeStores();
 

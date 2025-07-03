@@ -60,6 +60,7 @@ Contains unit tests for all modules:
 
 - **`services/`** - Tests for service layer
 - **`routers/`** - Tests for API routes
+- **`test_download_manager.py`** - Unit tests for DownloadManager (mocked HTTP/HTTPS requests, file skipping, progress reporting)
 
 ### 🏛️ Core Modules
 

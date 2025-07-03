@@ -1,305 +1,263 @@
 <template>
-  <div class="download-models-container w-full p-4 space-y-4">
-    <!-- Supprimer la card "Active Downloads" -->
-
-    <!-- Model Manager Card -->
-    <div
-      class="models-card bg-background-soft border border-border rounded-lg shadow-md"
-    >
-      <div class="flex items-center justify-between p-4 border-b border-border">
+  <div class="p-4 bg-background space-y-6">
+    <CommonCard>
+      <template #header>
         <div class="flex items-center gap-2">
-          <svg
-            class="w-6 h-6 text-white"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-          >
-            <path
-              d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"
-            />
-          </svg>
+          <FontAwesomeIcon icon="cubes" class="w-6 h-6 text-white" />
           <span class="text-lg font-bold text-white">Model Manager</span>
-        </div>
-        <div class="header-actions flex gap-2">
-          <button
-            :disabled="!hasSelectedToDelete"
-            @click="confirmDeleteSelected"
-            :class="[
-              'px-4 py-2 rounded text-sm font-medium transition-colors',
-              hasSelectedToDelete
-                ? 'bg-red-600 hover:bg-red-700 text-white'
-                : 'bg-gray-600 text-gray-400 cursor-not-allowed',
-            ]"
-          >
-            Delete selected
-          </button>
-          <button
-            :disabled="!hasSelectedToDownload"
-            @click="confirmDownloadSelected"
-            :class="[
-              'px-4 py-2 rounded text-sm font-medium transition-colors',
-              hasSelectedToDownload
-                ? 'bg-primary hover:bg-primary-dark text-white'
-                : 'bg-gray-600 text-gray-400 cursor-not-allowed',
-            ]"
-          >
-            Download selected
-          </button>
-        </div>
-      </div>
-
-      <div class="p-4 space-y-4">
-        <!-- Filter Section -->
-        <div
-          class="filter-section bg-background-mute border border-border rounded-lg p-4 space-y-3"
-        >
-          <div class="flex items-center gap-2 mb-2">
-            <svg
-              class="w-5 h-5 text-text-light"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z"
-              />
-            </svg>
-            <span class="font-medium text-text-light">Filters</span>
+          <div class="header-actions flex gap-2 ml-auto">
             <button
-              v-if="filterText || selectedTagFilters.length > 0"
-              @click="clearFilters"
-              class="ml-auto px-2 py-1 text-xs bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors"
+              :disabled="!hasSelectedToDelete"
+              @click="confirmDeleteSelected"
+              :class="[
+                'px-4 py-2 rounded text-sm font-medium transition-colors',
+                hasSelectedToDelete
+                  ? 'bg-red-600 hover:bg-red-700 text-white'
+                  : 'bg-gray-600 text-gray-400 cursor-not-allowed',
+              ]"
             >
-              Clear All
+              Delete selected
+            </button>
+            <button
+              :disabled="!hasSelectedToDownload"
+              @click="confirmDownloadSelected"
+              :class="[
+                'px-4 py-2 rounded text-sm font-medium transition-colors',
+                hasSelectedToDownload
+                  ? 'bg-primary hover:bg-primary-dark text-white'
+                  : 'bg-gray-600 text-gray-400 cursor-not-allowed',
+              ]"
+            >
+              Download selected
             </button>
           </div>
-
-          <!-- Search Input -->
-          <div class="relative">
-            <input
-              v-model="filterText"
-              type="text"
-              placeholder="Search by name or tags..."
-              class="w-full px-3 py-2 pl-10 bg-background border border-border rounded-md text-text-light placeholder-text-light-muted focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-            <svg
-              class="absolute left-3 top-2.5 w-4 h-4 text-text-light-muted"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+        </div>
+      </template>
+      <AccordionComponent
+        title="Filters"
+        icon="filter"
+        size="xs"
+        :default-open="false"
+      >
+        <div class="relative">
+          <input
+            v-model="filterText"
+            type="search"
+            placeholder="Search by name or tags..."
+            class="w-full px-3 py-2 pl-10 bg-background border border-border rounded-md text-text-light placeholder-text-light-muted focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+          <FontAwesomeIcon
+            icon="search"
+            class="absolute left-3 top-2.5 w-4 h-4 text-text-light-muted"
+          />
+        </div>
+        <!-- Tag Filters -->
+        <div v-if="allTags.length > 0" class="space-y-2">
+          <span class="text-sm font-medium text-text-light"
+            >Filter by tags:</span
+          >
+          <div class="flex flex-wrap gap-2">
+            <button
+              v-for="tag in allTags"
+              :key="tag"
+              @click="toggleTagFilter(tag)"
+              :class="[
+                'px-3 py-1 text-xs rounded-full border transition-colors',
+                selectedTagFilters.includes(tag)
+                  ? 'bg-primary text-white border-primary'
+                  : 'bg-background border-border text-text-light hover:bg-background-mute',
+              ]"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-          </div>
-
-          <!-- Tag Filters -->
-          <div v-if="allTags.length > 0" class="space-y-2">
-            <span class="text-sm font-medium text-text-light"
-              >Filter by tags:</span
-            >
-            <div class="flex flex-wrap gap-2">
-              <button
-                v-for="tag in allTags"
-                :key="tag"
-                @click="toggleTagFilter(tag)"
-                :class="[
-                  'px-3 py-1 text-xs rounded-full border transition-colors',
-                  selectedTagFilters.includes(tag)
-                    ? 'bg-primary text-white border-primary'
-                    : 'bg-background border-border text-text-light hover:bg-background-mute',
-                ]"
+              {{ tag }}
+              <span v-if="selectedTagFilters.includes(tag)" class="ml-1"
+                >×</span
               >
-                {{ tag }}
-                <span v-if="selectedTagFilters.includes(tag)" class="ml-1"
-                  >×</span
-                >
-              </button>
-            </div>
-          </div>
-
-          <!-- Filter Summary -->
-          <div
-            v-if="filterText || selectedTagFilters.length > 0"
-            class="text-xs text-text-light-muted"
-          >
-            Showing {{ filteredModels.length }} of {{ models.length }} models
-            <span v-if="filterText"> matching "{{ filterText }}"</span>
-            <span v-if="selectedTagFilters.length > 0">
-              with tags: {{ selectedTagFilters.join(", ") }}</span
-            >
+            </button>
           </div>
         </div>
-
+        <!-- Filter Summary -->
         <div
-          v-if="Object.keys(filteredGroupedModels).length === 0"
-          class="text-center text-text-light-muted py-8"
+          v-if="filterText || selectedTagFilters.length > 0"
+          class="text-xs text-text-light-muted"
         >
-          {{
-            filterText || selectedTagFilters.length > 0
-              ? "No models match the current filters."
-              : "No models found."
-          }}
-        </div>
-        <div v-else class="space-y-4">
-          <AccordionComponent
-            v-for="(groupModels, groupName) in filteredGroupedModels"
-            :key="groupName"
-            :title="groupName"
-            :size="'xs'"
-            :defaultOpen="expandedGroups.includes(groupName)"
-            @toggle="(isOpen) => handleGroupToggle(groupName, isOpen)"
+          Showing {{ filteredModels.length }} of {{ models.length }} models
+          <span v-if="filterText"> matching "{{ filterText }}"</span>
+          <span v-if="selectedTagFilters.length > 0">
+            with tags: {{ selectedTagFilters.join(", ") }}</span
           >
-            <div class="table-responsive">
-              <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                  <thead class="bg-background-mute">
-                    <tr>
-                      <th class="p-2 text-left">
-                        <input
-                          type="checkbox"
-                          :checked="allChecked(groupModels)"
-                          @change="
-                            (e) => toggleAll(groupModels, (e.target as HTMLInputElement)?.checked || false)
-                          "
-                          :disabled="
-                            groupModels.every((row) => isDownloading(row))
-                          "
-                          class="rounded"
-                        />
-                      </th>
-                      <th class="p-2 text-left text-text-light">Name</th>
-                      <th class="p-2 text-left text-text-light">Tags</th>
-                      <th class="p-2 text-left text-text-light">Type</th>
-                      <th class="p-2 text-left text-text-light">Size</th>
-                      <th class="p-2 text-left text-text-light">Source</th>
-                      <th class="p-2 text-left text-text-light">Present</th>
-                      <th class="p-2 text-left text-text-light">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr
-                      v-for="model in groupModels"
-                      :key="modelKey(model)"
-                      :class="[
-                        'border-b border-border hover:bg-background-mute transition-colors',
-                        isDownloading(model) ? 'is-downloading' : '',
-                      ]"
-                    >
-                      <td class="p-2">
-                        <input
-                          type="checkbox"
-                          :checked="selected[modelKey(model)] || false"
-                          @change="
-                            (e) => handleRowCheck(model, (e.target as HTMLInputElement)?.checked || false)
-                          "
-                          :disabled="isDownloading(model)"
-                          class="rounded"
-                        />
-                      </td>
-                      <td class="p-2">
-                        <span
-                          :class="[
-                            'font-medium',
-                            isDownloading(model) ? 'opacity-50' : '',
-                            isNSFW(model) ? 'text-red-400' : 'text-text-light',
-                          ]"
-                        >
-                          {{ lastPath(model.dest) || model.git }}
-                        </span>
-                      </td>
-                      <td class="p-2">
-                        <div
-                          v-if="model.tags && model.tags.length"
-                          class="flex flex-wrap gap-1"
-                        >
-                          <span
-                            v-for="tag in Array.isArray(model.tags)
-                              ? model.tags
-                              : [model.tags]"
-                            :key="tag"
-                            class="px-2 py-1 bg-blue-600 text-white text-xs rounded"
-                          >
-                            {{ tag }}
-                          </span>
-                        </div>
-                        <span v-else class="text-text-light-muted">-</span>
-                      </td>
-                      <td class="p-2 text-text-light">
-                        {{ model.type || groupName }}
-                      </td>
-                      <td class="p-2 text-text-light">
-                        {{ model.size ? formatSize(model.size) : "-" }}
-                      </td>
-                      <td class="p-2">
-                        <a
-                          v-if="model.src"
-                          :href="model.src"
-                          target="_blank"
-                          rel="noopener"
-                          class="text-primary hover:text-primary-light underline"
-                        >
-                          Link
-                        </a>
-                        <span v-else class="text-text-light-muted">-</span>
-                      </td>
-                      <td class="p-2">
-                        <span
-                          :class="[
-                            'px-2 py-1 text-xs rounded',
-                            model.exists
-                              ? 'bg-green-600 text-white'
-                              : 'bg-red-600 text-white',
-                          ]"
-                        >
-                          {{ model.exists ? "Yes" : "No" }}
-                        </span>
-                      </td>
-                      <td class="p-2">
-                        <div class="flex gap-2">
-                          <button
-                            v-if="!model.exists"
-                            @click="confirmDownload(model)"
-                            :disabled="isDownloading(model)"
-                            :class="[
-                              'px-3 py-1 rounded text-sm transition-colors',
-                              isDownloading(model)
-                                ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                : 'bg-primary hover:bg-primary-dark text-white',
-                            ]"
-                          >
-                            Download
-                          </button>
-                          <button
-                            v-if="model.exists"
-                            @click="confirmDelete(model)"
-                            :disabled="isDownloading(model)"
-                            :class="[
-                              'px-3 py-1 rounded text-sm transition-colors',
-                              isDownloading(model)
-                                ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                : 'bg-red-600 hover:bg-red-700 text-white',
-                            ]"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </AccordionComponent>
         </div>
+      </AccordionComponent>
+<br/>
+      <div
+        v-if="Object.keys(filteredGroupedModels).length === 0"
+        class="text-center text-text-light-muted py-8"
+      >
+        {{
+          filterText || selectedTagFilters.length > 0
+            ? "No models match the current filters."
+            : "No models found."
+        }}
       </div>
-    </div>
+      <div v-else class="space-y-4">
+        <AccordionComponent
+          v-for="(groupModels, groupName) in filteredGroupedModels"
+          :key="groupName"
+          :title="groupName"
+          :size="'xs'"
+          :defaultOpen="expandedGroups.includes(groupName)"
+          @toggle="(isOpen) => handleGroupToggle(groupName, isOpen)"
+        >
+          <div class="table-responsive">
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead class="bg-background-mute">
+                  <tr>
+                    <th class="p-2 text-left">
+                      <input
+                        type="checkbox"
+                        :checked="allChecked(groupModels)"
+                        @change="
+                          (e) =>
+                            toggleAll(
+                              groupModels,
+                              (e.target as HTMLInputElement)?.checked || false
+                            )
+                        "
+                        :disabled="
+                          groupModels.every((row) => isDownloading(row))
+                        "
+                        class="rounded"
+                      />
+                    </th>
+                    <th class="p-2 text-left text-text-light">Name</th>
+                    <th class="p-2 text-left text-text-light">Tags</th>
+                    <th class="p-2 text-left text-text-light">Type</th>
+                    <th class="p-2 text-left text-text-light">Size</th>
+                    <th class="p-2 text-left text-text-light">Source</th>
+                    <th class="p-2 text-left text-text-light">Present</th>
+                    <th class="p-2 text-left text-text-light">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="model in groupModels"
+                    :key="modelKey(model)"
+                    :class="[
+                      'border-b border-border hover:bg-background-mute transition-colors',
+                      isDownloading(model) ? 'is-downloading' : '',
+                    ]"
+                  >
+                    <td class="p-2">
+                      <input
+                        type="checkbox"
+                        :checked="selected[modelKey(model)] || false"
+                        @change="
+                          (e) =>
+                            handleRowCheck(
+                              model,
+                              (e.target as HTMLInputElement)?.checked || false
+                            )
+                        "
+                        :disabled="isDownloading(model)"
+                        class="rounded"
+                      />
+                    </td>
+                    <td class="p-2">
+                      <span
+                        :class="[
+                          'font-medium',
+                          isDownloading(model) ? 'opacity-50' : '',
+                          isNSFW(model) ? 'text-red-400' : 'text-text-light',
+                        ]"
+                      >
+                        {{ lastPath(model.dest) || model.git }}
+                      </span>
+                    </td>
+                    <td class="p-2">
+                      <div
+                        v-if="model.tags && model.tags.length"
+                        class="flex flex-wrap gap-1"
+                      >
+                        <span
+                          v-for="tag in Array.isArray(model.tags)
+                            ? model.tags
+                            : [model.tags]"
+                          :key="tag"
+                          class="px-2 py-1 bg-blue-600 text-white text-xs rounded"
+                        >
+                          {{ tag }}
+                        </span>
+                      </div>
+                      <span v-else class="text-text-light-muted">-</span>
+                    </td>
+                    <td class="p-2 text-text-light">
+                      {{ model.type || groupName }}
+                    </td>
+                    <td class="p-2 text-text-light">
+                      {{ model.size ? formatSize(model.size) : "-" }}
+                    </td>
+                    <td class="p-2">
+                      <a
+                        v-if="model.src"
+                        :href="model.src"
+                        target="_blank"
+                        rel="noopener"
+                        class="text-primary hover:text-primary-light underline"
+                      >
+                        Link
+                      </a>
+                      <span v-else class="text-text-light-muted">-</span>
+                    </td>
+                    <td class="p-2">
+                      <span
+                        :class="[
+                          'px-2 py-1 text-xs rounded',
+                          model.exists
+                            ? 'bg-green-600 text-white'
+                            : 'bg-red-600 text-white',
+                        ]"
+                      >
+                        {{ model.exists ? "Yes" : "No" }}
+                      </span>
+                    </td>
+                    <td class="p-2">
+                      <div class="flex gap-2">
+                        <button
+                          v-if="!model.exists"
+                          @click="confirmDownload(model)"
+                          :disabled="isDownloading(model)"
+                          :class="[
+                            'px-3 py-1 rounded text-sm transition-colors',
+                            isDownloading(model)
+                              ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                              : 'bg-primary hover:bg-primary-dark text-white',
+                          ]"
+                        >
+                          Download
+                        </button>
+                        <button
+                          v-if="model.exists"
+                          @click="confirmDelete(model)"
+                          :disabled="isDownloading(model)"
+                          :class="[
+                            'px-3 py-1 rounded text-sm transition-colors',
+                            isDownloading(model)
+                              ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                              : 'bg-red-600 hover:bg-red-700 text-white',
+                          ]"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </AccordionComponent>
+      </div>
+    </CommonCard>
   </div>
 </template>
 
@@ -307,8 +265,10 @@
 import { ref, computed, onMounted, watchEffect } from "vue";
 import { useNotifications } from "../composables/useNotifications";
 import AccordionComponent from "./common/AccordionComponent.vue";
-import { useModelsStore } from "../stores/models";
+import { Model, useModelsStore } from "../stores/models";
 import { storeToRefs } from "pinia";
+import CommonCard from "./common/CommonCard.vue";
+import { getModelId } from "@/stores/types/models.types";
 
 /**
  * DownloadModelsComponent
@@ -465,26 +425,6 @@ import { storeToRefs } from "pinia";
  * - Supports AccordionComponent for grouped layout
  * - Follows project design system and Tailwind CSS conventions
  */
-interface ModelItem {
-  url?: string;
-  git?: string;
-  dest?: string;
-  group?: string;
-  tags?: string | string[];
-  exists?: boolean;
-  size?: number;
-  [key: string]: any;
-}
-
-/**
- * Download progress interface
- */
-interface DownloadProgress {
-  progress: number;
-  status?: string;
-  [key: string]: any;
-}
-
 /**
  * Configuration interface
  */
@@ -501,12 +441,12 @@ type SelectedModels = Record<string, boolean>;
 /**
  * Grouped models type
  */
-type GroupedModels = Record<string, ModelItem[]>;
+type GroupedModels = Record<string, Model[]>;
 
 const modelsStore = useModelsStore();
 
 // --- State ---
-const { models, rawDownloads } = storeToRefs(modelsStore);
+const { models, downloadProgress } = storeToRefs(modelsStore);
 const selected = ref<SelectedModels>({});
 const config = ref<Config>({});
 
@@ -517,9 +457,6 @@ const selectedTagFilters = ref<string[]>([]);
 // --- Notifications system ---
 const { showNotification, showDialog } = useNotifications();
 
-// --- Use centralized downloads data instead of local downloads ---
-const downloads = rawDownloads as any; // Type assertion to handle store structure
-
 // --- Fetch models ---
 const fetchModels = async (): Promise<void> => {
   try {
@@ -529,25 +466,6 @@ const fetchModels = async (): Promise<void> => {
     // handled by store error
   }
 };
-
-// --- Rafraîchir la liste des modèles à la fin d'un téléchargement ---
-let previousDownloads: any = {};
-watchEffect(() => {
-  // Pour chaque modèle en cours de téléchargement précédemment
-  for (const key in previousDownloads) {
-    // Si le téléchargement a disparu OU est passé à 100%
-    if (
-      !(key in downloads.value) ||
-      (downloads.value[key] && downloads.value[key].progress === 100)
-    ) {
-      // Rafraîchir la liste des modèles et mettre à jour previousDownloads
-      fetchModels();
-      break;
-    }
-  }
-  // Mettre à jour previousDownloads pour la prochaine comparaison
-  previousDownloads = { ...downloads.value };
-});
 
 // --- Additional state for UI ---
 const expandedGroups = ref<string[]>([]);
@@ -561,7 +479,7 @@ const handleGroupToggle = (groupName: string, isOpen: boolean): void => {
   }
 };
 
-const handleRowCheck = (model: ModelItem, checked: boolean): void => {
+const handleRowCheck = (model: Model, checked: boolean): void => {
   const key = modelKey(model);
   if (checked) {
     selected.value[key] = true;
@@ -575,7 +493,7 @@ const handleRowCheck = (model: ModelItem, checked: boolean): void => {
 // --- Computed properties for filtering ---
 const allTags = computed((): string[] => {
   const tags = new Set<string>();
-  (models.value as ModelItem[]).forEach((model) => {
+  (models.value as Model[]).forEach((model) => {
     if (model.tags) {
       if (Array.isArray(model.tags)) {
         model.tags.forEach((tag) => tags.add(tag));
@@ -587,8 +505,8 @@ const allTags = computed((): string[] => {
   return Array.from(tags).sort();
 });
 
-const filteredModels = computed((): ModelItem[] => {
-  let filtered = models.value as ModelItem[];
+const filteredModels = computed((): Model[] => {
+  let filtered = models.value as Model[];
 
   // Filter by text (name or tags)
   if (filterText.value.trim()) {
@@ -661,13 +579,9 @@ const toggleTagFilter = (tag: string): void => {
   }
 };
 
-const clearFilters = (): void => {
-  filterText.value = "";
-  selectedTagFilters.value = [];
-};
-
 // --- Helpers ---
-const modelKey = (model: ModelItem): string => model.url || model.git || '';
+const modelKey = (model: Model): string => getModelId(model);
+
 const lastPath = (path?: string): string => path?.split("/").pop() || "";
 const formatSize = (size?: number): string => {
   if (!size) return "-";
@@ -676,20 +590,20 @@ const formatSize = (size?: number): string => {
   if (size > 1e3) return (size / 1e3).toFixed(2) + " KB";
   return size + " B";
 };
-const isNSFW = (model: ModelItem): boolean => {
+const isNSFW = (model: Model): boolean => {
   const tags = model.tags;
   if (!tags) return false;
   if (Array.isArray(tags)) return tags.includes("nsfw");
   return tags === "nsfw";
 };
-const isDownloading = (model: ModelItem): boolean => !!downloads.value[modelKey(model)];
+const isDownloading = (model: Model): boolean => modelsStore.isModelDownloading(getModelId(model));
 
 // --- Selection logic ---
-const allChecked = (groupModels: ModelItem[]): boolean =>
+const allChecked = (groupModels: Model[]): boolean =>
   groupModels
     .filter((m) => !isDownloading(m))
     .every((m) => selected.value[modelKey(m)]);
-const toggleAll = (groupModels: ModelItem[], checked: boolean): void => {
+const toggleAll = (groupModels: Model[], checked: boolean): void => {
   for (const m of groupModels) {
     if (!isDownloading(m)) {
       selected.value[modelKey(m)] = checked;
@@ -697,27 +611,17 @@ const toggleAll = (groupModels: ModelItem[], checked: boolean): void => {
   }
 };
 
-const selectedToDelete = computed((): ModelItem[] =>
-  (models.value as ModelItem[]).filter((m) => selected.value[modelKey(m)] && m.exists)
-);
-const selectedToDownload = computed((): ModelItem[] =>
-  (models.value as ModelItem[]).filter(
-    (m) =>
-      selected.value[modelKey(m)] && !m.exists && !downloads.value[modelKey(m)]
+const selectedToDelete = computed((): Model[] =>
+  (models.value as Model[]).filter(
+    (m) => selected.value[modelKey(m)] && m.exists
   )
 );
-
-// Debug: log computed values
-watchEffect(() => {
-  console.log(
-    "selectedToDelete:",
-    selectedToDelete.value.map((m) => modelKey(m))
-  );
-  console.log(
-    "selectedToDownload:",
-    selectedToDownload.value.map((m) => modelKey(m))
-  );
-});
+const selectedToDownload = computed((): Model[] =>
+  (models.value as Model[]).filter(
+    (m) =>
+      selected.value[modelKey(m)] && !m.exists && ! modelsStore.isModelDownloading(getModelId(m))
+  )
+);
 
 const hasSelectedToDelete = computed(() => selectedToDelete.value.length > 0);
 const hasSelectedToDownload = computed(
@@ -725,7 +629,7 @@ const hasSelectedToDownload = computed(
 );
 
 // --- Actions ---
-function unselectModels(modelsList: ModelItem | ModelItem[]): void {
+function unselectModels(modelsList: Model | Model[]): void {
   const models = Array.isArray(modelsList) ? modelsList : [modelsList];
   for (const m of models) {
     delete selected.value[modelKey(m)];
@@ -768,7 +672,9 @@ const confirmDownloadSelected = async (): Promise<void> => {
 };
 
 // Fonction unique pour supprimer un ou plusieurs modèles
-async function deleteModels(modelsToDelete: ModelItem | ModelItem[]): Promise<void> {
+async function deleteModels(
+  modelsToDelete: Model | Model[]
+): Promise<void> {
   try {
     const res = await modelsStore.deleteModels(modelsToDelete);
     const results = Array.isArray(res) ? res : [res];
@@ -792,7 +698,9 @@ async function deleteModels(modelsToDelete: ModelItem | ModelItem[]): Promise<vo
 }
 
 // Fonction unique pour télécharger un ou plusieurs modèles
-async function downloadModels(modelsToDownload: ModelItem | ModelItem[]): Promise<void> {
+async function downloadModels(
+  modelsToDownload: Model | Model[]
+): Promise<void> {
   try {
     const modelsArray = Array.isArray(modelsToDownload)
       ? modelsToDownload
@@ -825,21 +733,13 @@ async function downloadModels(modelsToDownload: ModelItem | ModelItem[]): Promis
           : "Download started",
         "success"
       );
-      setTimeout(async () => {
-        await modelsStore.refreshDownloads();
-        console.log(
-          "Downloads refreshed after POST, current downloads:",
-          Object.keys(rawDownloads.value)
-        );
-      }, 1000);
     }
-    await fetchModels();
   } catch (error) {
     showNotification("Download operation failed", "error");
   }
 }
 
-const confirmDownload = async (model: ModelItem): Promise<void> => {
+const confirmDownload = async (model: Model): Promise<void> => {
   // Vérifier si le modèle est déjà en cours de téléchargement
   if (isDownloading(model)) {
     showNotification(
@@ -862,7 +762,7 @@ const confirmDownload = async (model: ModelItem): Promise<void> => {
   }
 };
 
-const confirmDelete = async (model: ModelItem): Promise<void> => {
+const confirmDelete = async (model: Model): Promise<void> => {
   const result = await showDialog({
     title: "Delete model",
     message: `Delete model "${lastPath(model.dest) || model.git}"?`,
@@ -882,21 +782,8 @@ const confirmDelete = async (model: ModelItem): Promise<void> => {
 
 onMounted(async () => {
   await fetchModels(); // Configuration is now extracted directly from /jsonmodels/
-  await modelsStore.refreshDownloads();
-
-  // Start global download polling
-  modelsStore.startGlobalDownloadPolling();
-
-  // Note: Download polling is now managed by the models store
-  // restoreActiveDownloads() is called by InstallProgressIndicator
+  await modelsStore.restoreActiveDownloads();
 });
-</script>
-
-<script lang="ts">
-// Pour l'import dynamique dans HomeView
-export default {
-  name: "DownloadModelsComponent",
-};
 </script>
 
 <style scoped>

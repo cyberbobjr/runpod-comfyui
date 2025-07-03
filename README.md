@@ -7,6 +7,12 @@
 - **Test file:** `/back/tests/test_model_selector_modal.spec.js`
 
 This component allows users to select models for a profile, with tag-based filtering and grouping. It emits events for closing and applying the selection.
+
+### InstallProgressIndicator.stories.js
+- **Location:** `/front/src/stories/InstallProgressIndicator.stories.js`
+- **Goal:** Storybook stories for the InstallProgressIndicator component, demonstrating its different states (idle, in-progress, completed, error) for UI development and testing.
+- **Test file:** `/front/src/stories/InstallProgressIndicator.spec.js`
+
 # ComfyUI Model & Bundle Manager
 
 A comprehensive web application for managing ComfyUI models, workflows, and bundles with a FastAPI backend and Vue.js frontend.

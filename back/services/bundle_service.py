@@ -1,5 +1,6 @@
 import os
 import json
+import traceback
 import uuid
 import zipfile
 import shutil
@@ -68,7 +69,7 @@ class BundleService:
         **Returns:** str containing the installed bundles file path
         """
         base_dir = ConfigService.get_base_dir()
-        return os.path.join(base_dir, INSTALLED_BUNDLES_FILE)
+        return os.path.join(base_dir, "bundles", INSTALLED_BUNDLES_FILE)
     
     def get_all_bundles(self) -> List[Bundle]:
         """
@@ -396,33 +397,55 @@ class BundleService:
         **Raises:** FileNotFoundError if bundle not found, ValueError if profile not found
         """
         bundle = self.get_bundle(bundle_id)
-        
-        if profile not in bundle.get("hardware_profiles", {}):
+
+        if bundle.hardware_profiles is None or profile not in bundle.hardware_profiles:
             raise ValueError(f"Profile '{profile}' not found in bundle")
-        
-        profile_data = bundle["hardware_profiles"][profile]
+
+        profile_data = bundle.hardware_profiles[profile]
         installed_models = []
         failed_models = []
-        
+
         # Install models
-        for model in profile_data.get("models", []):
-            try:
-                # Use download manager to install model
-                DownloadManager.download_model(model)
-                installed_models.append(model.get("dest", model.get("git", "")))
-            except Exception as e:
-                logger.error(f"Failed to install model {model}: {e}")
-                failed_models.append(model.get("dest", model.get("git", "")))
-        
+        if profile_data and hasattr(profile_data, "models") and profile_data.models:
+            for model in profile_data.models:
+                try:
+                    # Convert model to dict if needed
+                    if hasattr(model, "dict") and callable(model.dict):
+                        model_entry = model.dict()
+                    elif isinstance(model, dict):
+                        model_entry = model
+                    else:
+                        model_entry = vars(model)
+                    base_dir = ConfigService.get_base_dir()
+                    from .token_service import TokenService
+                    tokens = TokenService.get_tokens()
+                    hf_token = tokens.get("hf_token")
+                    civitai_token = tokens.get("civitai_token")
+                    DownloadManager.download_model(model_entry, base_dir, hf_token=hf_token, civitai_token=civitai_token, background=True)
+                    dest = model_entry.get("dest", model_entry.get("git", ""))
+                    installed_models.append(dest)
+                except Exception as e:
+                    logger.error(f"Failed to install model {model}: {e}")
+                    logger.error(traceback.format_exc())
+                    if 'model_entry' in locals():
+                        dest = model_entry.get("dest", model_entry.get("git", ""))
+                    else:
+                        dest = getattr(model, "dest", None)
+                        if dest is None and isinstance(model, dict):
+                            dest = model.get("dest", model.get("git", ""))
+                        elif dest is None:
+                            dest = getattr(model, "git", "")
+                    failed_models.append(dest)
+
         # Track installation
         installation_status = {
             "status": "completed" if not failed_models else "partial",
             "installed_models": installed_models,
             "failed_models": failed_models
         }
-        
+
         self._track_installed_bundle(bundle_id, profile, installation_status)
-        
+
         return {
             "installed": installed_models,
             "failed": failed_models
@@ -509,32 +532,31 @@ class BundleService:
     def get_installed_bundles(self) -> List[Dict[str, Any]]:
         """
         Get list of installed bundles.
-        
-        **Description:** Returns information about all installed bundles.
+
+        **Description:** Returns information about all installed bundles and profiles (list format).
         **Parameters:** None
-        **Returns:** List of installed bundle information
+        **Returns:** List of installed bundle information (installation)
         """
         installed_file = self.get_installed_bundles_file()
-        
+
         if not os.path.exists(installed_file):
             return []
-        
+
         try:
             with open(installed_file, "r", encoding="utf-8") as f:
                 installed_bundles = json.load(f)
-            
+
+            if not isinstance(installed_bundles, list):
+                logger.warning("Installed bundles file is not a list, returning empty list.")
+                return []
+
             result = []
-            for bundle_id, info in installed_bundles.items():
+            for entry in installed_bundles:
+                bundle_id = entry.get("bundle_id")
                 try:
-                    bundle_data = self.get_bundle(bundle_id)
-                    result.append({
-                        "bundle": bundle_data,
-                        "installation": info
-                    })
+                    result.append(entry)
                 except FileNotFoundError:
-                    # Bundle file was deleted but still tracked as installed
                     logger.warning(f"Installed bundle {bundle_id} not found in bundles directory")
-            
             return result
         except Exception as e:
             logger.error(f"Error reading installed bundles: {e}")
@@ -627,9 +649,9 @@ class BundleService:
     @staticmethod
     def _track_installed_bundle(bundle_id: str, profile: str, installation_status: Dict[str, Any]) -> None:
         """
-        Track an installed bundle, supporting multiple profiles per bundle.
-        
-        **Description:** Records bundle installation information, merging new profiles into the existing structure.
+        Track an installed bundle as a list of installed bundles/profiles.
+
+        **Description:** Records bundle installation information as a list of dicts, each with bundle_id and profile.
         **Parameters:**
         - `bundle_id` (str): Bundle identifier
         - `profile` (str): Hardware profile used
@@ -637,23 +659,23 @@ class BundleService:
         **Returns:** None
         """
         installed_file = BundleService.get_installed_bundles_file()
-        installed_bundles = {}
+        installed_bundles = []
         if os.path.exists(installed_file):
             try:
                 with open(installed_file, "r", encoding="utf-8") as f:
-                    installed_bundles = json.load(f)
-            except Exception:
-                pass
-
-        # Convert legacy single-profile format to multi-profile if needed
-        if bundle_id in installed_bundles:
-            entry = installed_bundles[bundle_id]
-            if isinstance(entry, dict) and 'profile' in entry:
-                # Convert to multi-profile
-                installed_bundles[bundle_id] = {entry['profile']: entry}
+                    loaded = json.load(f)
+                    if isinstance(loaded, list):
+                        installed_bundles = loaded
+                    else:
+                        logger.warning(f"Installed bundles file is not a list, resetting: {type(loaded)}")
+                        installed_bundles = []
+            except Exception as e:
+                logger.warning(f"Could not read installed bundles file: {e}")
+                installed_bundles = []
 
         # Prepare the new profile installation info
         profile_info = {
+            "bundle_id": bundle_id,
             "profile": profile,
             "installed_at": datetime.now().isoformat(),
             "status": installation_status["status"],
@@ -661,11 +683,9 @@ class BundleService:
             "failed_models": installation_status["failed_models"]
         }
 
-        # Merge or create
-        if bundle_id not in installed_bundles:
-            installed_bundles[bundle_id] = {profile: profile_info}
-        else:
-            installed_bundles[bundle_id][profile] = profile_info
+        # Remove any existing entry for this bundle_id/profile
+        installed_bundles = [entry for entry in installed_bundles if not (entry.get("bundle_id") == bundle_id and entry.get("profile") == profile)]
+        installed_bundles.append(profile_info)
 
         os.makedirs(os.path.dirname(installed_file) or ".", exist_ok=True)
         with open(installed_file, "w", encoding="utf-8") as f:

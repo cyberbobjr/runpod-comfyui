@@ -1,9 +1,9 @@
 /**
  * Bundles Store Types
- * 
+ *
  * Type definitions for the bundles store, including all bundle-related
  * interfaces and types used throughout the application.
- * 
+ *
  * @author TypeScript Migration
  * @version 1.0.0
  */
@@ -12,8 +12,8 @@ import { Model } from "./models.types";
 
 export interface BundleStatus {
   status: string;
-  text:  string;
-  color:  string;
+  text: string;
+  color: string;
 }
 /**
  * Bundle interface
@@ -41,25 +41,12 @@ export interface Bundle {
  * Each object contains the bundle metadata and installation details.
  */
 export interface InstalledBundle {
-  /**
-   * Bundle metadata (full bundle object)
-   */
-  bundle: Bundle;
-  /**
-   * Installation details
-   */
-  installation: {
-    /** Hardware profile used for installation */
-    profile: string;
-    /** ISO timestamp of installation */
-    installed_at: string;
-    /** Installation status (e.g., "completed", "partial") */
-    status: string;
-    /** List of successfully installed model filenames */
-    installed_models: string[];
-    /** List of model filenames that failed to install */
-    failed_models: string[];
-  };
+  bundle_id: string;
+  profile: string;
+  installed_at: string;
+  status: string;
+  installed_models: string[];
+  failed_models: string[];
 }
 
 /**
@@ -76,7 +63,7 @@ export interface HardwareProfile {
  */
 export interface InstallProgress {
   bundleId: string;
-  status: 'pending' | 'downloading' | 'installing' | 'completed' | 'failed';
+  status: "pending" | "downloading" | "installing" | "completed" | "failed";
   progress: number;
   message?: string;
   currentFile?: string;
@@ -103,8 +90,8 @@ export interface BundleFilterOptions {
   tags?: string[];
   installed?: boolean;
   search?: string;
-  sortBy?: 'name' | 'date' | 'size' | 'category';
-  sortOrder?: 'asc' | 'desc';
+  sortBy?: "name" | "date" | "size" | "category";
+  sortOrder?: "asc" | "desc";
 }
 
 /**
