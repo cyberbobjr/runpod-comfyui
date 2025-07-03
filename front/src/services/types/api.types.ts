@@ -1,9 +1,9 @@
 /**
  * API Types and Interfaces
- * 
+ *
  * Comprehensive type definitions for API responses and requests
  * used throughout the application.
- * 
+ *
  * @author TypeScript Migration
  * @version 1.0.0
  */
@@ -117,7 +117,7 @@ export interface ModelEntryApiResponse {
 export interface DownloadProgressApiResponse {
   id: string;
   progress: number;
-  status: 'pending' | 'downloading' | 'completed' | 'failed' | 'cancelled';
+  status: "pending" | "downloading" | "completed" | "failed" | "cancelled";
   total_size?: number;
   downloaded_size?: number;
   error?: string;
@@ -131,7 +131,7 @@ export interface DownloadProgressApiResponse {
 export interface BundleInstallationApiResponse {
   bundle_id: string;
   profile: string;
-  status: 'pending' | 'installing' | 'completed' | 'failed';
+  status: "pending" | "installing" | "completed" | "failed";
   progress: number;
   installed_at?: string;
   error?: string;
@@ -141,7 +141,7 @@ export interface BundleInstallationApiResponse {
  * System status API response
  */
 export interface SystemStatusApiResponse {
-  status: 'healthy' | 'degraded' | 'down';
+  status: "healthy" | "degraded" | "down";
   version: string;
   uptime: number;
   disk_usage: {
@@ -193,18 +193,30 @@ export interface FileDownloadConfig {
 /**
  * API method types for type-safe API calls
  */
-export type ApiMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+export type ApiMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 /**
  * Type guard for API error responses
  */
 export function isApiError(response: any): response is ApiErrorResponse {
-  return response && typeof response === 'object' && 'message' in response && 'status' in response;
+  return (
+    response &&
+    typeof response === "object" &&
+    "message" in response &&
+    "status" in response
+  );
 }
 
 /**
  * Type guard for successful API responses
  */
 export function isApiSuccess<T>(response: any): response is ApiResponse<T> {
-  return response && typeof response === 'object' && 'data' in response && 'success' in response;
+  return (
+    response &&
+    typeof response === "object" &&
+    "data" in response &&
+    "success" in response
+  );
 }
+
+export const TOKENSTORAGEKEY = "auth_token";

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterView, useRoute } from "vue-router";
-import { computed, onMounted } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import type { RouteLocationNormalizedLoaded, Router } from "vue-router";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
@@ -10,13 +10,14 @@ import {
   faFolder,
   faFileCode,
   faGear,
+  faBars,
 } from "@fortawesome/free-solid-svg-icons";
 import NotificationContainer from "./components/NotificationContainer.vue";
-import DialogContainer from "./components/DialogContainer.vue";
+import DialogContainer from "./components/common/DialogContainer.vue";
 import InstallProgressIndicator from "./components/InstallProgressIndicator.vue";
 import FooterComponent from "./components/common/FooterComponent.vue";
-import { useNotifications } from "./composables/useNotifications";
 import { useAuthStore } from "./stores/auth";
+import { TOKENSTORAGEKEY } from "./services/types/api.types";
 
 /**
  * App.vue - Main Application Component (TypeScript)
@@ -36,8 +37,25 @@ import { useAuthStore } from "./stores/auth";
 const route: RouteLocationNormalizedLoaded = useRoute();
 const router: Router = useRouter();
 const authStore = useAuthStore();
-const { loadPersistentNotifications } = useNotifications();
 
+/**
+ * State for sidebar collapse
+ *
+ * **Description:** Reactive reference that controls sidebar visibility.
+ * **Returns:** Boolean indicating if sidebar is collapsed
+ */
+const isSidebarCollapsed = ref<boolean>(false);
+
+/**
+ * Toggle sidebar collapse state
+ *
+ * **Description:** Toggles the sidebar between collapsed and expanded states.
+ * **Parameters:** None
+ * **Returns:** void
+ */
+const toggleSidebar = (): void => {
+  isSidebarCollapsed.value = !isSidebarCollapsed.value;
+};
 /**
  * Check if the user is authenticated
  *
@@ -45,7 +63,7 @@ const { loadPersistentNotifications } = useNotifications();
  * **Returns:** Boolean indicating if user is authenticated
  */
 const isAuthenticated = computed((): boolean => {
-  return !!localStorage.getItem("auth_token");
+  return !!localStorage.getItem(TOKENSTORAGEKEY);
 });
 
 /**
@@ -136,7 +154,16 @@ onMounted(() => {
       v-if="showHeader"
       class="bg-background-soft text-text-light flex justify-between items-center py-4 shadow-md border-b border-border"
     >
-      <h1 class="text-2xl font-semibold ml-4">ComfyUI Model Manager</h1>
+      <div class="flex items-center">
+        <!-- Sidebar toggle button -->
+        <button
+          @click="toggleSidebar"
+          class="btn bg-background-mute hover:bg-background text-text-light p-2 rounded transition-colors mr-4 ml-4"
+        >
+          <FontAwesomeIcon :icon="faBars" class="text-lg" />
+        </button>
+        <h1 class="text-2xl font-semibold">ComfyUI Model Manager</h1>
+      </div>
       <button
         @click="handleLogout"
         class="btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition-colors mr-4"
@@ -145,37 +172,71 @@ onMounted(() => {
       </button>
     </header>
 
-    <!-- Navigation tabs that appear only when logged in -->
-    <div
-      v-if="showHeader"
-      class="border-b border-border bg-background-soft w-full"
-    >
-      <!-- Global Install Progress Indicator -->
-      <InstallProgressIndicator />
+    <!-- Main content area with sidebar -->
+    <div v-if="showHeader" class="flex flex-1 overflow-hidden">
+      <!-- Vertical Sidebar -->
+      <nav
+        :class="[
+          'bg-background-soft border-r border-border transition-all duration-300 ease-in-out overflow-hidden',
+          isSidebarCollapsed ? 'w-16' : 'w-64'
+        ]"
+      >
+        <!-- Global Install Progress Indicator -->
+        <div class="px-2 py-2">
+          <InstallProgressIndicator />
+        </div>
 
-      <div class="flex overflow-x-auto">
-        <button
-          v-for="tab in tabs"
-          :key="tab.name"
-          @click="handleTabChange(tab.name)"
-          :class="[
-            'flex items-center px-6 py-4 transition-colors focus:outline-none whitespace-nowrap',
-            activeTab === tab.name
-              ? 'text-primary border-b-2 border-primary bg-background-mute'
-              : 'text-text-light-muted hover:bg-background-mute hover:text-text-light',
-          ]"
-        >
-          <FontAwesomeIcon
-            :icon="tab.icon"
-            class="mr-3 text-lg"
-            :class="{ 'text-primary': activeTab === tab.name }"
-          />
-          <span class="text-sm font-medium">{{ tab.label }}</span>
-        </button>
-      </div>
+        <!-- Navigation Items -->
+        <div class="flex flex-col py-2">
+          <button
+            v-for="tab in tabs"
+            :key="tab.name"
+            @click="handleTabChange(tab.name)"
+            :class="[
+              'flex items-center px-4 py-3 transition-all duration-200 ease-in-out focus:outline-none group relative',
+              activeTab === tab.name
+                ? 'text-primary bg-background-mute border-r-2 border-primary'
+                : 'text-text-light-muted hover:bg-background-mute hover:text-text-light',
+            ]"
+            :title="isSidebarCollapsed ? tab.label : ''"
+          >
+            <div class="flex items-center min-w-0 w-full">
+              <FontAwesomeIcon
+                :icon="tab.icon"
+                class="text-lg flex-shrink-0"
+                :class="{ 'text-primary': activeTab === tab.name }"
+              />
+              <span
+                :class="[
+                  'ml-3 text-sm font-medium transition-all duration-300 ease-in-out whitespace-nowrap',
+                  isSidebarCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 w-auto'
+                ]"
+              >
+                {{ tab.label }}
+              </span>
+            </div>
+            
+            <!-- Tooltip for collapsed state -->
+            <div
+              v-if="isSidebarCollapsed"
+              class="absolute left-full ml-2 px-2 py-1 bg-background-soft text-text-light text-sm rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 whitespace-nowrap"
+            >
+              {{ tab.label }}
+            </div>
+          </button>
+        </div>
+      </nav>
+
+      <!-- Main content area -->
+      <main class="flex-1 overflow-auto bg-background">
+        <div class="view-container">
+          <RouterView />
+        </div>
+      </main>
     </div>
 
-    <div class="view-container flex-1 overflow-auto bg-background w-full mt-2">
+    <!-- For non-authenticated users, show full width content -->
+    <div v-else class="view-container flex-1 overflow-auto bg-background w-full">
       <RouterView />
     </div>
 
@@ -232,17 +293,30 @@ body {
   margin: 0 auto;
 }
 
-/* Media query for large screens */
-@media (min-width: 1280px) {
-  .app-container {
-    max-width: 1280px; /* Limiting width on large screens */
-  }
-}
 
 .view-container {
   flex: 1 1 auto;
   width: 100%;
   min-height: 0;
-  overflow: auto;
+  padding: 1rem;
+}
+
+/* Smooth scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a2332;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #374151;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
 }
 </style>

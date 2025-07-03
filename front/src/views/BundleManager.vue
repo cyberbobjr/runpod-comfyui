@@ -148,24 +148,37 @@
   />
 </template>
 
-<script setup>
-import { ref,  onMounted } from "vue";
-import { useNotifications } from "../composables/useNotifications";
+<script setup lang="ts">
+import { ref, onMounted } from "vue";
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import api from "../services/api";
 import { useBundlesStore } from "../stores/bundles";
-import CommonCard from "./common/CommonCard.vue";
-import BundleEditor from "./bundle/BundleEditor.vue";
 import { storeToRefs } from "pinia";
+import type { Bundle } from "../stores/types/bundles.types";
+import CommonCard from "@/components/common/CommonCard.vue";
+import BundleEditor from "@/components/bundle/BundleEditor.vue";
+import { useNotifications } from "@/composables/useNotifications";
 
 const { success, error, confirm } = useNotifications();
 const bundleStore = useBundlesStore();
 
 // State
 const { bundles } = storeToRefs(bundleStore);
-const showBundleForm = ref(false);
+const showBundleForm = ref<boolean>(false);
 
-const currentBundle = ref({
-  id: "",
+interface CurrentBundle {
+  id: string | null;
+  name: string;
+  description: string;
+  version: string;
+  author: string;
+  website: string;
+  workflows: string[];
+  hardware_profiles: Record<string, any>;
+}
+
+const currentBundle = ref<CurrentBundle>({
+  id: null,
   name: "",
   description: "",
   version: "1.0.0",
@@ -176,33 +189,38 @@ const currentBundle = ref({
 });
 
 // Methods
-const createNewBundle = () => {
+const createNewBundle = (): void => {
   currentBundle.value.id = null;
   showBundleForm.value = true;
 };
 
-const afterBundleSaved = () => {
+const afterBundleSaved = (): void => {
   showBundleForm.value = false;
   success("Bundle saved successfully");
 };
 
-const returnToBundleList = () => {
+const returnToBundleList = (): void => {
   showBundleForm.value = false;
 };
 
 // Lifecycle
-onMounted(async () => {
+onMounted(async (): Promise<void> => {
   await Promise.all([bundleStore.fetchBundles()]);
 });
 
-const editBundle = async (bundleId) => {
+const editBundle = async (bundleId: string): Promise<void> => {
   try {
     const bundle = bundleStore.getBundleById(bundleId); // Ensure store is updated
+
+    if (!bundle) {
+      error("Bundle not found");
+      return;
+    }
 
     currentBundle.value = {
       id: bundle.id,
       name: bundle.name,
-      description: bundle.description,
+      description: bundle.description || "",
       version: bundle.version || "1.0.0",
       author: bundle.author || "",
       website: bundle.website || "",
@@ -217,9 +235,9 @@ const editBundle = async (bundleId) => {
   }
 };
 
-const handleDeleteBundle = async (bundleId) => {
+const handleDeleteBundle = async (bundleId: string): Promise<void> => {
   try {
-    const bundle = bundles.value.find((b) => b.id === bundleId);
+    const bundle = bundles.value.find((b: Bundle) => b.id === bundleId);
     const bundleName = bundle ? bundle.name : bundleId;
 
     const confirmed = await confirm(
@@ -232,13 +250,15 @@ const handleDeleteBundle = async (bundleId) => {
     }
   } catch (err) {
     console.error("Error deleting bundle:", err);
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    const apiError = err as any;
     error(
-      "Failed to delete bundle: " + (err.response?.data?.detail || err.message)
+      "Failed to delete bundle: " + (apiError.response?.data?.detail || errorMessage)
     );
   }
 };
 
-const downloadBundle = async (bundleId, bundleName, bundleVersion) => {
+const downloadBundle = async (bundleId: string, bundleName: string, bundleVersion: string): Promise<void> => {
   try {
     const response = await api.get(`/bundles/download/${bundleId}`, {
       responseType: "blob",
@@ -260,9 +280,11 @@ const downloadBundle = async (bundleId, bundleName, bundleVersion) => {
     success(`Bundle "${bundleName}" downloaded successfully`);
   } catch (err) {
     console.error("Error downloading bundle:", err);
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    const apiError = err as any;
     error(
       "Failed to download bundle: " +
-        (err.response?.data?.detail || err.message)
+        (apiError.response?.data?.detail || errorMessage)
     );
   }
 };

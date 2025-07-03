@@ -36,7 +36,7 @@ class TokenService:
         **Parameters:** None
         **Returns:** str containing the path to the .env file
         """
-        return ModelManager.get_env_file_path()
+        return ConfigService.get_env_file_path()
 
     @staticmethod
     def write_env_file(hf_token: Optional[str], civitai_token: Optional[str]) -> None:

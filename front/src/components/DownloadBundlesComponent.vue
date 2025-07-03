@@ -234,7 +234,7 @@
                         <span class="text-text-light text-sm">{{
                           profileName
                         }}</span>
-                        <span class="text-text-muted text-xs">
+                        <span class="text-text-muted text-xs ml-2">
                           {{
                             bundle.hardware_profiles?.[profileName]?.models
                               ?.length || 0
@@ -595,7 +595,7 @@ import ButtonDropdownComponent from "./common/ButtonDropdownComponent.vue";
 import { storeToRefs } from "pinia";
 import { Bundle, BundleStatus } from "@/stores/types/bundles.types";
 
-const { success, error, confirm } = useNotifications();
+const { success, error, confirm, warning } = useNotifications();
 const modelsStore = useModelsStore();
 const bundlesStore = useBundlesStore();
 const searchQuery = ref<string>("");
@@ -650,7 +650,6 @@ const triggerBundleUpload = (): void => {
   ) as HTMLInputElement;
   element?.click();
 };
-
 
 // Get bundle status for uploaded bundles
 const getUploadedBundleStatus = (bundle: Bundle): BundleStatus => {
@@ -777,9 +776,13 @@ onMounted(async () => {
 // Get available profiles for installation (not already installed)
 const getAvailableProfiles = (bundle: Bundle): string[] => {
   const profiles = Object.keys(bundle.hardware_profiles || {});
-  return profiles.filter(
-    (profile) => !bundlesStore.isBundleInstalled(bundle.id, profile)
-  );
+  return profiles.filter((profile) => {
+    const modelsInProfile: Model[] =
+      bundle.hardware_profiles?.[profile]?.models ?? [];
+    return modelsInProfile.some((model: Model) =>
+      !modelsStore.isModelInstalled(model)
+    );
+  });
 };
 
 // Get installed profiles for a bundle
@@ -831,14 +834,9 @@ const installBundleProfile = async (
     // Start installation with progress tracking
     await modelsStore.startBundleInstallation(
       bundle.id,
-      bundle.name,
       profilesToInstall
     );
-
-    // Reload installed bundles after a delay
-    setTimeout(async () => {
-      await bundlesStore.fetchInstalledBundles();
-    }, 2000);
+    await modelsStore.startDownloadPolling();
 
     success(
       `Started installation of ${profilesToInstall.length} profile(s) for bundle "${bundle.name}"`
@@ -855,7 +853,7 @@ const installBundleProfile = async (
 const installAllProfiles = async (bundle: Bundle): Promise<void> => {
   const availableProfiles = getAvailableProfiles(bundle);
   if (availableProfiles.length === 0) {
-    success(`Bundle "${bundle.name}" is already fully installed`);
+    warning(`Bundle "${bundle.name}" does not contain any installable profiles.`);
     return;
   }
   await installBundleProfile(bundle, availableProfiles);

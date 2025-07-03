@@ -54,10 +54,8 @@
 </template>
 
 <script setup lang="ts">
+import { useNotifications } from '@/composables/useNotifications';
 import { nextTick, ref } from 'vue'
-import type { Ref } from 'vue'
-import { useNotifications } from '../composables/useNotifications'
-import type { Dialog as BaseDialog } from '../composables/useNotifications'
 
 /**
  * DialogContainer Component
@@ -96,6 +94,17 @@ import type { Dialog as BaseDialog } from '../composables/useNotifications'
  * **Parameters:** None
  * **Returns:** Promise<void>
  */
+
+// Define the base dialog interface
+interface BaseDialog {
+  id:  number;
+  type: 'alert' | 'confirm' | 'prompt';
+  title: string;
+  message: string;
+  confirmText?: string;
+  cancelText?: string;
+  defaultValue?: string;
+}
 
 // Extend the base Dialog interface with component-specific properties
 interface DialogWithInput extends BaseDialog {

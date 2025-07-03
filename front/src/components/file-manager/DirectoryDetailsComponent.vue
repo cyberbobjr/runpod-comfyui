@@ -226,7 +226,7 @@
         <FilePropertiesComponent
           v-if="fileProps"
           :file-props="fileProps"
-          :selected-file="selectedFile"
+          :selected-file="selectedFile as any"
         />
         <div v-else class="text-text-muted bg-background-soft p-6 rounded-lg text-center">
           Select a file to see its properties.
@@ -236,31 +236,49 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import { ref } from 'vue'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import FilePropertiesComponent from './FilePropertiesComponent.vue'
 import TooltipComponent from '../common/TooltipComponent.vue'
-import { ref } from 'vue'
+import type { 
+  DirectoryDetailsProps, 
+  DirectoryDetailsEmits 
+} from '../../views/types/views.types'
 
-const props = defineProps({
-  currentPath: String,
-  files: Array,
-  dirs: Array,
-  selectedFile: Object,
-  fileProps: Object,
+/**
+ * Component props definition
+ */
+const props = withDefaults(defineProps<DirectoryDetailsProps>(), {
+  currentPath: '',
+  files: () => [],
+  dirs: () => [],
+  selectedFile: null,
+  fileProps: null,
 })
 
-const emit = defineEmits([
-  'go-up',
-  'refresh',
-  'file-upload',
-  'create-directory',
-  'navigate-to-folder',
-  'select-file',
-  'rename',
-  'delete',
-  'download',
-  'copy',
-])
+/**
+ * Component emits definition
+ */
+const emit = defineEmits<DirectoryDetailsEmits>()
 
-const hoveredItem = ref(null)
+/**
+ * Reactive state
+ */
+const hoveredItem = ref<string | null>(null)
+
+/**
+ * ### formatSize
+ * **Description:** Formats byte size into human-readable format.
+ * **Parameters:**
+ * - `bytes` (number | undefined): Number of bytes to format.
+ * **Returns:** Formatted size string with appropriate unit.
+ */
+function formatSize(bytes: number | undefined): string {
+  if (!bytes || bytes === 0) return '0 Bytes'
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+}
 </script>
