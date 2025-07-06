@@ -78,7 +78,8 @@ import {
   faDatabase,
   faTimesCircle,
   faPlus,
-  faLayerGroup
+  faLayerGroup,
+  faSliders
 } from '@fortawesome/free-solid-svg-icons';
 
 // Import global styles
@@ -144,7 +145,8 @@ const iconsToRegister: IconDefinition[] = [
   faDatabase,
   faTimesCircle,
   faPlus,
-  faLayerGroup
+  faLayerGroup,
+  faSliders
 ];
 
 /**

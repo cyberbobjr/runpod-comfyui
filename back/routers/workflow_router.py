@@ -24,7 +24,7 @@ from ..utils.logger import get_logger
 logger = get_logger(__name__)
 
 # Create router
-router = APIRouter(prefix="/api/workflows", tags=["workflows"])
+router = APIRouter(prefix="/api/workflows", tags=["Workflows"])
 
 # Initialize service
 workflow_service = WorkflowService()
@@ -305,30 +305,3 @@ def delete_workflow(filename: str, user=Depends(protected)):
     except Exception as e:
         logger.error(f"Error deleting workflow {filename}: {e}")
         raise HTTPException(status_code=500, detail=f"Error deleting workflow: {str(e)}")
-
-
-@router.head("/{filename}")
-def check_workflow_exists(filename: str, user=Depends(protected)):
-    """
-    HEAD /api/workflows/{filename}
-    
-    Checks if a workflow file exists without returning content.
-    
-    Arguments:
-    - filename (str): Name of the workflow file (in URL path)
-    - user: Authentication token (automatic via Depends)
-    
-    Returns:
-    - Status: 200 OK if file exists
-    - Status: 404 if file doesn't exist
-    
-    Possible errors:
-    - 401: Not authenticated
-    - 404: Workflow file not found
-    
-    Usage: Check workflow existence without downloading content.
-    """
-    if not workflow_service.workflow_exists(filename):
-        raise HTTPException(status_code=404, detail=f"Workflow '{filename}' not found")
-    
-    return {"exists": True}

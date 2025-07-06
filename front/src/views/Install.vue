@@ -1,5 +1,5 @@
 <template>
-    <div class="bg-background-soft border border-border rounded-lg">
+    <div class="bg-background-soft border border-border">
       <!-- Tab Headers -->
       <div class="border-b border-border">
         <nav class="flex space-x-0" aria-label="Tabs">

@@ -12,6 +12,15 @@ the style is global and defined in "/front/src/assets/main.css" don't create new
 Always use common components available in the project instead of creating new ones. The common components are located in the `/front/src/components/common` directory.
 These components are designed to be reusable and maintain consistency across the application.
 
+* AccordionComponent.vue
+* ButtonDropdownComponent.vue
+* CommonCard.vue
+* CommonModale.vue
+* DialogContainer.vue
+* DropdownComponent.vue
+* FormDropdownComponent.vue
+* TooltipComponent.vue
+
 ## Design System Integration
 
 All components follow the project's design system:

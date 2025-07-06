@@ -25,7 +25,7 @@ from ..utils.logger import get_logger
 logger = get_logger(__name__)
 
 # Create router
-router = APIRouter(prefix="/api/bundles", tags=["bundles"])
+router = APIRouter(prefix="/api/bundles", tags=["Bundles"])
 
 # Initialize service
 bundle_service = BundleService()

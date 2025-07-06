@@ -27,7 +27,7 @@ from ..utils.logger import get_logger
 logger = get_logger(__name__)
 
 # Create router
-router = APIRouter(prefix="/api/jsonmodels", tags=["json-models"])
+router = APIRouter(prefix="/api/jsonmodels", tags=["JSON Models"])
 
 # Initialize service
 json_models_service = JsonModelsService()

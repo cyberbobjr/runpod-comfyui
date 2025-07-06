@@ -11,6 +11,7 @@ import {
   faFileCode,
   faGear,
   faBars,
+  faMagicWandSparkles,
 } from "@fortawesome/free-solid-svg-icons";
 import NotificationContainer from "./components/NotificationContainer.vue";
 import DialogContainer from "./components/common/DialogContainer.vue";
@@ -117,6 +118,11 @@ const tabs = [
     name: "install",
     label: "Install",
     icon: faDownload,
+  },
+  {
+    name: "comfyui",
+    label: "ComfyUI Generator",
+    icon: faMagicWandSparkles,
   },
   {
     name: "manage-bundles",
@@ -298,7 +304,6 @@ body {
   flex: 1 1 auto;
   width: 100%;
   min-height: 0;
-  padding: 1rem;
 }
 
 /* Smooth scrollbar styling */

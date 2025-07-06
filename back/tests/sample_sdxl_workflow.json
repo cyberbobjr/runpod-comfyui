@@ -1,0 +1,134 @@
+{
+  "1": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "sd_xl_base_1.0.safetensors"
+    },
+    "_meta": {
+      "title": "Load Checkpoint"
+    }
+  },
+  "2": {
+    "class_type": "Seed Generator",
+    "inputs": {
+      "seed": 42
+    },
+    "_meta": {
+      "title": "Seed Generator"
+    }
+  },
+  "3": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "blurry, low quality",
+      "clip": [
+        "1",
+        1
+      ]
+    },
+    "_meta": {
+      "title": "CLIP Text Encode (Negative)"
+    }
+  },
+  "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "A beautiful landscape with mountains and trees",
+      "clip": [
+        "1",
+        1
+      ]
+    },
+    "_meta": {
+      "title": "CLIP Text Encode (Positive)"
+    }
+  },
+  "5": {
+    "class_type": "CR SDXL Aspect Ratio",
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "aspect_ratio": "custom",
+      "swap_dimensions": "Off",
+      "upscale_factor": 1,
+      "batch_size": 1
+    },
+    "_meta": {
+      "title": "🔳 CR SDXL Aspect Ratio"
+    }
+  },
+  "6": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "1",
+        0
+      ],
+      "positive": [
+        "4",
+        0
+      ],
+      "negative": [
+        "3",
+        0
+      ],
+      "latent_image": [
+        "5",
+        4
+      ],
+      "seed": [
+        "2",
+        0
+      ],
+      "steps": 30,
+      "cfg": 7.5,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 1.0
+    },
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "6",
+        0
+      ],
+      "vae": [
+        "1",
+        2
+      ]
+    },
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "7",
+        0
+      ],
+      "filename_prefix": "generated_"
+    },
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "9": {
+    "class_type": "easy clearCacheAll",
+    "inputs": {
+      "anything": [
+        "2",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Clear Cache All"
+    }
+  }
+}

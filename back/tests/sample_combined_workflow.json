@@ -1,0 +1,188 @@
+{
+  "1": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "sd_xl_base_1.0.safetensors"
+    },
+    "_meta": {
+      "title": "Load Checkpoint"
+    }
+  },
+  "2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "portrait.png"
+    },
+    "_meta": {
+      "title": "Load Init Image"
+    }
+  },
+  "3": {
+    "class_type": "ImagePadForOutpaint",
+    "inputs": {
+      "image": [
+        "2",
+        0
+      ],
+      "left": 128,
+      "top": 128,
+      "right": 128,
+      "bottom": 128,
+      "feathering": 20
+    },
+    "_meta": {
+      "title": "Pad Image for Outpaint"
+    }
+  },
+  "4": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "portrait_damage.png",
+      "channel": "alpha"
+    },
+    "_meta": {
+      "title": "Load Inpaint Mask"
+    }
+  },
+  "5": {
+    "class_type": "Seed Generator",
+    "inputs": {
+      "seed": 456
+    },
+    "_meta": {
+      "title": "Seed Generator"
+    }
+  },
+  "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "A magnificent restored and expanded portrait in Renaissance style",
+      "clip": [
+        "1",
+        1
+      ]
+    },
+    "_meta": {
+      "title": "CLIP Text Encode (Positive)"
+    }
+  },
+  "7": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "damaged, incomplete, cropped, modern style",
+      "clip": [
+        "1",
+        1
+      ]
+    },
+    "_meta": {
+      "title": "CLIP Text Encode (Negative)"
+    }
+  },
+  "8": {
+    "class_type": "InpaintModelConditioning",
+    "inputs": {
+      "positive": [
+        "6",
+        0
+      ],
+      "negative": [
+        "7",
+        0
+      ],
+      "vae": [
+        "1",
+        2
+      ],
+      "pixels": [
+        "3",
+        0
+      ],
+      "mask": [
+        "4",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Inpaint Model Conditioning"
+    }
+  },
+  "9": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": [
+        "5",
+        0
+      ],
+      "steps": 35,
+      "cfg": 8.0,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 1.0,
+      "model": [
+        "1",
+        0
+      ],
+      "positive": [
+        "8",
+        0
+      ],
+      "negative": [
+        "8",
+        1
+      ],
+      "latent_image": [
+        "8",
+        2
+      ],
+      "mask": [
+        "4",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "10": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "9",
+        0
+      ],
+      "vae": [
+        "1",
+        2
+      ]
+    },
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "11": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "10",
+        0
+      ],
+      "filename_prefix": "generated_"
+    },
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "12": {
+    "class_type": "easy clearCacheAll",
+    "inputs": {
+      "anything": [
+        "5",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Clear Cache All"
+    }
+  }
+}

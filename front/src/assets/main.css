@@ -56,7 +56,7 @@
   }
   
   .card {
-    @apply bg-background-soft rounded-lg border border-border p-2 shadow-md;
+    @apply bg-background-soft border border-border p-2 shadow-md;
   }
 }
 

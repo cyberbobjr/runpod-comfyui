@@ -1,0 +1,168 @@
+{
+  "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "SD3/sd3_medium.safetensors",
+      "weight_dtype": "fp16"
+    },
+    "_meta": {
+      "title": "Load SD3 Diffusion Model"
+    }
+  },
+  "2": {
+    "class_type": "TripleCLIPLoader",
+    "inputs": {
+      "clip_name1": "SD3/clip_l.safetensors",
+      "clip_name2": "SD3/clip_g.safetensors",
+      "clip_name3": "SD3/t5xxl_fp16.safetensors"
+    },
+    "_meta": {
+      "title": "TripleCLIPLoader"
+    }
+  },
+  "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "SD3/sd3_vae.safetensors"
+    },
+    "_meta": {
+      "title": "Load SD3 VAE"
+    }
+  },
+  "4": {
+    "class_type": "ModelSamplingSD3",
+    "inputs": {
+      "shift": 3.0,
+      "model": [
+        "1",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "ModelSamplingSD3"
+    }
+  },
+  "5": {
+    "class_type": "Seed Generator",
+    "inputs": {
+      "seed": 12345
+    },
+    "_meta": {
+      "title": "Seed Generator"
+    }
+  },
+  "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "A cyberpunk cityscape with neon lights",
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "CLIP Text Encode (Positive)"
+    }
+  },
+  "7": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "blurry, low quality",
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "CLIP Text Encode (Negative)"
+    }
+  },
+  "8": {
+    "class_type": "CR SDXL Aspect Ratio",
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "aspect_ratio": "custom",
+      "swap_dimensions": "Off",
+      "upscale_factor": 1,
+      "batch_size": 1
+    },
+    "_meta": {
+      "title": "\ud83d\udd33 CR SDXL Aspect Ratio"
+    }
+  },
+  "9": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": [
+        "5",
+        0
+      ],
+      "steps": 25,
+      "cfg": 7.0,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 1.0,
+      "model": [
+        "4",
+        0
+      ],
+      "positive": [
+        "6",
+        0
+      ],
+      "negative": [
+        "7",
+        0
+      ],
+      "latent_image": [
+        "8",
+        4
+      ]
+    },
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "10": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "9",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "11": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "10",
+        0
+      ],
+      "filename_prefix": "generated_"
+    },
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "12": {
+    "class_type": "easy clearCacheAll",
+    "inputs": {
+      "anything": [
+        "5",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Clear Cache All"
+    }
+  }
+}

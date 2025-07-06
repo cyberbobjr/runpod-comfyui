@@ -1,22 +1,18 @@
 /**
  * Workflows Store - TypeScript Version (Simplified)
- * 
+ *
  * Pinia store for managing workflows.
  * This is a simplified version to resolve import errors.
- * 
+ *
  * @author Converted to TypeScript
  * @version 2.0.0
  */
 
-import { defineStore } from 'pinia';
-import type {
-  Workflow,
-  WorkflowsStoreState,
-  WorkflowExecution,
-  WorkflowFilterOptions
-} from './types/workflows.types';
+import { defineStore } from "pinia";
+import type { WorkflowsStoreState } from "./types/workflows.types";
+const { default: api } = await import("@/services/api");
 
-export const useWorkflowsStore = defineStore('workflows', {
+export const useWorkflowsStore = defineStore("workflows", {
   // === STATE ===
   state: (): WorkflowsStoreState => ({
     workflows: [],
@@ -24,62 +20,16 @@ export const useWorkflowsStore = defineStore('workflows', {
     selectedWorkflow: null,
     loading: false,
     error: null,
-    executionHistory: [],
-    executionStatus: {},
-    workflowCategories: [],
-    recentWorkflows: []
   }),
 
   // === GETTERS ===
-  getters: {
-    /**
-     * Get workflows grouped by category
-     * 
-     * **Description:** Groups workflows by their category for organized display.
-     * **Returns:** Object with categories as keys and workflow arrays as values
-     */
-    workflowsByCategory(): Record<string, Workflow[]> {
-      const grouped: Record<string, Workflow[]> = {};
-      this.workflows.forEach((workflow: Workflow) => {
-        const category = workflow.category || 'Uncategorized';
-        if (!grouped[category]) {
-          grouped[category] = [];
-        }
-        grouped[category].push(workflow);
-      });
-      return grouped;
-    },
-
-    /**
-     * Get available workflow categories
-     * 
-     * **Description:** Returns a list of unique workflow categories.
-     * **Returns:** Array of unique workflow categories
-     */
-    availableCategories(): string[] {
-      const categories = new Set<string>();
-      this.workflows.forEach((workflow: Workflow) => {
-        categories.add(workflow.category || 'Uncategorized');
-      });
-      return [...categories];
-    },
-
-    /**
-     * Get workflows count
-     * 
-     * **Description:** Returns the total number of workflows.
-     * **Returns:** Total number of workflows
-     */
-    workflowsCount(): number {
-      return this.workflows.length;
-    }
-  },
+  getters: {},
 
   // === ACTIONS ===
   actions: {
     /**
      * Fetch workflows
-     * 
+     *
      * **Description:** Loads workflows from the server (placeholder implementation).
      * **Parameters:** None
      * **Returns:** Promise that resolves when workflows are loaded
@@ -89,13 +39,44 @@ export const useWorkflowsStore = defineStore('workflows', {
       this.error = null;
 
       try {
-        // TODO: Implement actual API call
-        // const response = await api.get('/workflows/');
-        // this.workflows = response.data || [];
-        this.workflows = [];
+        const response = await api.get<string[]>("/workflows/");
+        this.workflows = response.data || [];
       } catch (error: any) {
         this.error = error.message;
-        console.error('Error fetching workflows:', error);
+        console.error("Error fetching workflows:", error);
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    /**
+     * Upload workflow
+     *
+     * **Description:** Uploads a workflow file to the server.
+     * **Parameters:**
+     * - `file` (File): The workflow file to upload
+     * **Returns:** Promise that resolves when the workflow is uploaded
+     */
+    async uploadWorkflow(file: File): Promise<void> {
+      this.loading = true;
+      this.error = null;
+
+      try {
+        const formData = new FormData();
+        formData.append("workflow_file", file);
+
+        // Dynamic import to avoid circular dependency
+
+        await api.post("/workflows/upload", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+
+        // Reload workflows after successful upload
+        await this.fetchWorkflows();
+      } catch (error: any) {
+        this.error = error.message;
+        console.error("Error uploading workflow:", error);
         throw error;
       } finally {
         this.loading = false;
@@ -104,7 +85,7 @@ export const useWorkflowsStore = defineStore('workflows', {
 
     /**
      * Clear workflows
-     * 
+     *
      * **Description:** Clears all workflows data.
      * **Parameters:** None
      * **Returns:** void
@@ -113,34 +94,7 @@ export const useWorkflowsStore = defineStore('workflows', {
       this.workflows = [];
       this.currentWorkflow = null;
       this.selectedWorkflow = null;
-      this.executionHistory = [];
-      this.executionStatus = {};
-      this.recentWorkflows = [];
       this.error = null;
     },
-
-    /**
-     * Set current workflow
-     * 
-     * **Description:** Sets the currently active workflow.
-     * **Parameters:**
-     * - `workflow` (Workflow | null): Workflow to set as current
-     * **Returns:** void
-     */
-    setCurrentWorkflow(workflow: Workflow | null): void {
-      this.currentWorkflow = workflow;
-    },
-
-    /**
-     * Set selected workflow
-     * 
-     * **Description:** Sets the selected workflow for operations.
-     * **Parameters:**
-     * - `workflow` (Workflow | null): Workflow to set as selected
-     * **Returns:** void
-     */
-    setSelectedWorkflow(workflow: Workflow | null): void {
-      this.selectedWorkflow = workflow;
-    }
-  }
+  },
 });

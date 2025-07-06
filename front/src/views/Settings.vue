@@ -579,7 +579,7 @@ const changePassword = async (): Promise<void> => {
   message.value = "";
 
   try {
-    await api.post("/models/change_user", {
+    await api.post("/auth/change_user", {
       old_username: passwordForm.value.oldUsername,
       old_password: passwordForm.value.oldPassword,
       new_username: passwordForm.value.newUsername,

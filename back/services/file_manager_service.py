@@ -502,3 +502,23 @@ class FileManagerService:
         except Exception as e:
             logger.error(f"Error getting models info: {e}")
             raise
+        
+    @staticmethod
+    def get_total_directory_size(path: str) -> int:
+        """
+        Calculate the total size of a directory.
+        
+        **Description:** Recursively calculates the total size of all files in a directory.
+        **Parameters:**
+        - `path` (str): Directory path to calculate size for
+        **Returns:** int containing the total size in bytes
+        """
+        total = 0
+        for dirpath, dirnames, filenames in os.walk(path):
+            for f in filenames:
+                fp = os.path.join(dirpath, f)
+                try:
+                    total += os.path.getsize(fp)
+                except Exception:
+                    pass
+        return total

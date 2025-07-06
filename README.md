@@ -48,6 +48,48 @@ A comprehensive web application for managing ComfyUI models, workflows, and bund
 - Integration with bundle system
 - Automatic workflow deployment to ComfyUI
 
+### ⚡ ComfyUI Integration
+- **Workflow Generation**: Dynamically generate ComfyUI workflows from parameters
+  - Support for multiple model types (SDXL, Flux, HiDream, etc.)
+  - **Factory Pattern Architecture**: Extensible model loader system
+    - Easy addition of new model types without code modification
+    - Consistent interface for all model loaders
+    - Clean separation of concerns for different model architectures
+  - LoRA integration with configurable strengths
+  - ControlNet support with preprocessors
+  - Image-to-image workflows with initialization images
+  - Inpainting and outpainting capabilities
+- **Workflow Execution**: Direct integration with ComfyUI server
+  - Send workflows to ComfyUI for processing
+  - Real-time execution status monitoring
+  - Background execution with progress tracking
+  - Automatic result retrieval
+  - Query execution results by prompt ID
+  - Access generated images and execution history
+- **Model Registry**: Centralized model configuration
+  - Pre-configured model definitions
+  - Support for checkpoint, diffusers, flux, and hidream models
+  - Automatic model loader selection via Factory pattern
+- **Advanced Features**:
+  - Combination workflows (generate and execute in one call)
+  - ComfyUI server status monitoring
+  - Error handling and timeout management
+  - WebSocket support for live previews
+  - **Extensible Architecture**: Add custom model loaders at runtime
+
+### 🎨 ComfyUI Image Generation
+- **Interactive Generation Interface**: Full-featured UI for creating images with ComfyUI
+- **Real-time Preview**: Live preview of generation progress via WebSocket
+- **Model Support**: Support for multiple model types (Flux, SDXL, HiDream, etc.)
+- **Advanced Parameters**: 
+  - Samplers, steps, CFG scale configuration
+  - LoRA integration support
+  - ControlNet and Image-to-Image workflows
+  - Optimization settings (TeaCache, memory management)
+- **Workflow Management**: Automatic workflow generation based on parameters
+- **Result Management**: Download and preview generated images
+- **Server Integration**: Direct communication with ComfyUI backend
+
 ### 📋 Bundle System
 - **Bundle Creation**: Package models and workflows together
 - **Hardware Profiles**: Different configurations for various hardware setups
@@ -64,6 +106,37 @@ A comprehensive web application for managing ComfyUI models, workflows, and bund
   - Avoid duplicate downloads
   - Background installation process
   - Installation progress tracking
+
+### 🔍 Model Scanner & Discovery
+- **Automatic Model Detection**: Scans the models directory to discover all available model files
+- **Smart Categorization**: Automatically categorizes models by type:
+  - **Checkpoints**: Full model checkpoints and diffusion models
+  - **VAE**: Variational Autoencoders for image encoding/decoding
+  - **CLIP**: Text encoders for prompt understanding
+  - **ControlNet**: Models for guided generation control
+  - **LoRA**: Low-Rank Adaptation models for fine-tuning
+  - **Embeddings**: Text embeddings and textual inversions
+  - **Upscale Models**: Models for image resolution enhancement
+  - **Other Categories**: Hypernetworks, style models, UNet architectures
+- **File Format Support**: Supports all major model formats:
+  - `.safetensors` - SafeTensors format (recommended)
+  - `.sft` - SafeTensors shortened extension
+  - `.ckpt` - Legacy checkpoint format
+  - `.pt`, `.pth` - PyTorch formats
+  - `.bin` - Binary model format
+- **Model Information**: Provides detailed metadata for each model:
+  - File size and location
+  - Model type classification
+  - Compatibility information
+  - Directory organization
+- **Search & Filter**: Advanced search capabilities:
+  - Search by model name or path
+  - Filter by model category
+  - Quick model discovery
+- **Statistics & Summary**: Overview of model collection:
+  - Total models by category
+  - Disk usage statistics
+  - Storage optimization insights
 
 ### 🗃️ File Management
 - **Directory Structure**: Organized file hierarchy
@@ -85,8 +158,10 @@ A comprehensive web application for managing ComfyUI models, workflows, and bund
 - **Route Modules**:
   - `/api/auth` - Authentication
   - `/api/models` - Model management
+  - `/api/models/scanner` - Model discovery and scanning
   - `/api/bundles` - Bundle operations
   - `/api/workflows` - Workflow management
+  - `/api/comfy` - ComfyUI workflow generation and execution
   - `/api/files` - File operations
 - **Request/Response Models**: Pydantic-based data validation
 - **Error Handling**: Comprehensive error responses
@@ -477,6 +552,81 @@ Comprehensive bundle management:
 ### Runtime Configuration
 All configuration can be modified through the web interface without server restart.
 
+## 🧪 Testing & Development
+
+### Running Tests
+
+The project includes comprehensive test suites for all components.
+
+#### Quick Test Scripts
+```bash
+# Windows - Tests des routers
+run_router_tests.bat
+
+# Windows - Tous les tests avec couverture
+run_all_tests.bat
+
+# Linux/Mac - Tests des routers
+chmod +x run_router_tests.sh && ./run_router_tests.sh
+```
+
+#### Manual Testing Commands
+```bash
+# Install test dependencies
+pip install pytest pytest-asyncio pytest-cov
+
+# Run all tests
+pytest back/tests/ -v
+
+# Run specific test categories
+pytest back/tests/routers/ -v      # API endpoint tests
+pytest back/tests/services/ -v     # Business logic tests
+
+# Run with code coverage
+pytest back/tests/ --cov=back --cov-report=html
+
+# Test specific functionality
+pytest back/tests/ -k "comfy" -v   # ComfyUI related tests
+pytest back/tests/ -k "auth" -v    # Authentication tests
+```
+
+#### Test Structure
+- **Unit Tests**: Individual component testing
+- **Integration Tests**: API endpoint testing with mocked dependencies
+- **Service Tests**: Business logic validation
+- **Router Tests**: HTTP endpoint testing
+
+See [docs/TESTING_GUIDE.md](docs/TESTING_GUIDE.md) for detailed testing instructions.
+
+### Development Setup
+
+1. **Install development dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   pip install pytest pytest-asyncio pytest-cov
+   ```
+
+2. **Set up environment variables:**
+   ```bash
+   # Windows
+   set PYTHONPATH=%PYTHONPATH%;%CD%
+   
+   # Linux/Mac
+   export PYTHONPATH="${PYTHONPATH}:$(pwd)"
+   ```
+
+3. **Run tests before development:**
+   ```bash
+   pytest back/tests/ -v
+   ```
+
+4. **Code quality checks:**
+   ```bash
+   # Check imports and code quality
+   python -m py_compile back/routers/*.py
+   python -m py_compile back/services/*.py
+   ```
+
 ## API Documentation
 
 The application provides comprehensive REST API endpoints for all functionality. Each endpoint includes:
@@ -491,3 +641,40 @@ For detailed API documentation, run the application and visit `/docs` for the in
 
 ### ButtonDropdownComponent
 A split button Vue component: left side is a normal button (main action), right side is a dropdown toggle with chevron. The dropdown content is customizable via slot. Used for actions that have a primary action and additional options (e.g., install, add, etc.).
+
+### ComfyUIView.vue
+
+- **Location:** `/front/src/views/ComfyUIView.vue`
+- **Goal:** Provide a comprehensive interface for ComfyUI image generation with real-time preview and parameter configuration.
+- **Test file:** `/front/src/views/__tests__/ComfyUIView.spec.ts`
+
+This component serves as the main interface for ComfyUI integration, featuring:
+- Collapsible parameter form (1/3 of screen)
+- Real-time preview during generation
+- Model and parameter selection
+- WebSocket integration for live updates
+- Result gallery with download functionality
+
+### ComfyUI Store (comfyui.ts)
+
+- **Location:** `/front/src/stores/comfyui.ts`
+- **Goal:** Centralized state management for ComfyUI operations including models, generation state, and API communication.
+- **Test file:** `/front/src/stores/comfyui.test.ts`
+
+This Pinia store manages:
+- Model registry and available models
+- Generation parameters and workflow state
+- Real-time generation status
+- API communication with backend
+- Error handling and server status
+
+### ComfyUI Types (comfyui.types.ts)
+
+- **Location:** `/front/src/stores/types/comfyui.types.ts`
+- **Goal:** TypeScript interfaces and types for ComfyUI integration, ensuring type safety across the application.
+
+Defines interfaces for:
+- Generation parameters and LoRA configuration
+- API responses and workflow definitions
+- Store state and form validation
+- Model registry and options

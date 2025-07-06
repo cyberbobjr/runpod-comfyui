@@ -172,7 +172,7 @@
           <!-- Workflow Dropdown -->
           <FormDropdownComponent
             label="Add Workflows"
-            :icon="'plus-circle'"
+            :icon="faPlusCircle"
             :items="availableWorkflows"
             @select="addWorkflowToSelection"
           >
@@ -548,7 +548,7 @@
     v-if="showModelSelectorModal"
     :show="showModelSelectorModal"
     :currentProfileName="currentProfileName"
-    :groupedModels="groupedModels"
+    :groupedModels="models"
     :selectedModels="selectedModels"
     :popularTags="popularTags"
     @close="closeModelSelector"
@@ -613,12 +613,15 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { useBundlesStore } from "../../stores/bundles";
-import { useNotifications } from "../../composables/useNotifications";
-import api from "../../services/api";
-import CommonCard from "../common/CommonCard.vue";
-import FormDropdownComponent from "../common/FormDropdownComponent.vue";
-import ModelSelectorModal from "../common/ModelSelectorModal.vue";
+import { useBundlesStore } from "@/stores/bundles";
+import { useWorkflowsStore } from "@/stores/workflows";
+import { useNotifications } from "@/composables/useNotifications";
+import { useModelsStore } from "@/stores/models";
+import CommonCard from "@/components/common/CommonCard.vue";
+import FormDropdownComponent from "@/components/common/FormDropdownComponent.vue";
+import ModelSelectorModal from "@/components/common/ModelSelectorModal.vue";
+import { storeToRefs } from "pinia";
+import { faPlusCircle } from "@fortawesome/free-solid-svg-icons";
 
 const props = defineProps({
   bundleId: {
@@ -631,6 +634,11 @@ const emit = defineEmits(["saved", "cancel"]);
 
 const { success, error, confirm } = useNotifications();
 const bundleStore = useBundlesStore();
+const workflowsStore = useWorkflowsStore();
+const modelsStore = useModelsStore();
+const { workflows } = storeToRefs(workflowsStore);
+const { models } = storeToRefs(modelsStore);
+
 const showModelsSection = ref(true);
 const dropdownPosition = ref({ top: "0px", left: "0px" });
 const showRenameModal = ref(false);
@@ -644,9 +652,6 @@ const showFilterSection = ref(false);
 const renamingProfile = ref("");
 const activeProfileTab = ref("");
 const modelFilter = ref("");
-const workflows = ref([]);
-const groupedModels = ref({});
-
 const currentBundle = ref({
   id: "",
   name: "",
@@ -673,8 +678,8 @@ onMounted(async () => {
       hardware_profiles: b.hardware_profiles || {},
     };
   }
-  await loadWorkflows();
-  await loadModels();
+  await workflowsStore.fetchWorkflows();
+  await modelsStore.fetchModels();
 
   // Auto-select first hardware profile if any exist
   const profileNames = Object.keys(currentBundle.value.hardware_profiles);
@@ -720,12 +725,11 @@ const availableWorkflows = computed(() => {
   );
 });
 
-
 // Computed for popular tags
 const popularTags = computed(() => {
   const tagCounts = {};
 
-  for (const models of Object.values(groupedModels.value)) {
+  for (const models of Object.values(models.value)) {
     for (const model of models) {
       if (model.tags && model.tags.length > 0) {
         for (const tag of model.tags) {
@@ -740,27 +744,6 @@ const popularTags = computed(() => {
     .slice(0, 8)
     .map(([tag]) => tag);
 });
-
-// API Functions
-const loadWorkflows = async () => {
-  try {
-    const response = await api.get("/workflows/");
-    workflows.value = response.data || [];
-  } catch (err) {
-    console.error("Error loading workflows:", err);
-    error("Failed to load workflows");
-  }
-};
-
-const loadModels = async () => {
-  try {
-    const response = await api.get("/jsonmodels/");
-    groupedModels.value = response.data?.groups || {};
-  } catch (err) {
-    console.error("Error loading models:", err);
-    error("Failed to load model groups");
-  }
-};
 
 const removeWorkflowFromBundle = async (workflow) => {
   try {
@@ -1068,15 +1051,8 @@ async function handleSaveBundle() {
 
 const uploadWorkflow = async (file) => {
   try {
-    const formData = new FormData();
-    formData.append("workflow_file", file);
-
-    await api.post("/workflows/upload", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-
+    await workflowsStore.uploadWorkflow(file);
     success(`Workflow "${file.name}" uploaded successfully`);
-    await loadWorkflows(); // Reload workflows
   } catch (err) {
     console.error("Error uploading workflow:", err);
     error(

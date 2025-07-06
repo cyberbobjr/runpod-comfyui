@@ -1,0 +1,298 @@
+{
+  "1": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "Flux/flux1-dev-fp8.safetensors",
+      "weight_dtype": "fp8_e4m3fn"
+    },
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "2": {
+    "class_type": "DualCLIPLoader",
+    "inputs": {
+      "clip_name1": "Flux/clip_l.safetensors",
+      "clip_name2": "Flux/t5xxl_fp8_e4m3fn.safetensors",
+      "type": "flux",
+      "device": "default"
+    },
+    "_meta": {
+      "title": "DualCLIPLoader"
+    }
+  },
+  "3": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "Flux/ae.safetensors"
+    },
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "4": {
+    "class_type": "ModelSamplingFlux",
+    "inputs": {
+      "max_shift": 1.15,
+      "base_shift": 0.5,
+      "width": 1024,
+      "height": 1024,
+      "model": [
+        "1",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "ModelSamplingFlux"
+    }
+  },
+  "5": {
+    "class_type": "Power Lora Loader (rgthree)",
+    "inputs": {
+      "PowerLoraLoaderHeaderWidget": {
+        "type": "PowerLoraLoaderHeaderWidget"
+      },
+      "➕ Add Lora": "",
+      "model": [
+        "4",
+        0
+      ],
+      "clip": [
+        "2",
+        0
+      ],
+      "lora_1": {
+        "lora": "FLUX\\Hand v2.safetensors",
+        "on": true,
+        "strength": 1.0
+      },
+      "lora_2": {
+        "lora": "FLUX\\aidmaImageUprader-FLUX-v0.3.safetensors",
+        "on": true,
+        "strength": 0.8
+      },
+      "lora_3": {
+        "on": false,
+        "lora": "",
+        "strength": 1
+      },
+      "lora_4": {
+        "on": false,
+        "lora": "",
+        "strength": 1
+      },
+      "lora_5": {
+        "on": false,
+        "lora": "",
+        "strength": 1
+      }
+    },
+    "_meta": {
+      "title": "Lora Loader"
+    }
+  },
+  "6": {
+    "class_type": "TeaCache",
+    "inputs": {
+      "model_type": "flux",
+      "rel_l1_thresh": 0.4,
+      "start_percent": 0,
+      "end_percent": 1,
+      "cache_device": "cuda",
+      "model": [
+        "5",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "TeaCache"
+    }
+  },
+  "7": {
+    "class_type": "Seed Generator",
+    "inputs": {
+      "seed": 141809178
+    },
+    "_meta": {
+      "title": "Seed Generator"
+    }
+  },
+  "8": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "",
+      "clip": [
+        "5",
+        1
+      ]
+    },
+    "_meta": {
+      "title": "CLIP Text Encode (Negative)"
+    }
+  },
+  "9": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "A character in anime style with perfect hands",
+      "clip": [
+        "5",
+        1
+      ]
+    },
+    "_meta": {
+      "title": "CLIP Text Encode (Positive)"
+    }
+  },
+  "10": {
+    "class_type": "FluxGuidance",
+    "inputs": {
+      "guidance": 7.5,
+      "conditioning": [
+        "9",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "FluxGuidance"
+    }
+  },
+  "11": {
+    "class_type": "CR SDXL Aspect Ratio",
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "aspect_ratio": "custom",
+      "swap_dimensions": "Off",
+      "upscale_factor": 1,
+      "batch_size": 1
+    },
+    "_meta": {
+      "title": "🔳 CR SDXL Aspect Ratio"
+    }
+  },
+  "12": {
+    "class_type": "BasicScheduler",
+    "inputs": {
+      "scheduler": "normal",
+      "steps": 30,
+      "denoise": 1.0,
+      "model": [
+        "6",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "BasicScheduler"
+    }
+  },
+  "13": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "_meta": {
+      "title": "KSamplerSelect"
+    }
+  },
+  "14": {
+    "class_type": "DetailDaemonSamplerNode",
+    "inputs": {
+      "detail_amount": 0.3,
+      "start": 0.2,
+      "end": 0.8,
+      "bias": 0.5,
+      "exponent": 1,
+      "start_offset": 0,
+      "end_offset": 0,
+      "fade": 0,
+      "smooth": true,
+      "cfg_scale_override": 0,
+      "sampler": [
+        "13",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Detail Daemon Sampler"
+    }
+  },
+  "15": {
+    "class_type": "SamplerCustom",
+    "inputs": {
+      "add_noise": true,
+      "noise_seed": [
+        "7",
+        0
+      ],
+      "cfg": 1.0,
+      "model": [
+        "6",
+        0
+      ],
+      "positive": [
+        "10",
+        0
+      ],
+      "negative": [
+        "8",
+        0
+      ],
+      "sampler": [
+        "14",
+        0
+      ],
+      "sigmas": [
+        "12",
+        0
+      ],
+      "latent_image": [
+        "11",
+        4
+      ]
+    },
+    "_meta": {
+      "title": "SamplerCustom"
+    }
+  },
+  "16": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "15",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "17": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "16",
+        0
+      ],
+      "filename_prefix": "generated_"
+    },
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "18": {
+    "class_type": "easy clearCacheAll",
+    "inputs": {
+      "anything": [
+        "7",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Clear Cache All"
+    }
+  }
+}

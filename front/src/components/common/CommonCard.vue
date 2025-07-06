@@ -1,5 +1,5 @@
 <template>
-  <div class="card bg-background rounded-lg shadow">
+  <div class="card bg-background shadow">
     <div v-if="title || $slots.header" class="border-b border-border px-4 py-3">
       <h3 v-if="title">{{ title }}</h3>
       <slot name="header" />

@@ -16,18 +16,17 @@ from typing import List, Optional, Dict, Any
 from ..services.auth_middleware import protected
 from ..services.file_manager_service import FileManagerService
 from ..models.file_models import (
-    FileInfo, DirectoryListing, FileOperationRequest, RenameRequest,
+    FileOperationRequest, RenameRequest,
     CreateDirectoryRequest, FilePropertiesResponse, UploadResponse,
     ModelsInfoResponse, FileOperationResponse
 )
 from ..utils.logger import get_logger
-from back.services.model_service import ModelService
 
 # Initialize logger
 logger = get_logger(__name__)
 
 # Create router
-router = APIRouter(prefix="/api/file", tags=["file-manager"])
+router = APIRouter(prefix="/api/file", tags=["File Manager"])
 
 # Initialize service
 file_service = FileManagerService()
@@ -480,4 +479,6 @@ def total_size(user=Depends(protected)):
     
     Usage: Calculates and returns the total disk space used by the ComfyUI installation.
     """
-    return ModelService.get_total_size()
+    base_dir = os.environ.get("COMFYUI_MODEL_DIR", ".")
+    size = FileManagerService.get_total_directory_size(base_dir)
+    return {"base_dir": base_dir, "total_size": size}

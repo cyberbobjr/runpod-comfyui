@@ -146,6 +146,16 @@ const routes: TypedRouteRecord[] = [
     },
   },
   {
+    path: "/comfyui",
+    name: "comfyui",
+    component: () => import("../views/ComfyUIView.vue"),
+    meta: {
+      requiresAuth: true,
+      title: "ComfyUI Generator",
+      description: "Generate images using ComfyUI workflows",
+    },
+  },
+  {
     // Catch-all route for 404 errors
     path: "/:pathMatch(.*)*",
     name: "not-found",

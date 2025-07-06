@@ -31,6 +31,7 @@ Contains all API route definitions, delegating business logic to services:
 - **`file_manager_router.py`** - File system operations routes
 - **`json_models_router.py`** - JSON model configuration routes
 - **`workflow_router.py`** - Workflow management routes
+- **`comfy_router.py`** - ComfyUI workflow generation and execution routes
 
 ### ⚙️ Services (`/services/`)
 Contains all business logic and core operations:
@@ -45,6 +46,15 @@ Contains all business logic and core operations:
 - **`file_manager_service.py`** - File system operations with security
 - **`json_models_service.py`** - JSON model configuration and validation
 - **`workflow_service.py`** - Workflow file management and validation
+- **`comfy_workflow_builder.py`** - ComfyUI workflow generation with Factory pattern for model loaders
+  - **Factory Pattern**: Extensible model loader system for different model types
+  - **BaseModelLoader**: Abstract base class for all model loaders
+  - **CheckpointModelLoader**: Handles SDXL, SD1.5 checkpoint models
+  - **FluxModelLoader**: Handles Flux models with separate UNet, CLIP, VAE loaders
+  - **HiDreamModelLoader**: Handles HiDream models with QuadrupleCLIP support
+  - **ModelLoaderFactory**: Manages registration and creation of model loaders
+  - **Easy Extension**: Add new model types by implementing BaseModelLoader
+- **`comfy_client.py`** - ComfyUI server communication and execution client
 
 ### 📊 Models (`/models/`)
 Contains all Pydantic models for request/response validation:
@@ -95,6 +105,8 @@ Legacy `api_*.py` files are deprecated but still present for backward compatibil
 3. **Maintainability**: Smaller, focused modules are easier to understand and modify
 4. **Reusability**: Services can be used by multiple routers or other components
 5. **Type Safety**: Comprehensive Pydantic models for all data structures
+6. **Extensibility**: Factory pattern enables easy addition of new model types
+7. **Clean Dependencies**: Clear separation between API layer and business logic
 6. **Documentation**: Each method is documented with purpose, parameters, and returns
 
 ## 🚀 Usage
@@ -112,14 +124,67 @@ app.include_router(api_router)
 
 Run tests for the new architecture:
 
-```bash
-# Run all tests
-pytest back/tests/
+### Quick Start (Scripts automatiques)
 
-# Run specific test modules
-pytest back/tests/services/
-pytest back/tests/routers/
+**Windows:**
+```batch
+# Tests des routers uniquement
+run_router_tests.bat
+
+# Tous les tests avec couverture
+run_all_tests.bat
 ```
+
+**Linux/Mac:**
+```bash
+# Tests des routers uniquement
+chmod +x run_router_tests.sh
+./run_router_tests.sh
+
+# Tous les tests
+pytest back/tests/ -v
+```
+
+### Commandes pytest détaillées
+
+```bash
+# Tous les tests
+pytest back/tests/ -v
+
+# Tests spécifiques par module
+pytest back/tests/services/ -v
+pytest back/tests/routers/ -v
+
+# Test d'un fichier spécifique
+pytest back/tests/routers/test_comfy_router.py -v
+
+# Tests avec couverture de code
+pytest back/tests/ --cov=back --cov-report=html
+
+# Tests en mode debug
+pytest back/tests/routers/test_comfy_router.py -v -s
+
+# Filtrer les tests par nom
+pytest back/tests/ -k "comfy" -v
+```
+
+### Configuration requise
+
+Assurez-vous d'avoir installé les dépendances de test :
+```bash
+pip install pytest pytest-asyncio pytest-cov
+```
+
+Et ajouté le PYTHONPATH :
+```bash
+# Windows
+set PYTHONPATH=%PYTHONPATH%;%CD%
+
+# Linux/Mac
+export PYTHONPATH="${PYTHONPATH}:$(pwd)"
+```
+
+Voir [TESTING_GUIDE.md](../docs/TESTING_GUIDE.md) pour plus de détails.
 
 ## 📋 Standards
 

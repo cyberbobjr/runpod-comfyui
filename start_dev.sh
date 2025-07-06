@@ -8,5 +8,7 @@ if [ -f "$LOGFILE" ] && [ $(stat -c%s "$LOGFILE") -ge $MAXSIZE ]; then
     [ -f "$LOGFILE.2" ] && mv "$LOGFILE.2" "$LOGFILE.3"
 fi
 
+source ./venv/bin/activate
+
 # nohup python -m uvicorn main:app --reload --host 0.0.0.0 --port 8081 >> "$LOGFILE" 2>&1 &
 python -m uvicorn main:app --reload --host 0.0.0.0 --port 8082 --workers 4
